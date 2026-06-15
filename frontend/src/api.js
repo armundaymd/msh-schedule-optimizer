@@ -21,3 +21,17 @@ export async function postRefresh() {
   if (!r.ok) throw new Error('refresh failed')
   return r.json()
 }
+
+export async function fetchDemandCI() {
+  const r = await fetch('/api/demand-ci')
+  if (!r.ok) return null
+  const data = await r.json()
+  return data?.status === 'not_run' ? null : data
+}
+
+export async function fetchValidation() {
+  const r = await fetch('/api/validation')
+  if (!r.ok) return null
+  const data = await r.json()
+  return data?.status === 'not_run' ? null : data
+}

@@ -1,1794 +1,1794 @@
 [
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "19:00",
-    "end": "05:00"
+    "start_time": "19:00",
+    "end_time": "05:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Resident",
-    "start": "09:00",
-    "end": "19:00"
+    "start_time": "09:00",
+    "end_time": "19:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Monday",
     "team": "FastTrack",
     "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
+    "start_time": "09:00",
+    "end_time": "17:00"
   },
   {
     "day": "Monday",
     "team": "FastTrack",
     "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
+    "start_time": "17:00",
+    "end_time": "01:00"
   },
   {
     "day": "Monday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Monday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Monday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "19:00",
-    "end": "23:00"
+    "start_time": "19:00",
+    "end_time": "23:00"
   },
   {
     "day": "Monday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Monday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "11:00",
-    "end": "23:00"
+    "start_time": "11:00",
+    "end_time": "23:00"
   },
   {
     "day": "Monday",
     "team": "FastTrack",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Monday",
     "team": "ERU",
     "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
+    "start_time": "09:00",
+    "end_time": "17:00"
   },
   {
     "day": "Monday",
     "team": "ERU",
     "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
+    "start_time": "17:00",
+    "end_time": "01:00"
   },
   {
     "day": "Monday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Monday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Monday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Monday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "14:00",
-    "end": "22:00"
+    "start_time": "14:00",
+    "end_time": "22:00"
   },
   {
     "day": "Monday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "14:00",
-    "end": "22:00"
+    "start_time": "14:00",
+    "end_time": "22:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Blue",
     "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
+    "start_time": "09:00",
+    "end_time": "17:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Blue",
     "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
+    "start_time": "17:00",
+    "end_time": "01:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Blue",
     "role_type": "PA",
-    "start": "09:00",
-    "end": "21:00"
+    "start_time": "09:00",
+    "end_time": "21:00"
   },
   {
     "day": "Monday",
-    "team": "Main",
+    "team": "Blue",
     "role_type": "PA",
-    "start": "11:00",
-    "end": "23:00"
+    "start_time": "11:00",
+    "end_time": "23:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Resident",
-    "start": "09:00",
-    "end": "19:00"
+    "start_time": "09:00",
+    "end_time": "19:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "PA",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Tuesday",
     "team": "FastTrack",
     "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
+    "start_time": "09:00",
+    "end_time": "17:00"
   },
   {
     "day": "Tuesday",
     "team": "FastTrack",
     "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
+    "start_time": "17:00",
+    "end_time": "01:00"
   },
   {
     "day": "Tuesday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Tuesday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Tuesday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "19:00",
-    "end": "23:00"
+    "start_time": "19:00",
+    "end_time": "23:00"
   },
   {
     "day": "Tuesday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Tuesday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "11:00",
-    "end": "23:00"
+    "start_time": "11:00",
+    "end_time": "23:00"
   },
   {
     "day": "Tuesday",
     "team": "FastTrack",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Tuesday",
     "team": "ERU",
     "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
+    "start_time": "09:00",
+    "end_time": "17:00"
   },
   {
     "day": "Tuesday",
     "team": "ERU",
     "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
+    "start_time": "17:00",
+    "end_time": "01:00"
   },
   {
     "day": "Tuesday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Tuesday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Tuesday",
     "team": "ERU",
     "role_type": "PA",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Tuesday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "14:00",
-    "end": "22:00"
+    "start_time": "14:00",
+    "end_time": "22:00"
   },
   {
     "day": "Tuesday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "14:00",
-    "end": "22:00"
+    "start_time": "14:00",
+    "end_time": "22:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Blue",
     "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
+    "start_time": "09:00",
+    "end_time": "17:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Blue",
     "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
+    "start_time": "17:00",
+    "end_time": "01:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Blue",
     "role_type": "PA",
-    "start": "09:00",
-    "end": "21:00"
+    "start_time": "09:00",
+    "end_time": "21:00"
   },
   {
     "day": "Tuesday",
-    "team": "Main",
+    "team": "Blue",
     "role_type": "PA",
-    "start": "11:00",
-    "end": "23:00"
+    "start_time": "11:00",
+    "end_time": "23:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "19:00",
-    "end": "05:00"
+    "start_time": "19:00",
+    "end_time": "05:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "09:00",
-    "end": "21:00"
+    "start_time": "09:00",
+    "end_time": "21:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "10:00",
-    "end": "19:00"
+    "start_time": "10:00",
+    "end_time": "19:00"
   },
   {
     "day": "Wednesday",
     "team": "FastTrack",
     "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
+    "start_time": "09:00",
+    "end_time": "17:00"
   },
   {
     "day": "Wednesday",
     "team": "FastTrack",
     "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
+    "start_time": "17:00",
+    "end_time": "01:00"
   },
   {
     "day": "Wednesday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Wednesday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Wednesday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "19:00",
-    "end": "23:00"
+    "start_time": "19:00",
+    "end_time": "23:00"
   },
   {
     "day": "Wednesday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Wednesday",
     "team": "FastTrack",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Wednesday",
     "team": "ERU",
     "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
+    "start_time": "09:00",
+    "end_time": "17:00"
   },
   {
     "day": "Wednesday",
     "team": "ERU",
     "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
+    "start_time": "17:00",
+    "end_time": "01:00"
   },
   {
     "day": "Wednesday",
     "team": "ERU",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Wednesday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Wednesday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Wednesday",
     "team": "ERU",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Blue",
     "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
+    "start_time": "09:00",
+    "end_time": "17:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Blue",
     "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
+    "start_time": "17:00",
+    "end_time": "01:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Blue",
     "role_type": "PA",
-    "start": "09:00",
-    "end": "21:00"
+    "start_time": "09:00",
+    "end_time": "21:00"
   },
   {
     "day": "Wednesday",
-    "team": "Main",
+    "team": "Blue",
     "role_type": "PA",
-    "start": "11:00",
-    "end": "23:00"
+    "start_time": "11:00",
+    "end_time": "23:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Resident",
-    "start": "09:00",
-    "end": "19:00"
+    "start_time": "09:00",
+    "end_time": "19:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Thursday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Thursday",
     "team": "FastTrack",
     "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
+    "start_time": "09:00",
+    "end_time": "17:00"
   },
   {
     "day": "Thursday",
     "team": "FastTrack",
     "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
-  },
-  {
-    "day": "Thursday",
-    "team": "FastTrack",
-    "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "17:00",
+    "end_time": "01:00"
   },
   {
     "day": "Thursday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Thursday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "19:00",
-    "end": "23:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Thursday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "23:00"
   },
   {
     "day": "Thursday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Thursday",
-    "team": "ERU",
-    "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
-  },
-  {
-    "day": "Thursday",
-    "team": "ERU",
-    "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
-  },
-  {
-    "day": "Thursday",
-    "team": "ERU",
-    "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
-  },
-  {
-    "day": "Thursday",
-    "team": "ERU",
-    "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
-  },
-  {
-    "day": "Thursday",
-    "team": "ERU",
-    "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
-  },
-  {
-    "day": "Thursday",
-    "team": "ERU",
-    "role_type": "Resident",
-    "start": "14:00",
-    "end": "22:00"
-  },
-  {
-    "day": "Thursday",
-    "team": "ERU",
-    "role_type": "Resident",
-    "start": "14:00",
-    "end": "22:00"
-  },
-  {
-    "day": "Thursday",
-    "team": "Main",
-    "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
-  },
-  {
-    "day": "Thursday",
-    "team": "Main",
-    "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
-  },
-  {
-    "day": "Thursday",
-    "team": "Main",
-    "role_type": "Resident",
-    "start": "09:00",
-    "end": "21:00"
-  },
-  {
-    "day": "Thursday",
-    "team": "Main",
-    "role_type": "Resident",
-    "start": "11:00",
-    "end": "23:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Attending",
-    "start": "07:00",
-    "end": "15:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Attending",
-    "start": "15:00",
-    "end": "23:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Attending",
-    "start": "23:00",
-    "end": "07:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Resident",
-    "start": "09:00",
-    "end": "19:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Attending",
-    "start": "07:00",
-    "end": "15:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Attending",
-    "start": "15:00",
-    "end": "23:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Attending",
-    "start": "23:00",
-    "end": "07:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Resident",
-    "start": "07:00",
-    "end": "19:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Resident",
-    "start": "07:00",
-    "end": "19:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Main",
-    "role_type": "Resident",
-    "start": "07:00",
-    "end": "19:00"
-  },
-  {
-    "day": "Friday",
-    "team": "FastTrack",
-    "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
-  },
-  {
-    "day": "Friday",
-    "team": "FastTrack",
-    "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
-  },
-  {
-    "day": "Friday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
-    "day": "Friday",
-    "team": "FastTrack",
-    "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "day": "Thursday",
+    "team": "ERU",
+    "role_type": "Attending",
+    "start_time": "09:00",
+    "end_time": "17:00"
   },
   {
-    "day": "Friday",
-    "team": "FastTrack",
+    "day": "Thursday",
+    "team": "ERU",
+    "role_type": "Attending",
+    "start_time": "17:00",
+    "end_time": "01:00"
+  },
+  {
+    "day": "Thursday",
+    "team": "ERU",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
+  },
+  {
+    "day": "Thursday",
+    "team": "ERU",
+    "role_type": "Resident",
+    "start_time": "15:00",
+    "end_time": "23:00"
+  },
+  {
+    "day": "Thursday",
+    "team": "ERU",
+    "role_type": "Resident",
+    "start_time": "23:00",
+    "end_time": "07:00"
+  },
+  {
+    "day": "Thursday",
+    "team": "ERU",
+    "role_type": "Resident",
+    "start_time": "14:00",
+    "end_time": "22:00"
+  },
+  {
+    "day": "Thursday",
+    "team": "ERU",
+    "role_type": "Resident",
+    "start_time": "14:00",
+    "end_time": "22:00"
+  },
+  {
+    "day": "Thursday",
+    "team": "Blue",
+    "role_type": "Attending",
+    "start_time": "09:00",
+    "end_time": "17:00"
+  },
+  {
+    "day": "Thursday",
+    "team": "Blue",
+    "role_type": "Attending",
+    "start_time": "17:00",
+    "end_time": "01:00"
+  },
+  {
+    "day": "Thursday",
+    "team": "Blue",
+    "role_type": "Resident",
+    "start_time": "09:00",
+    "end_time": "21:00"
+  },
+  {
+    "day": "Thursday",
+    "team": "Blue",
+    "role_type": "Resident",
+    "start_time": "11:00",
+    "end_time": "23:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Green",
+    "role_type": "Attending",
+    "start_time": "07:00",
+    "end_time": "15:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Green",
+    "role_type": "Attending",
+    "start_time": "15:00",
+    "end_time": "23:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Green",
+    "role_type": "Attending",
+    "start_time": "23:00",
+    "end_time": "07:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Green",
+    "role_type": "PA",
+    "start_time": "07:00",
+    "end_time": "19:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Green",
+    "role_type": "PA",
+    "start_time": "07:00",
+    "end_time": "19:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Green",
+    "role_type": "Resident",
+    "start_time": "19:00",
+    "end_time": "07:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Green",
+    "role_type": "Resident",
+    "start_time": "19:00",
+    "end_time": "07:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Green",
+    "role_type": "Resident",
+    "start_time": "09:00",
+    "end_time": "19:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "role_type": "Attending",
+    "start_time": "07:00",
+    "end_time": "15:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "role_type": "Attending",
+    "start_time": "15:00",
+    "end_time": "23:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "role_type": "Attending",
+    "start_time": "23:00",
+    "end_time": "07:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "role_type": "Resident",
+    "start_time": "07:00",
+    "end_time": "15:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "role_type": "Resident",
+    "start_time": "15:00",
+    "end_time": "23:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "role_type": "Resident",
+    "start_time": "23:00",
+    "end_time": "07:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "role_type": "Resident",
+    "start_time": "07:00",
+    "end_time": "19:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "role_type": "Resident",
+    "start_time": "19:00",
+    "end_time": "07:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "role_type": "Resident",
+    "start_time": "07:00",
+    "end_time": "19:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "role_type": "Resident",
+    "start_time": "19:00",
+    "end_time": "07:00"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "role_type": "Resident",
+    "start_time": "07:00",
+    "end_time": "19:00"
+  },
+  {
+    "day": "Friday",
+    "team": "FastTrack",
+    "role_type": "Attending",
+    "start_time": "09:00",
+    "end_time": "17:00"
+  },
+  {
+    "day": "Friday",
+    "team": "FastTrack",
+    "role_type": "Attending",
+    "start_time": "17:00",
+    "end_time": "01:00"
   },
   {
     "day": "Friday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
+  },
+  {
+    "day": "Friday",
+    "team": "FastTrack",
+    "role_type": "PA",
+    "start_time": "07:00",
+    "end_time": "19:00"
+  },
+  {
+    "day": "Friday",
+    "team": "FastTrack",
+    "role_type": "Resident",
+    "start_time": "19:00",
+    "end_time": "07:00"
+  },
+  {
+    "day": "Friday",
+    "team": "FastTrack",
+    "role_type": "PA",
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Friday",
     "team": "ERU",
     "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
+    "start_time": "09:00",
+    "end_time": "17:00"
   },
   {
     "day": "Friday",
     "team": "ERU",
     "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
+    "start_time": "17:00",
+    "end_time": "01:00"
   },
   {
     "day": "Friday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Friday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Friday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Friday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "14:00",
-    "end": "22:00"
+    "start_time": "14:00",
+    "end_time": "22:00"
   },
   {
     "day": "Friday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "14:00",
-    "end": "22:00"
+    "start_time": "14:00",
+    "end_time": "22:00"
   },
   {
     "day": "Friday",
-    "team": "Main",
+    "team": "Blue",
     "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
+    "start_time": "09:00",
+    "end_time": "17:00"
   },
   {
     "day": "Friday",
-    "team": "Main",
+    "team": "Blue",
     "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
+    "start_time": "17:00",
+    "end_time": "01:00"
   },
   {
     "day": "Friday",
-    "team": "Main",
+    "team": "Blue",
     "role_type": "Resident",
-    "start": "09:00",
-    "end": "21:00"
+    "start_time": "09:00",
+    "end_time": "21:00"
   },
   {
     "day": "Friday",
-    "team": "Main",
+    "team": "Blue",
     "role_type": "Resident",
-    "start": "11:00",
-    "end": "23:00"
+    "start_time": "11:00",
+    "end_time": "23:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "11:00",
-    "end": "20:00"
+    "start_time": "11:00",
+    "end_time": "20:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Saturday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
-  },
-  {
-    "day": "Saturday",
-    "team": "FastTrack",
-    "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Saturday",
     "team": "FastTrack",
     "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
+    "start_time": "09:00",
+    "end_time": "17:00"
+  },
+  {
+    "day": "Saturday",
+    "team": "FastTrack",
+    "role_type": "Attending",
+    "start_time": "17:00",
+    "end_time": "01:00"
   },
   {
     "day": "Saturday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Saturday",
     "team": "FastTrack",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Saturday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "09:00",
-    "end": "21:00"
+    "start_time": "09:00",
+    "end_time": "21:00"
   },
   {
     "day": "Saturday",
     "team": "FastTrack",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Saturday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "11:00",
-    "end": "15:00"
+    "start_time": "11:00",
+    "end_time": "15:00"
   },
   {
     "day": "Saturday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "15:00",
-    "end": "19:00"
+    "start_time": "15:00",
+    "end_time": "19:00"
   },
   {
     "day": "Saturday",
     "team": "ERU",
     "role_type": "Attending",
-    "start": "11:00",
-    "end": "19:00"
+    "start_time": "11:00",
+    "end_time": "19:00"
   },
   {
     "day": "Saturday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Saturday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Saturday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Attending",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "11:00",
-    "end": "20:00"
+    "start_time": "11:00",
+    "end_time": "20:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Green",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Attending",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Sunday",
-    "team": "Main",
+    "team": "Red",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
-  },
-  {
-    "day": "Sunday",
-    "team": "FastTrack",
-    "role_type": "Attending",
-    "start": "09:00",
-    "end": "17:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   },
   {
     "day": "Sunday",
     "team": "FastTrack",
     "role_type": "Attending",
-    "start": "17:00",
-    "end": "01:00"
+    "start_time": "09:00",
+    "end_time": "17:00"
+  },
+  {
+    "day": "Sunday",
+    "team": "FastTrack",
+    "role_type": "Attending",
+    "start_time": "17:00",
+    "end_time": "01:00"
   },
   {
     "day": "Sunday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "07:00",
-    "end": "19:00"
+    "start_time": "07:00",
+    "end_time": "19:00"
   },
   {
     "day": "Sunday",
     "team": "FastTrack",
     "role_type": "Resident",
-    "start": "19:00",
-    "end": "07:00"
+    "start_time": "19:00",
+    "end_time": "07:00"
   },
   {
     "day": "Sunday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "09:00",
-    "end": "21:00"
+    "start_time": "09:00",
+    "end_time": "21:00"
   },
   {
     "day": "Sunday",
     "team": "FastTrack",
     "role_type": "PA",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Sunday",
     "team": "ERU",
     "role_type": "Attending",
-    "start": "11:00",
-    "end": "19:00"
+    "start_time": "11:00",
+    "end_time": "19:00"
   },
   {
     "day": "Sunday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "07:00",
-    "end": "15:00"
+    "start_time": "07:00",
+    "end_time": "15:00"
   },
   {
     "day": "Sunday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "15:00",
-    "end": "23:00"
+    "start_time": "15:00",
+    "end_time": "23:00"
   },
   {
     "day": "Sunday",
     "team": "ERU",
     "role_type": "Resident",
-    "start": "23:00",
-    "end": "07:00"
+    "start_time": "23:00",
+    "end_time": "07:00"
   }
 ]

@@ -160,18 +160,17 @@ def compute_summary(df: pd.DataFrame) -> dict:
 def load_schedule(sched_csv: Path) -> list:
     """Parse schedule CSV into list of shift dicts."""
     df = pd.read_csv(sched_csv)
-    team_norm = {"Green":"Main","Red":"Main","Blue":"Main","FastTrack":"FastTrack","ERU":"ERU"}
-    df["team_norm"] = df["team"].map(team_norm)
-    df = df.dropna(subset=["team_norm"])
+    valid_teams = {"Green", "Red", "Blue", "FastTrack", "ERU"}
+    df = df[df["team"].isin(valid_teams)]
 
     shifts = []
     for _, row in df.iterrows():
         shifts.append({
-            "day":       row["day_type"],
-            "team":      row["team_norm"],
-            "role_type": row["role_type"],
-            "start":     row["start_time"],
-            "end":       row["end_time"],
+            "day":        row["day_type"],
+            "team":       row["team"],        # keep original name (Green/Red/Blue/FastTrack/ERU)
+            "role_type":  row["role_type"],
+            "start_time": row["start_time"],  # field name normalizeShifts expects
+            "end_time":   row["end_time"],
         })
     return shifts
 

@@ -9,7 +9,7 @@ import SummaryStatsBar from './components/SummaryStatsBar'
 import OptimizeModal from './components/OptimizeModal'
 import { getOverflowHours, runOptimizer } from './utils/optimizer'
 
-const DEFAULT_PPH = { main: 2.3, fasttrack: 2.8, eru: 1.2 }
+const DEFAULT_PPH = { main: 2.1, fasttrack: 3.5, eru: 0.8 }
 
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
 
