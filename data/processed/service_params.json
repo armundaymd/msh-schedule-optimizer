@@ -2,131 +2,141 @@
   "ERU_1": {
     "team": "ERU",
     "acuity": 1,
-    "count": 11,
-    "mean": 135.1,
-    "median": 109.1,
-    "std": 117.0,
-    "ln_mu": 4.6267,
-    "ln_sigma": 0.7479
+    "count": 140,
+    "mean": 239.6,
+    "median": 171.0,
+    "std": 239.8,
+    "ln_mu": 5.1319,
+    "ln_sigma": 0.833
   },
   "ERU_2": {
     "team": "ERU",
     "acuity": 2,
-    "count": 430,
-    "mean": 337.8,
-    "median": 253.1,
-    "std": 284.6,
-    "ln_mu": 5.5541,
-    "ln_sigma": 0.7325
+    "count": 3401,
+    "mean": 343.2,
+    "median": 270.0,
+    "std": 277.0,
+    "ln_mu": 5.5875,
+    "ln_sigma": 0.7082
   },
   "ERU_3": {
     "team": "ERU",
     "acuity": 3,
-    "count": 68,
-    "mean": 358.8,
-    "median": 264.5,
-    "std": 324.9,
-    "ln_mu": 5.5833,
-    "ln_sigma": 0.7739
+    "count": 485,
+    "mean": 371.5,
+    "median": 302.0,
+    "std": 284.2,
+    "ln_mu": 5.6873,
+    "ln_sigma": 0.6787
   },
   "ERU_4": {
     "team": "ERU",
     "acuity": 4,
-    "count": 3,
-    "mean": 83.4,
-    "median": 67.2,
-    "std": 42.0,
-    "ln_mu": 4.31,
-    "ln_sigma": 0.4754
+    "count": 12,
+    "mean": 193.3,
+    "median": 179.0,
+    "std": 113.6,
+    "ln_mu": 5.1162,
+    "ln_sigma": 0.5445
   },
-  "FastTrack_2": {
-    "team": "FastTrack",
-    "acuity": 2,
-    "count": 13,
-    "mean": 164.5,
-    "median": 127.7,
-    "std": 125.3,
-    "ln_mu": 4.8742,
-    "ln_sigma": 0.6766
-  },
-  "FastTrack_3": {
-    "team": "FastTrack",
-    "acuity": 3,
-    "count": 530,
-    "mean": 209.0,
-    "median": 152.5,
-    "std": 227.6,
-    "ln_mu": 4.9512,
-    "ln_sigma": 0.8844
-  },
-  "FastTrack_4": {
-    "team": "FastTrack",
-    "acuity": 4,
-    "count": 980,
-    "mean": 169.4,
-    "median": 129.1,
-    "std": 183.0,
-    "ln_mu": 4.7457,
-    "ln_sigma": 0.8793
-  },
-  "FastTrack_5": {
-    "team": "FastTrack",
+  "ERU_5": {
+    "team": "ERU",
     "acuity": 5,
-    "count": 39,
-    "mean": 116.5,
-    "median": 31.6,
-    "std": 209.4,
-    "ln_mu": 4.0364,
-    "ln_sigma": 1.2012
-  },
-  "Main_1": {
-    "team": "Main",
-    "acuity": 1,
     "count": 1,
-    "mean": 124.7,
-    "median": 124.7,
+    "mean": 245.0,
+    "median": 245.0,
     "std": NaN,
     "ln_mu": NaN,
     "ln_sigma": NaN
   },
+  "FastTrack_2": {
+    "team": "FastTrack",
+    "acuity": 2,
+    "count": 193,
+    "mean": 245.2,
+    "median": 178.0,
+    "std": 238.5,
+    "ln_mu": 5.1689,
+    "ln_sigma": 0.8161
+  },
+  "FastTrack_3": {
+    "team": "FastTrack",
+    "acuity": 3,
+    "count": 4491,
+    "mean": 241.1,
+    "median": 190.0,
+    "std": 206.2,
+    "ln_mu": 5.2111,
+    "ln_sigma": 0.7407
+  },
+  "FastTrack_4": {
+    "team": "FastTrack",
+    "acuity": 4,
+    "count": 15600,
+    "mean": 193.4,
+    "median": 151.0,
+    "std": 179.0,
+    "ln_mu": 4.9557,
+    "ln_sigma": 0.7864
+  },
+  "FastTrack_5": {
+    "team": "FastTrack",
+    "acuity": 5,
+    "count": 1077,
+    "mean": 108.7,
+    "median": 71.0,
+    "std": 132.8,
+    "ln_mu": 4.2325,
+    "ln_sigma": 0.9553
+  },
+  "Main_1": {
+    "team": "Main",
+    "acuity": 1,
+    "count": 16,
+    "mean": 339.9,
+    "median": 284.0,
+    "std": 246.8,
+    "ln_mu": 5.6171,
+    "ln_sigma": 0.6507
+  },
   "Main_2": {
     "team": "Main",
     "acuity": 2,
-    "count": 785,
-    "mean": 362.9,
-    "median": 286.0,
-    "std": 295.8,
-    "ln_mu": 5.6394,
-    "ln_sigma": 0.7138
+    "count": 7957,
+    "mean": 399.2,
+    "median": 319.0,
+    "std": 289.3,
+    "ln_mu": 5.7785,
+    "ln_sigma": 0.6496
   },
   "Main_3": {
     "team": "Main",
     "acuity": 3,
-    "count": 2893,
-    "mean": 347.0,
-    "median": 270.9,
-    "std": 273.8,
-    "ln_mu": 5.6072,
-    "ln_sigma": 0.6958
+    "count": 26929,
+    "mean": 394.4,
+    "median": 323.0,
+    "std": 273.5,
+    "ln_mu": 5.7808,
+    "ln_sigma": 0.6268
   },
   "Main_4": {
     "team": "Main",
     "acuity": 4,
-    "count": 191,
-    "mean": 208.0,
-    "median": 165.6,
-    "std": 171.6,
-    "ln_mu": 5.078,
-    "ln_sigma": 0.7206
+    "count": 2154,
+    "mean": 266.9,
+    "median": 217.0,
+    "std": 199.9,
+    "ln_mu": 5.3643,
+    "ln_sigma": 0.6673
   },
   "Main_5": {
     "team": "Main",
     "acuity": 5,
-    "count": 13,
-    "mean": 96.4,
-    "median": 82.3,
-    "std": 67.1,
-    "ln_mu": 4.3707,
-    "ln_sigma": 0.6286
+    "count": 202,
+    "mean": 194.0,
+    "median": 155.0,
+    "std": 166.6,
+    "ln_mu": 4.9915,
+    "ln_sigma": 0.7434
   }
 }

@@ -1,25 +1,25 @@
 {
-  "total_encounters": 5957,
-  "date_range": "2026-01-30 \u2192 2026-05-31",
-  "unique_days": 37,
+  "total_encounters": 62658,
+  "date_range": "2025-08-04 \u2192 2026-05-31",
+  "unique_days": 302,
   "team_counts": {
-    "Main": 3883,
-    "FastTrack": 1562,
-    "ERU": 512
+    "Main": 37258,
+    "FastTrack": 21361,
+    "ERU": 4039
   },
   "acuity_dist": {
-    "1": 12,
-    "2": 1228,
-    "3": 3491,
-    "4": 1174,
-    "5": 52
+    "1": 156,
+    "2": 11551,
+    "3": 31905,
+    "4": 17766,
+    "5": 1280
   },
   "dispo_dist": {
-    "Discharge": 3997,
-    "Admit": 1580,
-    "Transfer": 123,
-    "AMA": 98,
-    "Left Before Treatment Complete": 79,
-    "Send to Another Department": 28
+    "Discharge": 43609,
+    "Admit": 14634,
+    "Left Before Treatment Complete": 1301,
+    "AMA": 972,
+    "Transfer": 870,
+    "Left Without Being Seen": 624
   }
 }

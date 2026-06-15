@@ -27,15 +27,15 @@ DOW_NAMES = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sund
 # ── Loaders ──────────────────────────────────────────────────────────────────
 
 def load_raw_encounters(raw_dir: Path) -> pd.DataFrame:
-    """Load all .xlsx files from raw_dir, deduplicate on CSN."""
-    files = sorted(raw_dir.glob("*.xlsx"))
+    """Load all .csv files from raw_dir, deduplicate on CSN."""
+    files = sorted(raw_dir.glob("*.csv"))
     if not files:
-        raise FileNotFoundError(f"No .xlsx files found in {raw_dir}")
+        raise FileNotFoundError(f"No .csv files found in {raw_dir}")
 
     dfs = []
     for f in files:
         try:
-            df = pd.read_excel(f, dtype={"CSN": str, "Visit ID/CSN": str})
+            df = pd.read_csv(f, dtype={"CSN": str})
             dfs.append(df)
             print(f"  Loaded {f.name}: {len(df):,} rows")
         except Exception as e:
@@ -52,7 +52,8 @@ def clean_encounters(df: pd.DataFrame) -> pd.DataFrame:
     """Parse dates, filter to adult ED, compute service times."""
 
     # Parse timestamps
-    df["arr_dt"]    = pd.to_datetime(df["Arrv Date/Time"], errors="coerce")
+    arr_col = "Arrived" if "Arrived" in df.columns else "Arrv Date/Time"
+    df["arr_dt"]    = pd.to_datetime(df[arr_col], errors="coerce")
     df["dispo_dt"]  = pd.to_datetime(df["Dispo Selected"], errors="coerce")
     df["roomed_dt"] = pd.to_datetime(df["Roomed"], errors="coerce")
 
@@ -67,9 +68,8 @@ def clean_encounters(df: pd.DataFrame) -> pd.DataFrame:
     df["sim_team"] = df["First Non-PIT ED Team"].map(TEAM_MAP)
     df = df.dropna(subset=["sim_team"])
 
-    # Team start time = arrival + time to first attending
-    df["att_delay_mins"] = pd.to_numeric(df["Arrival to 1st Attending"], errors="coerce")
-    df["team_start_dt"]  = df["arr_dt"] + pd.to_timedelta(df["att_delay_mins"], unit="m")
+    # Team start time = when the patient was roomed
+    df["team_start_dt"] = df["roomed_dt"]
 
     # Service time: team_start → dispo
     df["service_mins"] = (df["dispo_dt"] - df["team_start_dt"]).dt.total_seconds() / 60

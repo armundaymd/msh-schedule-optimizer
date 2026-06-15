@@ -13,6 +13,6 @@ frontend/dist/
 frontend/.vite/
 
 # Misc
-{data/
+data/raw/
 .DS_Store
 *.log
