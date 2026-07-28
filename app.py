@@ -7,11 +7,16 @@ Then: open http://localhost:5050
 """
 
 from flask import Flask, render_template, jsonify, request
+from flask_cors import CORS
 from pathlib import Path
 from pipeline import run_pipeline, load_processed
 from db import get_engine, init_schema
 
 app = Flask(__name__)
+CORS(app, origins=[
+    "https://msh-schedule-optimizer-1.onrender.com",
+    "http://localhost:5173",
+])
 DATA_DIR = Path(__file__).parent / "data"
 engine = get_engine()
 init_schema(engine)
