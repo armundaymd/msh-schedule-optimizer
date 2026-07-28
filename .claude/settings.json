@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(env)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" -X POST http://localhost:5050/api/refresh)",
+      "Bash(kill 26217)",
+      "Bash(kill 34705)",
+      "Bash(jobs -l)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" https://msh-schedule-optimizer-1.onrender.com/)",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" https://msh-schedule-optimizer-1.onrender.com/api/demand)",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" https://msh-schedule-optimizer-1.onrender.com/api/summary)",
+      "Bash(curl -sI https://msh-schedule-optimizer-1.onrender.com/)",
+      "Bash(curl -sI https://msh-schedule-optimizer-1.onrender.com/api/demand)",
+      "Bash(curl -s https://msh-schedule-optimizer-1.onrender.com/)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" https://msh-schedule-optimizer.onrender.com/)",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" https://msh-schedule-optimizer.onrender.com/api/demand)",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" https://msh-schedule-optimizer.onrender.com/api/summary)",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" https://msh-schedule-optimizer.onrender.com/api/schedule)",
+      "Bash(curl -sI https://msh-schedule-optimizer.onrender.com/)",
+      "Bash(npm --version)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(git checkout *)"
+    ]
+  }
+}

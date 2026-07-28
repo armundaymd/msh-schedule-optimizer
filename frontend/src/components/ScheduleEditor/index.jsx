@@ -131,7 +131,7 @@ export default function ScheduleEditor({ day, shifts, onAdd, onDelete, onUpdate,
               allDayShifts={shifts}
               hourPx={hourPx}
               totalH={totalH}
-              onAdd={(roleType) => onAdd(team.name, roleType)}
+              onAdd={(roleType, level) => onAdd(team.name, roleType, level)}
               onDelete={onDelete}
               onUpdate={onUpdate}
               onBeforeDrag={onBeforeDrag}

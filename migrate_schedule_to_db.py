@@ -25,11 +25,17 @@ def main():
     init_schema(engine)
 
     df = pd.read_csv(CSV_PATH, encoding="utf-8-sig")
-    df = df[["day_type", "team", "role_type", "role_detail", "start_time", "end_time"]]
+    df = df[["day_type", "team", "role_type", "role_detail", "resident_level", "start_time", "end_time"]]
+
+    records = df.to_dict(orient="records")
+    for r in records:
+        for k, v in r.items():
+            if isinstance(v, float) and pd.isna(v):  # NaN -> None so it inserts as SQL NULL
+                r[k] = None
 
     with engine.begin() as conn:
         conn.execute(schedule_shifts.delete())
-        conn.execute(schedule_shifts.insert(), df.to_dict(orient="records"))
+        conn.execute(schedule_shifts.insert(), records)
 
     print(f"Loaded {len(df):,} shifts from {CSV_PATH.name} into schedule_shifts.")
 

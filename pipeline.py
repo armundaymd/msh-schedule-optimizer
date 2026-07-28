@@ -176,6 +176,8 @@ def load_schedule(engine) -> list:
             "day":        row["day_type"],
             "team":       row["team"],        # keep original name (Green/Red/Blue/FastTrack/ERU)
             "role_type":  row["role_type"],
+            "role_detail": row.get("role_detail"),
+            "resident_level": row.get("resident_level"),
             "start_time": row["start_time"],  # field name normalizeShifts expects
             "end_time":   row["end_time"],
         })

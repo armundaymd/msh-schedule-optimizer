@@ -1,33 +1,10 @@
 import { useMemo } from 'react'
-
-function shiftCoversHour(s, h) {
-  const hStart = h * 60, hEnd = hStart + 60
-  if (s.endMins <= 1440) return s.startMins < hEnd && s.endMins > hStart
-  const wrapEnd = s.endMins - 1440
-  return s.startMins < hEnd || hStart < wrapEnd
-}
-
-function teamArea(teamName, customTeams) {
-  if (['Green', 'Red', 'Blue'].includes(teamName)) return 'main'
-  if (teamName === 'FastTrack') return 'fasttrack'
-  if (teamName === 'ERU') return 'eru'
-  const ct = customTeams?.find(t => t.name === teamName)
-  if (!ct) return 'main'
-  return ct.area === 'FastTrack' ? 'fasttrack' : ct.area === 'ERU' ? 'eru' : 'main'
-}
+import { capacityAllAreas } from '../utils/capacity'
 
 function computeCapacity(shifts, pph, customTeams) {
   return Array.from({ length: 24 }, (_, h) => {
-    let main = 0, ft = 0, eru = 0
-    for (const s of shifts) {
-      if (s.role_type !== 'Attending') continue
-      if (!shiftCoversHour(s, h)) continue
-      const area = teamArea(s.team, customTeams)
-      if (area === 'main') main++
-      else if (area === 'fasttrack') ft++
-      else if (area === 'eru') eru++
-    }
-    return main * pph.main + ft * pph.fasttrack + eru * pph.eru
+    const byArea = capacityAllAreas(shifts, pph, customTeams, h)
+    return byArea.main + byArea.fasttrack + byArea.eru
   })
 }
 

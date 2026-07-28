@@ -107,7 +107,7 @@ export default function ShiftBlock({ shift, color, hourPx, lane, numLanes, allDa
           />
           <BlockLabel h={wrapH} />
           {tooltip?.fromCont && (
-            <ShiftTooltip shift={shift} allDayShifts={allDayShifts} hoverHour={tooltip.hour}
+            <ShiftTooltip shift={shift} allDayShifts={allDayShifts} hoverHour={tooltip.hour} onUpdate={onUpdate}
               style={{ top: tooltip.y - 20, left: 4, zIndex: 100 }} />
           )}
         </div>
@@ -157,7 +157,7 @@ export default function ShiftBlock({ shift, color, hourPx, lane, numLanes, allDa
           ×
         </button>
         {tooltip && !tooltip.fromCont && (
-          <ShiftTooltip shift={shift} allDayShifts={allDayShifts} hoverHour={tooltip.hour}
+          <ShiftTooltip shift={shift} allDayShifts={allDayShifts} hoverHour={tooltip.hour} onUpdate={onUpdate}
             style={{ top: tooltip.y - 20, left: 4, zIndex: 100 }} />
         )}
       </div>

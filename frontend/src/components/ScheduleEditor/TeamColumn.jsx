@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import ShiftBlock from './ShiftBlock'
 
 const ROLES = ['Attending', 'PA', 'Resident']
+const RESIDENT_LEVELS = ['PGY-1', 'PGY-2', 'PGY-3', 'PGY-4', 'Off-Service']
 
 // True if two shifts share at least one minute on the 24-h clock.
 // endMins > 1440 means the shift wraps past midnight.
@@ -42,12 +43,18 @@ function assignLanes(shifts) {
 
 export default function TeamColumn({ team, color, shifts, allDayShifts, hourPx, totalH, onAdd, onDelete, onUpdate, onBeforeDrag, isCustom, onRemove }) {
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [residentSubmenu, setResidentSubmenu] = useState(false)
   const pickerRef = useRef(null)
+
+  function closePicker() {
+    setPickerOpen(false)
+    setResidentSubmenu(false)
+  }
 
   // Close picker on outside click
   useEffect(() => {
     if (!pickerOpen) return
-    function onDown(e) { if (pickerRef.current && !pickerRef.current.contains(e.target)) setPickerOpen(false) }
+    function onDown(e) { if (pickerRef.current && !pickerRef.current.contains(e.target)) closePicker() }
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
   }, [pickerOpen])
@@ -74,22 +81,39 @@ export default function TeamColumn({ team, color, shifts, allDayShifts, hourPx, 
 
         <div ref={pickerRef} className="relative">
           <button
-            onClick={() => setPickerOpen(v => !v)}
+            onClick={() => { setPickerOpen(v => !v); setResidentSubmenu(false) }}
             style={{ color, border: `1px solid ${color}`, borderRadius: 3 }}
             className="text-xs px-1 hover:opacity-80 leading-4"
           >
             +
           </button>
 
-          {pickerOpen && (
+          {pickerOpen && !residentSubmenu && (
             <div className="absolute right-0 top-6 z-50 bg-slate-800 border border-slate-600 rounded shadow-xl py-1 w-28">
               {ROLES.map(role => (
                 <button
                   key={role}
-                  onClick={() => { onAdd(role); setPickerOpen(false) }}
+                  onClick={() => {
+                    if (role === 'Resident') setResidentSubmenu(true)
+                    else { onAdd(role); closePicker() }
+                  }}
                   className="block w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-700 transition-colors"
                 >
                   {role}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {pickerOpen && residentSubmenu && (
+            <div className="absolute right-0 top-6 z-50 bg-slate-800 border border-slate-600 rounded shadow-xl py-1 w-28">
+              {RESIDENT_LEVELS.map(level => (
+                <button
+                  key={level}
+                  onClick={() => { onAdd('Resident', level); closePicker() }}
+                  className="block w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-700 transition-colors"
+                >
+                  {level}
                 </button>
               ))}
             </div>

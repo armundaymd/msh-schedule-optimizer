@@ -46,6 +46,7 @@ schedule_shifts = Table(
     Column("team", Text, nullable=False),
     Column("role_type", Text, nullable=False),
     Column("role_detail", Text),
+    Column("resident_level", Text),
     Column("start_time", Text, nullable=False),
     Column("end_time", Text, nullable=False),
 )

@@ -1,0 +1,96 @@
+row,team,role_detail,assigned_level,reason
+9,Green,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+10,Green,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+14,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+15,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+16,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+17,Red,EM2/3,PGY-2,range value — picked conservative low end
+18,Red,EM2/3,PGY-2,range value — picked conservative low end
+19,Red,EM2/3,PGY-2,range value — picked conservative low end
+20,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+21,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+22,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+23,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+24,Red,EM2/3,PGY-2,range value — picked conservative low end
+32,FastTrack,EM3/4-Green,PGY-3,range value — picked conservative low end
+35,ERU,EM2/3,PGY-2,range value — picked conservative low end
+36,ERU,EM2/3,PGY-2,range value — picked conservative low end
+37,ERU,EM2/3,PGY-2,range value — picked conservative low end
+51,Green,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+56,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+57,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+58,Red,EM2/3,PGY-2,range value — picked conservative low end
+59,Red,EM3/4,PGY-3,range value — picked conservative low end
+60,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+61,Red,EM2/3,PGY-2,range value — picked conservative low end
+63,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+75,ERU,EM2/3,PGY-2,range value — picked conservative low end
+76,ERU,EM2/3,PGY-2,range value — picked conservative low end
+92,Green,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+96,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+97,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+100,Red,EM2/3,PGY-2,range value — picked conservative low end
+101,Red,PA,,unrecognized role_detail — needs manual assignment
+102,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+103,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+111,FastTrack,EM3/4-Green,PGY-3,range value — picked conservative low end
+115,ERU,EM3/4,PGY-3,range value — picked conservative low end
+116,ERU,EM3/4,PGY-3,range value — picked conservative low end
+128,Green,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+129,Green,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+130,Green,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+134,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+135,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+136,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+137,Red,EM2/3,PGY-2,range value — picked conservative low end
+138,Red,EM2/3,PGY-2,range value — picked conservative low end
+139,Red,EM2/3,PGY-2,range value — picked conservative low end
+140,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+141,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+142,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+143,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+144,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+154,ERU,EM2/3,PGY-2,range value — picked conservative low end
+155,ERU,EM2/3,PGY-2,range value — picked conservative low end
+156,ERU,EM2/3,PGY-2,range value — picked conservative low end
+157,ERU,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+161,Blue,EM3/4,PGY-3,range value — picked conservative low end
+162,Blue,EM3/4,PGY-3,range value — picked conservative low end
+168,Green,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+170,Green,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+174,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+175,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+176,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+177,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+178,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+179,Red,EM1/2,PGY-1,range value — picked conservative low end
+180,Red,EM2/3,PGY-2,range value — picked conservative low end
+181,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+186,FastTrack,EM1/OS-Red,Off-Service,combo value — could be PGY-1 or Off-Service
+190,ERU,EM2/3,PGY-2,range value — picked conservative low end
+191,ERU,EM2/3,PGY-2,range value — picked conservative low end
+192,ERU,EM2/3,PGY-2,range value — picked conservative low end
+193,ERU,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+197,Blue,EM3/4,PGY-3,range value — picked conservative low end
+198,Blue,EM3/4,PGY-3,range value — picked conservative low end
+204,Green,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+205,Green,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+210,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+211,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+212,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+213,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+216,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+222,FastTrack,EM1/OS-Red,Off-Service,combo value — could be PGY-1 or Off-Service
+226,ERU,EM3/4,PGY-3,range value — picked conservative low end
+227,ERU,EM3/4,PGY-3,range value — picked conservative low end
+228,ERU,EM3/4,PGY-3,range value — picked conservative low end
+235,Green,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+236,Green,EM2/3,PGY-2,range value — picked conservative low end
+240,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+241,Red,Senior,PGY-4,assumed 'Senior' means most senior resident level
+242,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+243,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+246,Red,EM1/OS,Off-Service,combo value — could be PGY-1 or Off-Service
+255,ERU,EM3/4,PGY-3,range value — picked conservative low end
+256,ERU,EM3/4,PGY-3,range value — picked conservative low end
+257,ERU,EM3/4,PGY-3,range value — picked conservative low end

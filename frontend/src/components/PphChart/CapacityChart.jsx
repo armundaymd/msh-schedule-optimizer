@@ -2,47 +2,31 @@ import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Area,
 } from 'recharts'
+import { teamCapacity, attendingCapacity, extenderCapacity } from '../../utils/capacity'
 
 // Maps team name → area key used in pph object
 const AREA_KEY = { Main: 'main', FastTrack: 'fasttrack', ERU: 'eru' }
 
-function shiftCoversHour(s, h) {
-  const hStart = h * 60
-  const hEnd = hStart + 60
-  if (s.endMins <= 1440) {
-    return s.startMins < hEnd && s.endMins > hStart
-  }
-  const wrapEnd = s.endMins - 1440
-  return s.startMins < hEnd || hStart < wrapEnd
-}
-
-function teamArea(teamName, customTeams) {
-  if (['Green', 'Red', 'Blue'].includes(teamName)) return 'main'
-  if (teamName === 'FastTrack') return 'fasttrack'
-  if (teamName === 'ERU') return 'eru'
-  const ct = customTeams?.find(t => t.name === teamName)
-  if (!ct) return 'main'
-  return ct.area === 'FastTrack' ? 'fasttrack' : ct.area === 'ERU' ? 'eru' : 'main'
-}
-
 // Capacity for one team type only — apples-to-apples with per-team demand
 function computeTeamCapacity(shifts, pph, customTeams, team) {
   const areaKey = AREA_KEY[team] ?? 'main'
-  const pphVal  = pph[areaKey] ?? 0
-  return Array.from({ length: 24 }, (_, h) => {
-    let count = 0
-    for (const s of shifts) {
-      if (s.role_type !== 'Attending') continue
-      if (!shiftCoversHour(s, h)) continue
-      if (teamArea(s.team, customTeams) === areaKey) count++
-    }
-    return count * pphVal
-  })
+  return Array.from({ length: 24 }, (_, h) => teamCapacity(shifts, pph, customTeams, areaKey, h))
+}
+
+// Attending-only vs extender-only capacity, for the tooltip bottleneck breakdown
+function computeCapacityBreakdown(shifts, pph, customTeams, team) {
+  const areaKey = AREA_KEY[team] ?? 'main'
+  return Array.from({ length: 24 }, (_, h) => ({
+    attending: attendingCapacity(shifts, pph, customTeams, areaKey, h),
+    extender:  extenderCapacity(shifts, pph, customTeams, areaKey, h),
+  }))
 }
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
-  const byKey = Object.fromEntries(payload.map(p => [p.dataKey, p.value]))
+  // payload[].payload is the full source data row — includes fields (like
+  // attendingCap/extenderCap) that aren't individually rendered as a Line/Bar.
+  const byKey = { ...payload[0]?.payload, ...Object.fromEntries(payload.map(p => [p.dataKey, p.value])) }
   const ciLow  = byKey.ciLow != null ? Number(byKey.ciLow).toFixed(2) : null
   const ciHigh = ciLow != null && byKey.ciDiff != null
     ? (Number(byKey.ciLow) + Number(byKey.ciDiff)).toFixed(2)
@@ -55,6 +39,18 @@ function CustomTooltip({ active, payload, label }) {
       {byKey.proposed  != null && <div>Proposed cap: <span className="text-blue-300">{Number(byKey.proposed).toFixed(2)}</span></div>}
       {byKey.empirical != null && <div>Empirical cap: <span className="text-teal-300">{Number(byKey.empirical).toFixed(2)}</span></div>}
       {byKey.comparison != null && <div>Comparison: <span className="text-orange-300">{Number(byKey.comparison).toFixed(2)}</span></div>}
+      {(byKey.attendingCap != null || byKey.extenderCap != null) && (
+        <div className="border-t border-slate-700 mt-1 pt-1 text-slate-400">
+          <div>
+            Attending cap: {Number(byKey.attendingCap).toFixed(2)}
+            {byKey.attendingCap < byKey.extenderCap && <span className="text-amber-400 ml-1">(limiting)</span>}
+          </div>
+          <div>
+            Resident/PA cap: {Number(byKey.extenderCap).toFixed(2)}
+            {byKey.extenderCap < byKey.attendingCap && <span className="text-amber-400 ml-1">(limiting)</span>}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -77,6 +73,7 @@ export default function CapacityChart({
   // Capacity lines — filtered to active team only
   const baselineCap   = computeTeamCapacity(baselineShifts, pph,               customTeams, activeTeam)
   const proposedCap   = computeTeamCapacity(shifts,         pph,               customTeams, activeTeam)
+  const proposedBreakdown = computeCapacityBreakdown(shifts, pph, customTeams, activeTeam)
   const empiricalCap  = empiricalPph
     ? computeTeamCapacity(shifts, empiricalPph, customTeams, activeTeam)
     : null
@@ -94,6 +91,8 @@ export default function CapacityChart({
       proposed: p,
       gapGreen: p >= b ? [b, p] : [b, b],
       gapRed:   p <  b ? [p, b] : [b, b],
+      attendingCap: parseFloat(proposedBreakdown[h].attending.toFixed(2)),
+      extenderCap:  parseFloat(proposedBreakdown[h].extender.toFixed(2)),
     }
     if (ciSeries?.[h]) {
       row.ciLow  = parseFloat(ciSeries[h].ci_low.toFixed(3))

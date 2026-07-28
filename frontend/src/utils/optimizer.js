@@ -1,6 +1,9 @@
+import {
+  STATIC_MAIN, shiftCoversHour, attendingCapacity, extenderCapacity, capacityAllAreas,
+} from './capacity'
+
 const SNAP = 30
 const CUSTOM_COLORS = ['#0d9488','#ec4899','#f59e0b','#6366f1','#84cc16','#06b6d4','#f43f5e','#64748b']
-const STATIC_MAIN = ['Green', 'Red', 'Blue']
 
 function snap(m) { return Math.round(m / SNAP) * SNAP }
 
@@ -9,33 +12,11 @@ function minsToTime(m) {
   return `${String(Math.floor(norm / 60)).padStart(2,'0')}:${String(norm % 60).padStart(2,'0')}`
 }
 
-function shiftCoversHour(s, h) {
-  const hStart = h * 60, hEnd = hStart + 60
-  if (s.endMins <= 1440) return s.startMins < hEnd && s.endMins > hStart
-  const wrapEnd = s.endMins - 1440
-  return s.startMins < hEnd || hStart < wrapEnd
-}
-
-function teamArea(teamName, customTeams = []) {
-  if (STATIC_MAIN.includes(teamName)) return 'main'
-  if (teamName === 'FastTrack') return 'fasttrack'
-  if (teamName === 'ERU') return 'eru'
-  const ct = customTeams.find(t => t.name === teamName)
-  if (!ct) return 'main'
-  return ct.area === 'FastTrack' ? 'fasttrack' : ct.area === 'ERU' ? 'eru' : 'main'
-}
-
+// Total capacity across all areas at hour h — compared against overall Main
+// demand (matches the existing demand series used throughout this module).
 function capAt(shifts, pph, customTeams, h) {
-  let main = 0, ft = 0, eru = 0
-  for (const s of shifts) {
-    if (s.role_type !== 'Attending') continue
-    if (!shiftCoversHour(s, h)) continue
-    const area = teamArea(s.team, customTeams)
-    if (area === 'main') main++
-    else if (area === 'fasttrack') ft++
-    else if (area === 'eru') eru++
-  }
-  return main * pph.main + ft * pph.fasttrack + eru * pph.eru
+  const byArea = capacityAllAreas(shifts, pph, customTeams, h)
+  return byArea.main + byArea.fasttrack + byArea.eru
 }
 
 function groupConsecutive(hours) {
@@ -64,6 +45,11 @@ export function runOptimizer(shifts, demand, pph, day, customTeams) {
 
   function overflowAt(h) { return Math.max(0, (series[h] ?? 0) - capAt(work, pph, allCustom, h)) }
   function overflowHours() { return Array.from({ length: 24 }, (_, h) => h).filter(h => overflowAt(h) > 0) }
+  // True when the Main-area bottleneck at hour h is insufficient resident/PA
+  // coverage rather than insufficient attending coverage.
+  function isExtenderBound(h) {
+    return extenderCapacity(work, pph, allCustom, 'main', h) < attendingCapacity(work, pph, allCustom, 'main', h)
+  }
 
   const totalOverflow = overflowHours().length
 
@@ -119,18 +105,47 @@ export function runOptimizer(shifts, demand, pph, day, customTeams) {
     }
   }
 
-  // Step 3 — add shifts to existing teams for remaining overflow windows
   const mainTeams = [
     ...STATIC_MAIN,
     ...allCustom.filter(t => t.area === 'Main').map(t => t.name),
   ]
 
+  // Step 3 — for hours where residents/PAs (not the attending) are the
+  // bottleneck, add PA coverage to close the gap up to the attending's
+  // ceiling, maximizing use of the attending's supervision capacity instead
+  // of leaving it under-utilized.
+  dirty = true
+  let guard = 0
+  while (dirty && guard < 200) {
+    dirty = false
+    for (const h of overflowHours()) {
+      guard++
+      if (overflowAt(h) <= 0) continue
+      if (!isExtenderBound(h)) continue
+
+      let bestTeam = mainTeams[0] ?? 'Green'
+      let minCov = Infinity
+      for (const name of mainTeams) {
+        const cov = work.filter(s => s.team === name
+          && (s.role_type === 'PA' || s.role_type === 'Resident')
+          && shiftCoversHour(s, h)).length
+        if (cov < minCov) { minCov = cov; bestTeam = name }
+      }
+
+      const hMins = h * 60
+      const sStart = snap(Math.max(0, hMins - 60))
+      const sEnd   = snap(Math.min(1440, hMins + 120))
+      const id = `opt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+      work.push({ id, day, team: bestTeam, role_type: 'PA', role_detail: 'PA',
+        start_time: minsToTime(sStart), end_time: minsToTime(sEnd), startMins: sStart, endMins: sEnd })
+      changes.push(`Added PA shift to ${bestTeam} to close resident/PA staffing gap: ${minsToTime(sStart)}–${minsToTime(sEnd)}`)
+      dirty = true
+    }
+  }
+
+  // Step 4 — add shifts to existing teams for remaining (attending-bound) overflow windows
   for (const window of groupConsecutive(overflowHours())) {
     if (window.every(h => overflowAt(h) <= 0)) continue
-    const wStart = window[0] * 60
-    const wEnd   = (window[window.length - 1] + 1) * 60
-    const sStart = snap(Math.max(0, wStart - 60))
-    const sEnd   = Math.max(snap(Math.min(1440, wEnd + 60)), sStart + 4 * 60)
 
     // pick team with fewest attending coverage in the window
     let bestTeam = mainTeams[0] ?? 'Green'
@@ -140,13 +155,27 @@ export function runOptimizer(shifts, demand, pph, day, customTeams) {
       if (cov < minCov) { minCov = cov; bestTeam = name }
     }
 
+    const wStart = window[0] * 60
+    const wEnd   = (window[window.length - 1] + 1) * 60
+    const sStart = snap(Math.max(0, wStart - 60))
+    const sEnd   = Math.max(snap(Math.min(1440, wEnd + 60)), sStart + 4 * 60)
+
     const id = `opt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
     work.push({ id, day, team: bestTeam, role_type: 'Attending', role_detail: 'Attending',
       start_time: minsToTime(sStart), end_time: minsToTime(sEnd), startMins: sStart, endMins: sEnd })
     changes.push(`Added attending shift to ${bestTeam}: ${minsToTime(sStart)}–${minsToTime(sEnd)}`)
+
+    // A brand-new attending shift needs matching extender coverage or the
+    // min() formula will cap capacity right back down — add a PA alongside it.
+    if (extenderCapacity(work, pph, allCustom, 'main', window[0]) < attendingCapacity(work, pph, allCustom, 'main', window[0])) {
+      const paId = `opt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+      work.push({ id: paId, day, team: bestTeam, role_type: 'PA', role_detail: 'PA',
+        start_time: minsToTime(sStart), end_time: minsToTime(sEnd), startMins: sStart, endMins: sEnd })
+      changes.push(`Added PA shift to ${bestTeam} alongside new attending coverage: ${minsToTime(sStart)}–${minsToTime(sEnd)}`)
+    }
   }
 
-  // Step 4 — add a new optimized team for any remaining overflow
+  // Step 5 — add a new optimized team for any remaining overflow
   const stillOverflow = overflowHours()
   if (stillOverflow.length > 0) {
     const usedColors = new Set(allCustom.map(t => t.color))
@@ -162,10 +191,15 @@ export function runOptimizer(shifts, demand, pph, day, customTeams) {
       const wEnd   = (window[window.length - 1] + 1) * 60
       const sStart = snap(Math.max(0, wStart - 60))
       const sEnd   = Math.max(snap(Math.min(1440, wEnd + 60)), sStart + 4 * 60)
-      const id = `opt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
-      work.push({ id, day, team: teamName, role_type: 'Attending', role_detail: 'Attending',
+      const attId = `opt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+      work.push({ id: attId, day, team: teamName, role_type: 'Attending', role_detail: 'Attending',
         start_time: minsToTime(sStart), end_time: minsToTime(sEnd), startMins: sStart, endMins: sEnd })
       changes.push(`Added new team ${teamName} with attending coverage ${minsToTime(sStart)}–${minsToTime(sEnd)}`)
+
+      const paId = `opt-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+      work.push({ id: paId, day, team: teamName, role_type: 'PA', role_detail: 'PA',
+        start_time: minsToTime(sStart), end_time: minsToTime(sEnd), startMins: sStart, endMins: sEnd })
+      changes.push(`Added PA coverage to new team ${teamName}: ${minsToTime(sStart)}–${minsToTime(sEnd)}`)
     }
   }
 

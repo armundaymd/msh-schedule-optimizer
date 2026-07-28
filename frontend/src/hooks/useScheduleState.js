@@ -107,15 +107,16 @@ export function useScheduleState() {
     })
   }, [baseline])
 
-  const addShift = useCallback((day, team, roleType = 'Attending') => {
+  const addShift = useCallback((day, team, roleType = 'Attending', level = null) => {
     const id = `new-${Date.now()}`
-    const roleDetail = roleType === 'Attending' ? 'Attending' : roleType === 'PA' ? 'PA' : 'Resident'
+    const roleDetail = roleType === 'Attending' ? 'Attending' : roleType === 'PA' ? 'PA' : (level ?? 'PGY-2')
     const shift = {
       id,
       day,
       team,
       role_type: roleType,
       role_detail: roleDetail,
+      resident_level: roleType === 'Resident' ? roleDetail : null,
       start_time: '07:00',
       end_time: '15:00',
       startMins: 7 * 60,

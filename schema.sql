@@ -14,11 +14,22 @@ CREATE TABLE IF NOT EXISTS schedule_shifts (
     role_type   TEXT NOT NULL
                 CHECK (role_type IN ('Attending','PA','Resident')),
     role_detail TEXT,
+    resident_level TEXT
+                CHECK (resident_level IS NULL OR resident_level IN
+                       ('PGY-1','PGY-2','PGY-3','PGY-4','Off-Service')),
     start_time  TEXT NOT NULL
                 CHECK (start_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'),
     end_time    TEXT NOT NULL
                 CHECK (end_time ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$')
 );
+
+-- NOTE: metadata.create_all() (used by db.py's init_schema on every app boot)
+-- only creates missing tables — it will NOT add this column to an
+-- already-existing schedule_shifts table. If schedule_shifts already exists
+-- in your database, run this by hand once:
+--   ALTER TABLE schedule_shifts ADD COLUMN IF NOT EXISTS resident_level TEXT
+--       CHECK (resident_level IS NULL OR resident_level IN
+--              ('PGY-1','PGY-2','PGY-3','PGY-4','Off-Service'));
 
 CREATE INDEX IF NOT EXISTS idx_schedule_shifts_day_team
     ON schedule_shifts (day_type, team);

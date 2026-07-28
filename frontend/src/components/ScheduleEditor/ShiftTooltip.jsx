@@ -15,7 +15,9 @@ function shiftCoversHour(s, h) {
   return s.startMins < hEnd || hStart < wrapEnd
 }
 
-export default function ShiftTooltip({ shift, allDayShifts, hoverHour, style }) {
+const RESIDENT_LEVELS = ['PGY-1', 'PGY-2', 'PGY-3', 'PGY-4', 'Off-Service']
+
+export default function ShiftTooltip({ shift, allDayShifts, hoverHour, style, onUpdate }) {
   if (hoverHour == null) return null
 
   const teammates = allDayShifts.filter(s => s.team === shift.team && shiftCoversHour(s, hoverHour))
@@ -25,10 +27,20 @@ export default function ShiftTooltip({ shift, allDayShifts, hoverHour, style }) 
 
   return (
     <div
-      style={{ ...style, pointerEvents: 'none', zIndex: 100 }}
+      style={{ ...style, zIndex: 100 }}
       className="absolute bg-slate-900 border border-slate-600 rounded shadow-xl p-2 text-xs text-slate-200 w-44"
     >
       <div className="font-semibold mb-1">{shift.role_type} — {shift.role_detail}</div>
+      {shift.role_type === 'Resident' && onUpdate && (
+        <select
+          value={shift.resident_level ?? shift.role_detail ?? 'PGY-2'}
+          onMouseDown={e => e.stopPropagation()}
+          onChange={e => onUpdate(shift.id, { role_detail: e.target.value, resident_level: e.target.value })}
+          className="mb-2 w-full bg-slate-800 border border-slate-600 rounded px-1 py-0.5 text-slate-200"
+        >
+          {RESIDENT_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+        </select>
+      )}
       <div className="text-slate-400 mb-2">{minsToDisplay(shift.startMins)} → {minsToDisplay(shift.endMins)}</div>
       <div className="border-t border-slate-700 pt-1 space-y-0.5">
         <div>At {String(hoverHour).padStart(2,'0')}:00</div>
