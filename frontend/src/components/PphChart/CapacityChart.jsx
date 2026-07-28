@@ -2,7 +2,7 @@ import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Area,
 } from 'recharts'
-import { teamCapacity, attendingCapacity, extenderCapacity } from '../../utils/capacity'
+import { teamCapacity, attendingCapacity, extenderCapacity, teamBreakdown } from '../../utils/capacity'
 
 // Maps team name → area key used in pph object
 const AREA_KEY = { Main: 'main', FastTrack: 'fasttrack', ERU: 'eru' }
@@ -34,6 +34,13 @@ function computeCapacityBreakdown(shifts, pph, customTeams, team) {
   }))
 }
 
+// Per-individual-team breakdown (Green/Red/Blue, etc.), for the tooltip —
+// shows which specific team is dragging the area total down and why.
+function computeTeamBreakdowns(shifts, pph, customTeams, team) {
+  const areaKey = AREA_KEY[team] ?? 'main'
+  return Array.from({ length: 24 }, (_, h) => teamBreakdown(shifts, pph, customTeams, areaKey, h))
+}
+
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   // payload[].payload is the full source data row — includes fields (like
@@ -63,6 +70,25 @@ function CustomTooltip({ active, payload, label }) {
           </div>
         </div>
       )}
+      {byKey.teamBreakdown?.length > 0 && (
+        <div className="border-t border-slate-700 mt-1 pt-1 text-slate-400 space-y-0.5">
+          <div className="text-slate-500">By team:</div>
+          {byKey.teamBreakdown.map(t => {
+            const limiter = t.attending === t.extender ? null : t.attending < t.extender ? 'attending' : 'resident/PA'
+            return (
+              <div key={t.team}>
+                {t.team}: cap {t.cap.toFixed(2)}
+                <span className="text-slate-500"> (att {t.attending.toFixed(2)} / ext {t.extender.toFixed(2)})</span>
+                {limiter && (
+                  <span className={limiter === 'attending' ? 'text-amber-400 ml-1' : 'text-teal-400 ml-1'}>
+                    {limiter === 'attending' ? '(attending-limited)' : '(resident/PA-limited)'}
+                  </span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -86,6 +112,7 @@ export default function CapacityChart({
   const baselineCap   = computeTeamCapacity(baselineShifts, pph,               customTeams, activeTeam)
   const proposedCap   = computeTeamCapacity(shifts,         pph,               customTeams, activeTeam)
   const proposedBreakdown = computeCapacityBreakdown(shifts, pph, customTeams, activeTeam)
+  const proposedTeamBreakdowns = computeTeamBreakdowns(shifts, pph, customTeams, activeTeam)
   const empiricalCap  = empiricalPph
     ? computeTeamCapacity(shifts, empiricalPph, customTeams, activeTeam)
     : null
@@ -105,6 +132,7 @@ export default function CapacityChart({
       gapRed:   p <  b ? [p, b] : [b, b],
       attendingCap: parseFloat(proposedBreakdown[h].attending.toFixed(2)),
       extenderCap:  parseFloat(proposedBreakdown[h].extender.toFixed(2)),
+      teamBreakdown: proposedTeamBreakdowns[h],
     }
     if (ciSeries?.[h]) {
       row.ciLow  = parseFloat(ciSeries[h].ci_low.toFixed(3))

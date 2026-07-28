@@ -2,13 +2,16 @@
 // a team can handle, used by the demand chart, summary stats, and the
 // auto-optimizer.
 //
-// Capacity per area+hour = min(attendingCapacity, extenderCapacity):
-//   attendingCapacity = (# Attending shifts active) * pph[area]
-//   extenderCapacity  = sum of each active Resident/PA shift's own max-PPH
-// The attending's max PPH is the real ceiling on team throughput; residents
-// and PAs supply capacity up to that ceiling. If their combined max PPH is
-// below the attending's, that's unused attending capacity (understaffed).
-// If it's above, the attending becomes the bottleneck.
+// An attending and their residents/PAs are tied to ONE specific team — an
+// attending on Blue can't be covered by residents staffed on Green. So
+// capacity is computed per INDIVIDUAL team first:
+//   teamCapacity(team) = min(attendingCapacity(team), extenderCapacity(team))
+//     attendingCapacity(team) = (# Attending shifts on that team) * pph[area]
+//     extenderCapacity(team)  = sum of each Resident/PA shift's own max-PPH,
+//                               restricted to shifts on that team
+// Area-level totals (Main/FastTrack/ERU, used for the demand chart) are the
+// SUM of each team's own min() — never sum-then-min across teams, which
+// would let one team's extenders paper over another team's empty roster.
 
 export const STATIC_MAIN = ['Green', 'Red', 'Blue']
 
@@ -50,34 +53,72 @@ export function extenderPphKey(shift) {
   return null
 }
 
-export function attendingCapacity(shifts, pph, customTeams, area, hour) {
+// Distinct team names with any shift active in `area` at `hour` — the set
+// of teams to roll up when computing an area-level total.
+export function activeTeamsInArea(shifts, customTeams, area, hour) {
+  const teams = new Set()
+  for (const s of shifts) {
+    if (!shiftCoversHour(s, hour)) continue
+    if (teamArea(s.team, customTeams) !== area) continue
+    teams.add(s.team)
+  }
+  return [...teams]
+}
+
+export function attendingCapacityForTeam(shifts, pph, area, teamName, hour) {
   let count = 0
   for (const s of shifts) {
     if (s.role_type !== 'Attending') continue
-    if (teamArea(s.team, customTeams) !== area) continue
+    if (s.team !== teamName) continue
     if (!shiftCoversHour(s, hour)) continue
     count++
   }
   return count * (pph[area] ?? 0)
 }
 
-export function extenderCapacity(shifts, pph, customTeams, area, hour) {
+export function extenderCapacityForTeam(shifts, pph, teamName, hour) {
   let total = 0
   for (const s of shifts) {
     if (s.role_type !== 'PA' && s.role_type !== 'Resident') continue
-    if (teamArea(s.team, customTeams) !== area) continue
+    if (s.team !== teamName) continue
     if (!shiftCoversHour(s, hour)) continue
-    const key = extenderPphKey(s)
-    total += pph[key] ?? 0
+    total += pph[extenderPphKey(s)] ?? 0
   }
   return total
 }
 
-export function teamCapacity(shifts, pph, customTeams, area, hour) {
+export function teamCapacityForTeam(shifts, pph, area, teamName, hour) {
   return Math.min(
-    attendingCapacity(shifts, pph, customTeams, area, hour),
-    extenderCapacity(shifts, pph, customTeams, area, hour),
+    attendingCapacityForTeam(shifts, pph, area, teamName, hour),
+    extenderCapacityForTeam(shifts, pph, teamName, hour),
   )
+}
+
+// Per-team breakdown for an area+hour — used by the chart tooltip so you can
+// see which specific team is dragging the area total down (and why).
+export function teamBreakdown(shifts, pph, customTeams, area, hour) {
+  return activeTeamsInArea(shifts, customTeams, area, hour)
+    .sort()
+    .map(team => {
+      const attending = attendingCapacityForTeam(shifts, pph, area, team, hour)
+      const extender = extenderCapacityForTeam(shifts, pph, team, hour)
+      return { team, attending, extender, cap: Math.min(attending, extender) }
+    })
+}
+
+export function attendingCapacity(shifts, pph, customTeams, area, hour) {
+  return activeTeamsInArea(shifts, customTeams, area, hour)
+    .reduce((sum, team) => sum + attendingCapacityForTeam(shifts, pph, area, team, hour), 0)
+}
+
+export function extenderCapacity(shifts, pph, customTeams, area, hour) {
+  return activeTeamsInArea(shifts, customTeams, area, hour)
+    .reduce((sum, team) => sum + extenderCapacityForTeam(shifts, pph, team, hour), 0)
+}
+
+export function teamCapacity(shifts, pph, customTeams, area, hour) {
+  return activeTeamsInArea(shifts, customTeams, area, hour)
+    .reduce((sum, team) => sum + teamCapacityForTeam(shifts, pph, area, team, hour), 0)
 }
 
 const AREAS = ['main', 'fasttrack', 'eru']
