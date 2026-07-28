@@ -3,3 +3,6 @@ pandas
 numpy
 openpyxl
 gunicorn
+SQLAlchemy
+psycopg2-binary
+python-dotenv

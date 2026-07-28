@@ -2,15 +2,22 @@
 pipeline.py — Data ingestion and processing for ED Staffing Dashboard
 
 DROP NEW EXCEL FILES INTO:  data/raw/
-UPDATE SCHEDULE CSV AT:     data/Current_Schedule_Block.csv
+UPDATE THE SCHEDULE VIA:    schedule_shifts table (Render Postgres)
 
 Then either restart app.py or click "Refresh Data" in the dashboard.
 """
+
+import math
 
 import pandas as pd
 import numpy as np
 import json
 from pathlib import Path
+
+from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+from db import pipeline_outputs, read_schedule_df
 
 
 # ── Constants ────────────────────────────────────────────────────────────────
@@ -157,9 +164,9 @@ def compute_summary(df: pd.DataFrame) -> dict:
     }
 
 
-def load_schedule(sched_csv: Path) -> list:
-    """Parse schedule CSV into list of shift dicts."""
-    df = pd.read_csv(sched_csv)
+def load_schedule(engine) -> list:
+    """Load the shift schedule from the schedule_shifts table into shift dicts."""
+    df = read_schedule_df(engine)
     valid_teams = {"Green", "Red", "Blue", "FastTrack", "ERU"}
     df = df[df["team"].isin(valid_teams)]
 
@@ -175,11 +182,56 @@ def load_schedule(sched_csv: Path) -> list:
     return shifts
 
 
+# ── Postgres I/O ─────────────────────────────────────────────────────────────
+
+def _json_safe(obj):
+    """Recursively convert to plain JSON-serializable types (mirrors the old
+    json.dump(default=str)). Postgres JSONB rejects the NaN/Infinity tokens
+    Python's json module allows by default, so those are mapped to null."""
+    if isinstance(obj, float):
+        return obj if math.isfinite(obj) else None
+    if isinstance(obj, dict):
+        return {k: _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_json_safe(v) for v in obj]
+    if isinstance(obj, (str, int, bool)) or obj is None:
+        return obj
+    if isinstance(obj, np.floating):
+        v = float(obj)
+        return v if math.isfinite(v) else None
+    if isinstance(obj, np.integer):
+        return int(obj)
+    if isinstance(obj, np.ndarray):
+        return _json_safe(obj.tolist())
+    return str(obj)
+
+
+def save_output(engine, key: str, payload) -> None:
+    """Upsert one processed output (demand/summary/service_params/schedule/
+    validation/demand_ci) into the pipeline_outputs table."""
+    stmt = pg_insert(pipeline_outputs).values(key=key, payload=_json_safe(payload))
+    stmt = stmt.on_conflict_do_update(
+        index_elements=["key"],
+        set_={"payload": stmt.excluded.payload, "generated_at": stmt.excluded.generated_at},
+    )
+    with engine.begin() as conn:
+        conn.execute(stmt)
+
+
+def load_processed(engine, key: str) -> dict:
+    """Load one processed output (by key) from the pipeline_outputs table."""
+    with engine.connect() as conn:
+        row = conn.execute(
+            select(pipeline_outputs.c.payload).where(pipeline_outputs.c.key == key)
+        ).first()
+    if row is None:
+        raise FileNotFoundError(f"No pipeline output found for key={key!r}. Run the pipeline first.")
+    return row[0]
+
+
 # ── Main pipeline ─────────────────────────────────────────────────────────────
 
-def run_pipeline(raw_dir: Path, sched_csv: Path, out_dir: Path) -> dict:
-    out_dir.mkdir(parents=True, exist_ok=True)
-
+def run_pipeline(raw_dir: Path, engine) -> dict:
     print("\n=== ED Data Pipeline ===")
 
     # 1. Load and clean encounters
@@ -190,24 +242,14 @@ def run_pipeline(raw_dir: Path, sched_csv: Path, out_dir: Path) -> dict:
     demand  = compute_demand(df)
     svc     = compute_service_params(df)
     summary = compute_summary(df)
-    sched   = load_schedule(sched_csv)
+    sched   = load_schedule(engine)
 
-    # 3. Save JSON
-    with open(out_dir / "demand.json", "w") as f:
-        json.dump(demand, f, indent=2)
-    with open(out_dir / "service_params.json", "w") as f:
-        json.dump(svc, f, indent=2)
-    with open(out_dir / "summary.json", "w") as f:
-        json.dump(summary, f, indent=2, default=str)
-    with open(out_dir / "schedule.json", "w") as f:
-        json.dump(sched, f, indent=2)
+    # 3. Save to Postgres
+    save_output(engine, "demand", demand)
+    save_output(engine, "service_params", svc)
+    save_output(engine, "summary", summary)
+    save_output(engine, "schedule", sched)
 
-    print(f"\nPipeline complete. Outputs written to {out_dir}")
+    print("\nPipeline complete. Outputs written to Postgres.")
     print(f"  {summary['total_encounters']:,} encounters | {summary['unique_days']} days | {summary['date_range']}")
     return summary
-
-
-def load_processed(path: Path) -> dict:
-    """Load a processed JSON file."""
-    with open(path) as f:
-        return json.load(f)

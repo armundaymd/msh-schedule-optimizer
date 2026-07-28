@@ -1,15 +1,14 @@
 """
 validate.py — Statistical validation for ED demand and service time models.
 
-Outputs:
-  data/processed/validation.json  — GOF tests, service time fits, empirical PPH
-  data/processed/demand_ci.json   — bootstrap 95% CIs on hourly demand curves
+Outputs (written to the pipeline_outputs table in Postgres):
+  validation  — GOF tests, service time fits, empirical PPH
+  demand_ci   — bootstrap 95% CIs on hourly demand curves
 
 Usage:
   python3 validate.py
 """
 
-import json
 import warnings
 from datetime import datetime
 from pathlib import Path
@@ -18,13 +17,12 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from pipeline import load_raw_encounters, clean_encounters, DOW_NAMES
+from db import get_engine, read_schedule_df
+from pipeline import load_raw_encounters, clean_encounters, save_output, DOW_NAMES
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
-RAW_DIR   = Path("data/raw")
-SCHED_CSV = Path("data/Current_Schedule_Block.csv")
-OUT_DIR   = Path("data/processed")
+RAW_DIR = Path("data/raw")
 
 TEAMS = ["Main", "FastTrack", "ERU"]
 SCHED_TEAM_MAP = {
@@ -251,12 +249,12 @@ def run_service_time_fits(df: pd.DataFrame) -> dict:
 
 # ── C: Empirical PPH ─────────────────────────────────────────────────────────
 
-def run_empirical_pph(df: pd.DataFrame, sched_csv: Path) -> dict:
+def run_empirical_pph(df: pd.DataFrame, engine) -> dict:
     """
     Observed PPH = dispositions per attended hour, empirically from data.
     Uses schedule to determine which hours had attending coverage per team.
     """
-    sched = pd.read_csv(sched_csv)
+    sched = read_schedule_df(engine)
     sched["team_norm"] = sched["team"].map(SCHED_TEAM_MAP)
     attending = sched[(sched["role_type"] == "Attending") & sched["team_norm"].notna()]
 
@@ -417,12 +415,9 @@ def run_bootstrap_ci(df: pd.DataFrame, n_boot: int = 1000) -> dict:
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 
-def run_validation(
-    raw_dir:   Path = RAW_DIR,
-    sched_csv: Path = SCHED_CSV,
-    out_dir:   Path = OUT_DIR,
-) -> dict:
-    out_dir.mkdir(parents=True, exist_ok=True)
+def run_validation(raw_dir: Path = RAW_DIR, engine=None) -> dict:
+    if engine is None:
+        engine = get_engine()
 
     print("\n=== ED Statistical Validation ===")
 
@@ -445,7 +440,7 @@ def run_validation(
 
     # C: Empirical PPH
     print("C) Computing empirical PPH…")
-    pph_results = run_empirical_pph(df, sched_csv)
+    pph_results = run_empirical_pph(df, engine)
     for team in TEAMS:
         print(f"   → {team}: overall mean PPH = {pph_results[team]['overall_mean_pph']}")
 
@@ -467,14 +462,10 @@ def run_validation(
         "empirical_pph":     pph_results,
     }
 
-    with open(out_dir / "validation.json", "w") as f:
-        json.dump(validation, f, indent=2, default=str)
-    with open(out_dir / "demand_ci.json", "w") as f:
-        json.dump(demand_ci, f, indent=2)
+    save_output(engine, "validation", validation)
+    save_output(engine, "demand_ci", demand_ci)
 
-    print(f"\nOutputs written to {out_dir}/")
-    print(f"  validation.json  ({(out_dir / 'validation.json').stat().st_size // 1024} KB)")
-    print(f"  demand_ci.json   ({(out_dir / 'demand_ci.json').stat().st_size // 1024} KB)")
+    print("\nOutputs written to Postgres (validation, demand_ci).")
 
     # Human-readable console summary
     print("\n" + "─" * 60)
