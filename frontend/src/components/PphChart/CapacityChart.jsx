@@ -13,6 +13,18 @@ function computeTeamCapacity(shifts, pph, customTeams, team) {
   return Array.from({ length: 24 }, (_, h) => teamCapacity(shifts, pph, customTeams, areaKey, h))
 }
 
+const ATTENDING_LIMITED_COLOR = '#f59e0b'  // amber — matches tooltip's "(limiting)" tag
+const EXTENDER_LIMITED_COLOR  = '#2dd4bf'  // teal — distinct from the blue proposed-cap line
+
+// Small colored marker on the "Proposed cap" line showing which side is the
+// bottleneck at that hour: amber = attending-limited, teal = resident/PA-limited.
+function BottleneckDot({ cx, cy, payload }) {
+  if (cx == null || cy == null || payload.attendingCap == null || payload.extenderCap == null) return null
+  if (payload.attendingCap === payload.extenderCap) return null
+  const color = payload.attendingCap < payload.extenderCap ? ATTENDING_LIMITED_COLOR : EXTENDER_LIMITED_COLOR
+  return <circle cx={cx} cy={cy} r={3} fill={color} stroke="#0f1117" strokeWidth={1} />
+}
+
 // Attending-only vs extender-only capacity, for the tooltip bottleneck breakdown
 function computeCapacityBreakdown(shifts, pph, customTeams, team) {
   const areaKey = AREA_KEY[team] ?? 'main'
@@ -131,7 +143,7 @@ export default function CapacityChart({
         <Area dataKey="gapRed"   legendType="none" fill="#ef4444" stroke="none" opacity={0.35} />
 
         <Line dataKey="baseline"   name="Baseline cap"  stroke="#94a3b8" strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
-        <Line dataKey="proposed"   name="Proposed cap"  stroke="#60a5fa" strokeWidth={2}   dot={false} />
+        <Line dataKey="proposed"   name="Proposed cap"  stroke="#60a5fa" strokeWidth={2}   dot={<BottleneckDot />} />
         {empiricalCap  && <Line dataKey="empirical"  name="Empirical cap" stroke="#2dd4bf" strokeWidth={1.5} dot={false} strokeDasharray="6 3" />}
         {comparisonCap && <Line dataKey="comparison" name="Comparison"    stroke="#fb923c" strokeWidth={1.5} dot={false} strokeDasharray="5 3" />}
       </ComposedChart>
