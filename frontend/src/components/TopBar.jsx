@@ -1,10 +1,16 @@
 import { useRef, useState, useEffect } from 'react'
 
-export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onSaveScenario, scenarioCount, onUndo, onRedo, canUndo, canRedo, onAutoOptimize, optimizing }) {
+export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onSaveScenario, scenarioCount, onUndo, onRedo, canUndo, canRedo, onAutoOptimize, onAutoOptimizeWeek, optimizing, onExport }) {
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [name, setName] = useState('')
   const popoverRef = useRef(null)
   const inputRef = useRef(null)
+
+  const [exportOpen, setExportOpen] = useState(false)
+  const exportRef = useRef(null)
+
+  const [optimizeMenuOpen, setOptimizeMenuOpen] = useState(false)
+  const optimizeMenuRef = useRef(null)
 
   useEffect(() => {
     if (!popoverOpen) return
@@ -16,6 +22,20 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
   }, [popoverOpen, scenarioCount])
+
+  useEffect(() => {
+    if (!exportOpen) return
+    function onDown(e) { if (exportRef.current && !exportRef.current.contains(e.target)) setExportOpen(false) }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [exportOpen])
+
+  useEffect(() => {
+    if (!optimizeMenuOpen) return
+    function onDown(e) { if (optimizeMenuRef.current && !optimizeMenuRef.current.contains(e.target)) setOptimizeMenuOpen(false) }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [optimizeMenuOpen])
 
   function confirm() {
     if (!name.trim()) return
@@ -83,13 +103,58 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
             </div>
           )}
         </div>
-        <button
-          onClick={onAutoOptimize}
-          disabled={optimizing}
-          className="text-xs px-3 py-1 rounded bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white transition-colors"
-        >
-          {optimizing ? '⚡ Optimizing…' : '⚡ Auto-optimize'}
-        </button>
+        <div className="relative flex" ref={optimizeMenuRef}>
+          <button
+            onClick={onAutoOptimize}
+            disabled={optimizing}
+            className="text-xs px-3 py-1 rounded-l bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white transition-colors"
+          >
+            {optimizing ? '⚡ Optimizing…' : '⚡ Auto-optimize'}
+          </button>
+          <button
+            onClick={() => setOptimizeMenuOpen(v => !v)}
+            disabled={optimizing}
+            title="More optimize options"
+            className="text-xs px-1.5 rounded-r bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white transition-colors border-l border-amber-900"
+          >
+            ▾
+          </button>
+          {optimizeMenuOpen && (
+            <div className="absolute right-0 top-8 z-50 bg-slate-800 border border-slate-600 rounded shadow-xl py-1 w-44">
+              <button
+                onClick={() => { setOptimizeMenuOpen(false); onAutoOptimizeWeek?.() }}
+                disabled={optimizing}
+                className="block w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-700 transition-colors disabled:opacity-40"
+              >
+                Optimize full week
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="relative" ref={exportRef}>
+          <button
+            onClick={() => setExportOpen(v => !v)}
+            className="text-xs px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors"
+          >
+            ⬇ Export
+          </button>
+          {exportOpen && (
+            <div className="absolute right-0 top-8 z-50 bg-slate-800 border border-slate-600 rounded shadow-xl py-1 w-40">
+              <button
+                onClick={() => { setExportOpen(false); onExport?.('csv') }}
+                className="block w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-700 transition-colors"
+              >
+                Export CSV
+              </button>
+              <button
+                onClick={() => { setExportOpen(false); onExport?.('json') }}
+                className="block w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-700 transition-colors"
+              >
+                Export JSON
+              </button>
+            </div>
+          )}
+        </div>
         <button
           onClick={onRefresh}
           disabled={refreshing}

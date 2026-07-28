@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import PphSliders from './PphSliders'
 import CapacityChart from './CapacityChart'
+import PillToggle from '../PillToggle'
 import { fetchDemandCI, fetchValidation } from '../../api'
 
 const TEAM_VIEWS = ['Main', 'FastTrack', 'ERU']
@@ -9,6 +10,7 @@ export default function PphChart({
   day, demand, shifts, baselineShifts, pph, onPphChange,
   scenarios, comparisonScenarioId, onSelectComparison, onDeleteScenario, onResetToScenario,
   customTeams,
+  costRates, costModeEnabled, onCostRateChange, onToggleCostMode,
 }) {
   const [demandCI, setDemandCI]         = useState(null)
   const [empiricalPph, setEmpiricalPph] = useState(null)
@@ -76,6 +78,38 @@ export default function PphChart({
           <span className="inline-block w-2 h-2 rounded-full" style={{ background: '#2dd4bf' }} />
           Resident/PA-limited
         </span>
+      </div>
+
+      {/* Cost modeling toggle */}
+      <div className="flex items-center gap-3 px-3 py-1.5 border-t border-slate-800">
+        <span className="text-[11px] text-slate-400 select-none">💰 Cost modeling</span>
+        <PillToggle checked={!!costModeEnabled} onChange={onToggleCostMode} />
+        {costModeEnabled && (
+          <div className="flex items-center gap-3 ml-2">
+            <label className="flex items-center gap-1 text-[11px] text-slate-400">
+              Attending $/hr
+              <input
+                type="number"
+                min={0}
+                step={5}
+                value={costRates?.attending ?? 0}
+                onChange={e => onCostRateChange('attending', parseFloat(e.target.value) || 0)}
+                className="w-16 bg-slate-800 border border-slate-600 rounded px-1.5 py-0.5 text-xs text-slate-100 outline-none focus:border-blue-500"
+              />
+            </label>
+            <label className="flex items-center gap-1 text-[11px] text-slate-400">
+              PA $/hr
+              <input
+                type="number"
+                min={0}
+                step={5}
+                value={costRates?.pa ?? 0}
+                onChange={e => onCostRateChange('pa', parseFloat(e.target.value) || 0)}
+                className="w-16 bg-slate-800 border border-slate-600 rounded px-1.5 py-0.5 text-xs text-slate-100 outline-none focus:border-blue-500"
+              />
+            </label>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 min-h-0 p-2">

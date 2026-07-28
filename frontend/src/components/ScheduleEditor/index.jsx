@@ -1,5 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
+import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core'
 import TeamColumn from './TeamColumn'
+import PillToggle from '../PillToggle'
 
 const TEAMS = ['Green', 'Red', 'Blue', 'FastTrack', 'ERU']
 export const TEAM_COLORS = {
@@ -14,30 +16,13 @@ const PRESET_COLORS = ['#0d9488','#ec4899','#f59e0b','#6366f1','#84cc16','#06b6d
 const AREAS = ['Main', 'FastTrack', 'ERU']
 const HEADER_H  = 32
 const TOGGLEBAR_H = 28
+const SNAP = 30
 
-function PillToggle({ checked, onChange }) {
-  return (
-    <button
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className="relative inline-flex items-center shrink-0 transition-colors duration-200 focus:outline-none"
-      style={{
-        width: 34, height: 18, borderRadius: 9,
-        background: checked ? '#3b82f6' : '#475569',
-      }}
-    >
-      <span
-        style={{
-          position: 'absolute',
-          width: 12, height: 12, borderRadius: '50%',
-          background: 'white',
-          left: checked ? 18 : 3,
-          transition: 'left 0.15s',
-        }}
-      />
-    </button>
-  )
+function snap(m) { return Math.round(m / SNAP) * SNAP }
+
+function minsToTime(m) {
+  const norm = ((m % 1440) + 1440) % 1440
+  return `${String(Math.floor(norm / 60)).padStart(2,'0')}:${String(norm % 60).padStart(2,'0')}`
 }
 
 export default function ScheduleEditor({ day, shifts, onAdd, onDelete, onUpdate, onBeforeDrag, customTeams, onAddCustomTeam, onRemoveCustomTeam }) {
@@ -49,6 +34,11 @@ export default function ScheduleEditor({ day, shifts, onAdd, onDelete, onUpdate,
   const [newColor, setNewColor] = useState(PRESET_COLORS[0])
   const [newArea, setNewArea] = useState('Main')
   const addRef = useRef(null)
+  const [activeDrag, setActiveDrag] = useState(null) // { shift, color } while dragging
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
+  )
 
   useEffect(() => {
     const el = containerRef.current
@@ -86,6 +76,28 @@ export default function ScheduleEditor({ day, shifts, onAdd, onDelete, onUpdate,
     ...(customTeams ?? []).map(t => ({ ...t, isCustom: true })),
   ]
 
+  function handleDragStart(event) {
+    const shift = event.active.data.current?.shift
+    if (!shift) return
+    onBeforeDrag?.()
+    const color = allTeams.find(t => t.name === shift.team)?.color ?? '#64748b'
+    setActiveDrag({ shift, color })
+  }
+
+  function handleDragEnd(event) {
+    const { active, delta, over } = event
+    const shift = active.data.current?.shift
+    setActiveDrag(null)
+    if (!shift) return
+
+    const deltaMins = delta.y * (60 / hourPx)
+    const ns = snap(shift.startMins + deltaMins)
+    const ne = ns + (shift.endMins - shift.startMins)
+    const patch = { startMins: ns, endMins: ne, start_time: minsToTime(ns), end_time: minsToTime(ne) }
+    if (over?.id && over.id !== shift.team) patch.team = over.id
+    onUpdate(shift.id, patch)
+  }
+
   return (
     <div ref={containerRef} className="flex flex-col h-full overflow-hidden bg-[#0f1117]">
 
@@ -118,6 +130,7 @@ export default function ScheduleEditor({ day, shifts, onAdd, onDelete, onUpdate,
         </div>
 
         {/* Team columns */}
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="flex flex-1 min-w-0 overflow-x-auto">
           {allTeams.map(team => (
             <TeamColumn
@@ -194,6 +207,30 @@ export default function ScheduleEditor({ day, shifts, onAdd, onDelete, onUpdate,
             </div>
           </div>
         </div>
+        <DragOverlay dropAnimation={null}>
+          {activeDrag && (
+            <div
+              style={{
+                background: activeDrag.color,
+                borderRadius: 3,
+                padding: '4px 6px',
+                width: 140,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                opacity: 0.9,
+                pointerEvents: 'none',
+              }}
+              className="text-white"
+            >
+              <div className="text-[10px] font-semibold truncate">
+                {activeDrag.shift.role_type}{activeDrag.shift.role_detail ? ` — ${activeDrag.shift.role_detail}` : ''}
+              </div>
+              <div className="text-[9px] opacity-80">
+                {activeDrag.shift.start_time} – {activeDrag.shift.end_time}
+              </div>
+            </div>
+          )}
+        </DragOverlay>
+        </DndContext>
       </div>
     </div>
   )

@@ -8,6 +8,8 @@ import PphChart from './components/PphChart'
 import SummaryStatsBar from './components/SummaryStatsBar'
 import OptimizeModal from './components/OptimizeModal'
 import { getOverflowHours, runOptimizer } from './utils/optimizer'
+import { exportScheduleAs } from './utils/exportSchedule'
+import { computeShiftCost } from './utils/cost'
 
 // main/fasttrack/eru = Attending max PPH per area (existing).
 // pa/pgy1-4/offService = Resident & PA max PPH, single value app-wide.
@@ -16,6 +18,9 @@ const DEFAULT_PPH = {
   main: 2.1, fasttrack: 3.5, eru: 0.8,
   pa: 1.2, pgy1: 0.5, pgy2: 0.8, pgy3: 1.1, pgy4: 1.4, offService: 0.8,
 }
+
+// Placeholder $/hr starting points — tune via the cost-modeling toggle in the PPH panel.
+const DEFAULT_COST_RATES = { attending: 250, pa: 90 }
 
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
 
@@ -32,9 +37,19 @@ function App() {
   const [optimizing, setOptimizing] = useState(false)
   const [optimizeResult, setOptimizeResult] = useState(null)
   const [toast, setToast] = useState(null)
+  const [costRates, setCostRates] = useState(DEFAULT_COST_RATES)
+  const [costModeEnabled, setCostModeEnabled] = useState(false)
 
   function handlePphChange(key, val) {
     setPph(prev => ({ ...prev, [key]: val }))
+  }
+
+  function handleCostRateChange(key, val) {
+    setCostRates(prev => ({ ...prev, [key]: val }))
+  }
+
+  function handleExport(format) {
+    exportScheduleAs(schedState, format)
   }
 
   function handleSaveScenario(name) {
@@ -82,13 +97,69 @@ function App() {
     setOptimizing(false)
   }
 
+  async function handleAutoOptimizeWeek() {
+    const anyOverflow = DAYS.some(day =>
+      getOverflowHours(schedState.getShiftsForDay(day), demand, pph, day, customTeams).length > 0
+    )
+    if (!anyOverflow) {
+      showToast('✓ No overflow — schedule already meets demand')
+      return
+    }
+    setOptimizing(true)
+    await new Promise(r => setTimeout(r, 280))
+
+    // Snapshot the whole week + custom teams for a clean batch discard
+    const preOptimizeSnapshot = {}
+    DAYS.forEach(day => { preOptimizeSnapshot[day] = schedState.getShiftsForDay(day) })
+    const preOptCustomTeams = customTeams
+
+    // Accumulate custom teams across days so "Optimized Team N" numbering
+    // stays consistent instead of colliding day to day
+    let accumulatedCustomTeams = [...customTeams]
+    const perDay = {}
+    let totalResolved = 0
+    let totalOverflow = 0
+    const allNewTeams = []
+
+    DAYS.forEach(day => {
+      const dayShifts = schedState.getShiftsForDay(day)
+      const result = runOptimizer(dayShifts, demand, pph, day, accumulatedCustomTeams)
+      schedState.applyDayShifts(day, result.newShifts)
+      if (result.newTeams.length > 0) {
+        accumulatedCustomTeams = [...accumulatedCustomTeams, ...result.newTeams]
+        allNewTeams.push(...result.newTeams)
+      }
+      perDay[day] = result
+      totalResolved += result.resolvedCount
+      totalOverflow += result.totalOverflow
+    })
+
+    if (allNewTeams.length > 0) setCustomTeams(accumulatedCustomTeams)
+
+    setOptimizeResult({
+      isWeek: true,
+      perDay,
+      resolvedCount: totalResolved,
+      totalOverflow,
+      changes: [],
+      preOptimizeSnapshot,
+      preOptCustomTeams,
+    })
+    setOptimizing(false)
+  }
+
   function handleAcceptOptimize() {
     setOptimizeResult(null)
   }
 
   function handleDiscardOptimize() {
-    // Undo reverts the active DOW; restore custom teams from saved snapshot
-    schedState.undoForDay(activeDow)
+    if (optimizeResult.isWeek) {
+      // Whole-week batch — restore the pre-optimize snapshot directly
+      schedState.loadSnapshot(optimizeResult.preOptimizeSnapshot)
+    } else {
+      // Single day — undo reverts the active DOW
+      schedState.undoForDay(activeDow)
+    }
     setCustomTeams(optimizeResult.preOptCustomTeams)
     setOptimizeResult(null)
   }
@@ -171,10 +242,15 @@ function App() {
   }
   const weekBreakdown = DAYS.map(d => {
     const dayShifts = schedState.getShiftsForDay(d)
+    const baselineDayShifts = schedState.baseline?.filter(s => s.day === d) ?? []
     const proposed = attendingHrs(dayShifts)
-    const baseline = attendingHrs(schedState.baseline?.filter(s => s.day === d) ?? [])
+    const baseline = attendingHrs(baselineDayShifts)
     const attendingShifts = dayShifts.filter(s => s.role_type === 'Attending').length
-    return { day: d, proposed, delta: proposed - baseline, attendingShifts }
+    return {
+      day: d, proposed, delta: proposed - baseline, attendingShifts,
+      cost: computeShiftCost(dayShifts, costRates),
+      costBaseline: computeShiftCost(baselineDayShifts, costRates),
+    }
   })
 
   return (
@@ -195,7 +271,9 @@ function App() {
         canUndo={schedState.canUndo(activeDow)}
         canRedo={schedState.canRedo(activeDow)}
         onAutoOptimize={handleAutoOptimize}
+        onAutoOptimizeWeek={handleAutoOptimizeWeek}
         optimizing={optimizing}
+        onExport={handleExport}
       />
       <DowTabs days={DAYS} active={activeDow} onChange={setActiveDow} />
       <SummaryStatsBar
@@ -207,6 +285,8 @@ function App() {
         customTeams={customTeams}
         weekBreakdown={weekBreakdown}
         activeDow={activeDow}
+        costRates={costRates}
+        costModeEnabled={costModeEnabled}
       />
       <div className="flex flex-1 overflow-hidden min-h-0">
         <div className="w-3/5 overflow-hidden border-r border-slate-700">
@@ -242,6 +322,10 @@ function App() {
             onDeleteScenario={handleDeleteScenario}
             onResetToScenario={handleResetToScenario}
             customTeams={customTeams}
+            costRates={costRates}
+            costModeEnabled={costModeEnabled}
+            onCostRateChange={handleCostRateChange}
+            onToggleCostMode={setCostModeEnabled}
           />
         </div>
       </div>

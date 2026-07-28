@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { capacityAllAreas } from '../utils/capacity'
+import { computeShiftCost } from '../utils/cost'
 
 function computeCapacity(shifts, pph, customTeams) {
   return Array.from({ length: 24 }, (_, h) => {
@@ -25,7 +26,9 @@ function MetricCard({ label, value, valueColor }) {
   )
 }
 
-export default function SummaryStatsBar({ shifts, baselineShifts, demand, day, pph, customTeams, weekBreakdown, activeDow }) {
+const currency = n => `$${Math.round(n).toLocaleString()}`
+
+export default function SummaryStatsBar({ shifts, baselineShifts, demand, day, pph, customTeams, weekBreakdown, activeDow, costRates, costModeEnabled }) {
   const stats = useMemo(() => {
     const proposed = attendingHours(shifts)
     const baseline = attendingHours(baselineShifts)
@@ -37,14 +40,19 @@ export default function SummaryStatsBar({ shifts, baselineShifts, demand, day, p
     const proposedCap = computeCapacity(shifts, pph, customTeams)
     const overflow = demandSeries.filter((d, h) => d > proposedCap[h]).length
 
+    const cost = costRates ? computeShiftCost(shifts, costRates) : 0
+    const costBaseline = costRates ? computeShiftCost(baselineShifts, costRates) : 0
+
     return {
       totalHours: proposed,
       delta,
       extraPatients: delta !== 0 ? Math.round(delta * pph.main) : null,
       overflow,
       totalShifts: shifts.length,
+      cost,
+      costDelta: cost - costBaseline,
     }
-  }, [shifts, baselineShifts, demand, day, pph, customTeams])
+  }, [shifts, baselineShifts, demand, day, pph, customTeams, costRates])
 
   const sign = stats.delta >= 0 ? '+' : ''
 
@@ -53,6 +61,10 @@ export default function SummaryStatsBar({ shifts, baselineShifts, demand, day, p
   const weekShifts  = weekBreakdown?.reduce((s, d) => s + d.attendingShifts, 0) ?? 0
   const yearlyHours = Math.round(weekTotal * 52)
   const wSign = weekDelta >= 0 ? '+' : ''
+
+  const weekCost      = weekBreakdown?.reduce((s, d) => s + (d.cost ?? 0), 0) ?? 0
+  const weekCostBase  = weekBreakdown?.reduce((s, d) => s + (d.costBaseline ?? 0), 0) ?? 0
+  const weekCostDelta = weekCost - weekCostBase
 
   return (
     <div className="flex items-center gap-3 px-4 py-2 bg-[#131620] border-b border-slate-800 shrink-0 flex-wrap">
@@ -76,6 +88,16 @@ export default function SummaryStatsBar({ shifts, baselineShifts, demand, day, p
         valueColor={stats.overflow > 0 ? '#f59e0b' : '#94a3b8'}
       />
       <MetricCard label="Total shifts" value={stats.totalShifts} />
+      {costModeEnabled && (
+        <>
+          <MetricCard label={`${day.slice(0,3)} est. cost`} value={currency(stats.cost)} />
+          <MetricCard
+            label="Cost vs baseline"
+            value={`${stats.costDelta >= 0 ? '+' : '-'}${currency(Math.abs(stats.costDelta))}`}
+            valueColor={stats.costDelta > 0 ? '#ef4444' : stats.costDelta < 0 ? '#22c55e' : '#94a3b8'}
+          />
+        </>
+      )}
 
       {weekBreakdown && <>
         {/* Divider */}
@@ -90,6 +112,13 @@ export default function SummaryStatsBar({ shifts, baselineShifts, demand, day, p
         />
         <MetricCard label="Week attending shifts" value={weekShifts} />
         <MetricCard label="Yearly hrs (×52)" value={yearlyHours.toLocaleString()} />
+        {costModeEnabled && (
+          <MetricCard
+            label="Week est. cost"
+            value={currency(weekCost)}
+            valueColor={weekCostDelta > 0 ? '#ef4444' : weekCostDelta < 0 ? '#22c55e' : undefined}
+          />
+        )}
 
         {/* Divider */}
         <div className="w-px self-stretch bg-slate-700 mx-1" />

@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
+import { useDraggable } from '@dnd-kit/core'
 import ShiftTooltip from './ShiftTooltip'
 
 const SNAP = 30
@@ -18,6 +19,23 @@ export default function ShiftBlock({ shift, color, hourPx, lane, numLanes, allDa
   const primaryRef = useRef(null)
   const contRef = useRef(null)
   const [tooltip, setTooltip] = useState(null)
+
+  // Cross-column drag (move within/between teams) — commit happens once in
+  // ScheduleEditor's onDragEnd, which has both the vertical delta and the
+  // drop target team. Resize handles (top/bottom) stay on the old raw mouse
+  // logic below since resizing never changes which team a shift belongs to.
+  const { attributes, listeners, setNodeRef: setDragNodeRef, isDragging } = useDraggable({
+    id: shift.id,
+    data: { shift },
+  })
+  // Stable merged ref — an inline arrow here would get a new identity on
+  // every render (e.g. from the tooltip's onMouseMove-driven re-renders),
+  // which detaches/reattaches dnd-kit's node ref mid-gesture and silently
+  // breaks drag activation.
+  const setRefs = useCallback(node => {
+    primaryRef.current = node
+    setDragNodeRef(node)
+  }, [setDragNodeRef])
 
   const isOvernight = shift.endMins > 1440
   const opacity = ROLE_OPACITY[shift.role_type] ?? 1
@@ -45,8 +63,7 @@ export default function ShiftBlock({ shift, color, hourPx, lane, numLanes, allDa
     function onMove(me) {
       const delta = (me.clientY - startY) * minsPerPx
       let ns = s0, ne = e0
-      if (mode === 'move')   { ns = snap(s0 + delta); ne = ns + (e0 - s0) }
-      else if (mode === 'top')    { ns = snap(s0 + delta); if (ns >= ne - SNAP) ns = ne - SNAP }
+      if (mode === 'top')    { ns = snap(s0 + delta); if (ns >= ne - SNAP) ns = ne - SNAP }
       else if (mode === 'bottom') { ne = snap(e0 + delta); if (ne <= ns + SNAP) ne = ns + SNAP }
       onUpdate(shift.id, { startMins: ns, endMins: ne, start_time: minsToTime(ns), end_time: minsToTime(ne) })
     }
@@ -115,13 +132,14 @@ export default function ShiftBlock({ shift, color, hourPx, lane, numLanes, allDa
 
       {/* Primary fragment — startMins to end-of-day (or endMins if not overnight) */}
       <div
-        ref={primaryRef}
+        ref={setRefs}
         style={{
           ...baseStyle,
           top: primaryTop,
           height: primaryH,
           cursor: 'grab',
           borderBottom: isOvernight ? `2px solid ${color}` : undefined,
+          opacity: isDragging ? 0.35 : opacity,
         }}
         onMouseMove={e => { const h = hourFromPrimary(e); if (h != null) setTooltip({ hour: h, fromCont: false, y: e.clientY - primaryRef.current.getBoundingClientRect().top }) }}
         onMouseLeave={() => setTooltip(null)}
@@ -131,10 +149,11 @@ export default function ShiftBlock({ shift, color, hourPx, lane, numLanes, allDa
           style={{ position: 'absolute', top: 0, left: 0, right: 0, height: HANDLE_PX, cursor: 'n-resize', zIndex: 2 }}
           onMouseDown={e => startDrag(e, 'top')}
         />
-        {/* body — move shift */}
+        {/* body — move shift (cross-column drag via dnd-kit; commit happens in ScheduleEditor's onDragEnd) */}
         <div
           style={{ position: 'absolute', top: HANDLE_PX, left: 0, right: 0, bottom: HANDLE_PX, cursor: 'grab' }}
-          onMouseDown={e => startDrag(e, 'move')}
+          {...listeners}
+          {...attributes}
         >
           <BlockLabel h={primaryH} />
         </div>

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useDroppable } from '@dnd-kit/core'
 import ShiftBlock from './ShiftBlock'
 
 const ROLES = ['Attending', 'PA', 'Resident']
@@ -60,6 +61,7 @@ export default function TeamColumn({ team, color, shifts, allDayShifts, hourPx, 
   }, [pickerOpen])
 
   const { lanes, numLanes } = assignLanes(shifts)
+  const { setNodeRef, isOver } = useDroppable({ id: team })
 
   return (
     <div className="flex-1 min-w-0 border-l border-slate-800 flex flex-col">
@@ -122,7 +124,15 @@ export default function TeamColumn({ team, color, shifts, allDayShifts, hourPx, 
       </div>
 
       {/* timeline */}
-      <div className="relative" style={{ height: totalH }}>
+      <div
+        ref={setNodeRef}
+        className="relative transition-colors"
+        style={{
+          height: totalH,
+          background: isOver ? 'rgba(59,130,246,0.10)' : undefined,
+          boxShadow: isOver ? 'inset 0 0 0 2px rgba(59,130,246,0.5)' : undefined,
+        }}
+      >
         {/* hour grid lines */}
         {Array.from({ length: 24 }, (_, h) => (
           <div

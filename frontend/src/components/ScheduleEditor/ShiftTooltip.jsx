@@ -27,7 +27,7 @@ export default function ShiftTooltip({ shift, allDayShifts, hoverHour, style, on
 
   return (
     <div
-      style={{ ...style, zIndex: 100 }}
+      style={{ ...style, zIndex: 100, pointerEvents: 'none' }}
       className="absolute bg-slate-900 border border-slate-600 rounded shadow-xl p-2 text-xs text-slate-200 w-44"
     >
       <div className="font-semibold mb-1">{shift.role_type} — {shift.role_detail}</div>
@@ -36,6 +36,7 @@ export default function ShiftTooltip({ shift, allDayShifts, hoverHour, style, on
           value={shift.resident_level ?? shift.role_detail ?? 'PGY-2'}
           onMouseDown={e => e.stopPropagation()}
           onChange={e => onUpdate(shift.id, { role_detail: e.target.value, resident_level: e.target.value })}
+          style={{ pointerEvents: 'auto' }}
           className="mb-2 w-full bg-slate-800 border border-slate-600 rounded px-1 py-0.5 text-slate-200"
         >
           {RESIDENT_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
