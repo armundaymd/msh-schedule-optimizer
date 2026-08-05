@@ -134,7 +134,7 @@ export default function CapacityChart({
       extenderCap:  parseFloat(proposedBreakdown[h].extender.toFixed(2)),
       teamBreakdown: proposedTeamBreakdowns[h],
     }
-    if (ciSeries?.[h]) {
+    if (ciSeries?.[h] && ciSeries[h].ci_low != null && ciSeries[h].ci_high != null) {
       row.ciLow  = parseFloat(ciSeries[h].ci_low.toFixed(3))
       row.ciDiff = parseFloat(Math.max(0, ciSeries[h].ci_high - ciSeries[h].ci_low).toFixed(3))
     }

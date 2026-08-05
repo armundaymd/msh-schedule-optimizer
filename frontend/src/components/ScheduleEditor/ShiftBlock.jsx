@@ -26,7 +26,7 @@ export default function ShiftBlock({ shift, color, hourPx, lane, numLanes, allDa
   // logic below since resizing never changes which team a shift belongs to.
   const { attributes, listeners, setNodeRef: setDragNodeRef, isDragging } = useDraggable({
     id: shift.id,
-    data: { shift },
+    data: { shift, lane, numLanes },
   })
   // Stable merged ref — an inline arrow here would get a new identity on
   // every render (e.g. from the tooltip's onMouseMove-driven re-renders),
@@ -39,6 +39,13 @@ export default function ShiftBlock({ shift, color, hourPx, lane, numLanes, allDa
 
   const isOvernight = shift.endMins > 1440
   const opacity = ROLE_OPACITY[shift.role_type] ?? 1
+
+  // Tooltip renders outside the block's own footprint (left/right of it,
+  // whichever side has more room) so it never sits on top of the area the
+  // user needs to click to grab or resize the shift.
+  const tooltipSide = lane < numLanes / 2
+    ? { left: 'calc(100% + 6px)' }
+    : { right: 'calc(100% + 6px)' }
 
   // Horizontal lane geometry (as CSS percentages + gap)
   const laneW = 100 / numLanes
@@ -113,19 +120,37 @@ export default function ShiftBlock({ shift, color, hourPx, lane, numLanes, allDa
       {isOvernight && (
         <div
           ref={contRef}
-          style={{ ...baseStyle, top: 0, height: wrapH, borderTop: `2px solid ${color}`, cursor: 'grab' }}
-          onMouseDown={e => startDrag(e, 'move')}
+          style={{
+            ...baseStyle,
+            top: 0,
+            height: wrapH,
+            borderTop: `2px solid ${color}`,
+            opacity: isDragging ? 0.6 : opacity,
+            outline: isDragging ? '2px solid #fbbf24' : undefined,
+            outlineOffset: isDragging ? -1 : undefined,
+            filter: isDragging ? 'brightness(1.5) saturate(1.4)' : undefined,
+          }}
           onMouseMove={e => { const h = hourFromCont(e); if (h != null) setTooltip({ hour: h, fromCont: true, y: e.clientY - contRef.current.getBoundingClientRect().top }) }}
           onMouseLeave={() => setTooltip(null)}
         >
+          {/* body — move shift (same dnd-kit cross-column drag as the primary
+              fragment's body; inset from the resize handle below so the two
+              don't fight over the same pointerdown) */}
+          <div
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: HANDLE_PX, cursor: isDragging ? 'grabbing' : 'grab' }}
+            {...listeners}
+            {...attributes}
+          >
+            <BlockLabel h={wrapH} />
+          </div>
+          {/* bottom handle — change endMins */}
           <div
             style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: HANDLE_PX, cursor: 's-resize', zIndex: 2 }}
             onMouseDown={e => startDrag(e, 'bottom')}
           />
-          <BlockLabel h={wrapH} />
           {tooltip?.fromCont && (
             <ShiftTooltip shift={shift} allDayShifts={allDayShifts} hoverHour={tooltip.hour} onUpdate={onUpdate}
-              style={{ top: tooltip.y - 20, left: 4, zIndex: 100 }} />
+              style={{ top: tooltip.y - 20, ...tooltipSide, zIndex: 100 }} />
           )}
         </div>
       )}
@@ -137,9 +162,12 @@ export default function ShiftBlock({ shift, color, hourPx, lane, numLanes, allDa
           ...baseStyle,
           top: primaryTop,
           height: primaryH,
-          cursor: 'grab',
+          cursor: isDragging ? 'grabbing' : 'grab',
           borderBottom: isOvernight ? `2px solid ${color}` : undefined,
-          opacity: isDragging ? 0.35 : opacity,
+          opacity: isDragging ? 0.6 : opacity,
+          outline: isDragging ? '2px solid #fbbf24' : undefined,
+          outlineOffset: isDragging ? -1 : undefined,
+          filter: isDragging ? 'brightness(1.5) saturate(1.4)' : undefined,
         }}
         onMouseMove={e => { const h = hourFromPrimary(e); if (h != null) setTooltip({ hour: h, fromCont: false, y: e.clientY - primaryRef.current.getBoundingClientRect().top }) }}
         onMouseLeave={() => setTooltip(null)}
@@ -151,7 +179,7 @@ export default function ShiftBlock({ shift, color, hourPx, lane, numLanes, allDa
         />
         {/* body — move shift (cross-column drag via dnd-kit; commit happens in ScheduleEditor's onDragEnd) */}
         <div
-          style={{ position: 'absolute', top: HANDLE_PX, left: 0, right: 0, bottom: HANDLE_PX, cursor: 'grab' }}
+          style={{ position: 'absolute', top: HANDLE_PX, left: 0, right: 0, bottom: HANDLE_PX, cursor: isDragging ? 'grabbing' : 'grab' }}
           {...listeners}
           {...attributes}
         >
@@ -177,7 +205,7 @@ export default function ShiftBlock({ shift, color, hourPx, lane, numLanes, allDa
         </button>
         {tooltip && !tooltip.fromCont && (
           <ShiftTooltip shift={shift} allDayShifts={allDayShifts} hoverHour={tooltip.hour} onUpdate={onUpdate}
-            style={{ top: tooltip.y - 20, left: 4, zIndex: 100 }} />
+            style={{ top: tooltip.y - 20, ...tooltipSide, zIndex: 100 }} />
         )}
       </div>
     </>

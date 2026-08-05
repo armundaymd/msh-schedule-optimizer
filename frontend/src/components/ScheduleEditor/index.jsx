@@ -4,7 +4,7 @@ import TeamColumn from './TeamColumn'
 import PillToggle from '../PillToggle'
 
 const TEAMS = ['Green', 'Red', 'Blue', 'FastTrack', 'ERU']
-export const TEAM_COLORS = {
+const TEAM_COLORS = {
   Green:     '#2d7a3a',
   Red:       '#c0392b',
   Blue:      '#185FA5',
@@ -35,6 +35,7 @@ export default function ScheduleEditor({ day, shifts, onAdd, onDelete, onUpdate,
   const [newArea, setNewArea] = useState('Main')
   const addRef = useRef(null)
   const [activeDrag, setActiveDrag] = useState(null) // { shift, color } while dragging
+  const [dragPreview, setDragPreview] = useState(null) // { team, top, height } — projected drop position
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } })
@@ -47,6 +48,20 @@ export default function ScheduleEditor({ day, shifts, onAdd, onDelete, onUpdate,
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
+
+  // Force a "grabbing" cursor everywhere while a shift is being dragged. The
+  // pointer's cursor is resolved from whatever element is directly under it,
+  // so setting it only on document.body isn't enough — every other shift
+  // block (and the resize handles) has its own `cursor` style that wins the
+  // moment the pointer crosses over them mid-drag. An `!important` stylesheet
+  // beats those inline styles regardless of what's underneath the pointer.
+  useEffect(() => {
+    if (!activeDrag) return
+    const style = document.createElement('style')
+    style.textContent = '*, *:hover { cursor: grabbing !important; }'
+    document.head.appendChild(style)
+    return () => style.remove()
+  }, [activeDrag])
 
   useEffect(() => {
     if (!addOpen) return
@@ -84,10 +99,38 @@ export default function ScheduleEditor({ day, shifts, onAdd, onDelete, onUpdate,
     setActiveDrag({ shift, color })
   }
 
+  function handleDragMove(event) {
+    const { active, delta, over } = event
+    const shift = active.data.current?.shift
+    if (!shift) return
+    const lane = active.data.current?.lane ?? 0
+    const numLanes = active.data.current?.numLanes ?? 1
+
+    const deltaMins = delta.y * (60 / hourPx)
+    const duration = shift.endMins - shift.startMins
+    const ns = ((snap(shift.startMins + deltaMins) % 1440) + 1440) % 1440
+    const ne = ns + duration
+
+    // Mirror ShiftBlock's own primary+continuation split so a preview that
+    // wraps past midnight shows both the bottom and top-wrapped portions,
+    // instead of silently truncating at 24:00.
+    const segments = ne > 1440
+      ? [
+          { top: (ns / 60) * hourPx, height: Math.max(((1440 - ns) / 60) * hourPx, 8) },
+          { top: 0, height: Math.max(((ne - 1440) / 60) * hourPx, 8) },
+        ]
+      : [
+          { top: (ns / 60) * hourPx, height: Math.max((duration / 60) * hourPx, 8) },
+        ]
+
+    setDragPreview({ team: over?.id ?? shift.team, lane, numLanes, segments })
+  }
+
   function handleDragEnd(event) {
     const { active, delta, over } = event
     const shift = active.data.current?.shift
     setActiveDrag(null)
+    setDragPreview(null)
     if (!shift) return
 
     const deltaMins = delta.y * (60 / hourPx)
@@ -96,6 +139,11 @@ export default function ScheduleEditor({ day, shifts, onAdd, onDelete, onUpdate,
     const patch = { startMins: ns, endMins: ne, start_time: minsToTime(ns), end_time: minsToTime(ne) }
     if (over?.id && over.id !== shift.team) patch.team = over.id
     onUpdate(shift.id, patch)
+  }
+
+  function handleDragCancel() {
+    setActiveDrag(null)
+    setDragPreview(null)
   }
 
   return (
@@ -130,7 +178,7 @@ export default function ScheduleEditor({ day, shifts, onAdd, onDelete, onUpdate,
         </div>
 
         {/* Team columns */}
-        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragMove={handleDragMove} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
         <div className="flex flex-1 min-w-0 overflow-x-auto">
           {allTeams.map(team => (
             <TeamColumn
@@ -148,6 +196,7 @@ export default function ScheduleEditor({ day, shifts, onAdd, onDelete, onUpdate,
               onDelete={onDelete}
               onUpdate={onUpdate}
               onBeforeDrag={onBeforeDrag}
+              dragPreview={dragPreview?.team === team.name ? dragPreview : null}
               isCustom={team.isCustom}
               onRemove={() => {
                 if (window.confirm(`Remove ${team.name} and all its shifts?`)) {

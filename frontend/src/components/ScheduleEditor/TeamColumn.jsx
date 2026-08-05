@@ -42,7 +42,7 @@ function assignLanes(shifts) {
   return { lanes, numLanes }
 }
 
-export default function TeamColumn({ team, color, shifts, allDayShifts, hourPx, totalH, onAdd, onDelete, onUpdate, onBeforeDrag, isCustom, onRemove }) {
+export default function TeamColumn({ team, color, shifts, allDayShifts, hourPx, totalH, onAdd, onDelete, onUpdate, onBeforeDrag, dragPreview, isCustom, onRemove }) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [residentSubmenu, setResidentSubmenu] = useState(false)
   const pickerRef = useRef(null)
@@ -138,6 +138,30 @@ export default function TeamColumn({ team, color, shifts, allDayShifts, hourPx, 
           <div
             key={h}
             style={{ position: 'absolute', top: h * hourPx, left: 0, right: 0, height: 1, background: '#1e293b' }}
+          />
+        ))}
+
+        {/* drop-position preview — where the dragged shift would land here.
+            Positioned at the shift's own lane (same geometry as its real
+            block), not lane 0, so it doesn't look like it's always jumping
+            to the team's first column. May be two segments if the projected
+            position wraps past midnight. */}
+        {dragPreview && dragPreview.segments.map((seg, i) => (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              top: seg.top,
+              height: seg.height,
+              left: `calc(${(dragPreview.lane / dragPreview.numLanes) * 100}% + 1px)`,
+              width: `calc(${100 / dragPreview.numLanes}% - 2px)`,
+              background: color,
+              opacity: 0.3,
+              border: `2px dashed ${color}`,
+              borderRadius: 3,
+              pointerEvents: 'none',
+              zIndex: 5,
+            }}
           />
         ))}
 
