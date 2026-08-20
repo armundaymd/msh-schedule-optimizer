@@ -1,9 +1,9 @@
-Flask
-Flask-Cors
+fastapi
+uvicorn[standard]
 pandas
 numpy
 openpyxl
-gunicorn
+scipy
 SQLAlchemy
 psycopg2-binary
 python-dotenv

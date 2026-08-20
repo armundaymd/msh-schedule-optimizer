@@ -3,6 +3,8 @@ FastAPI backend for ED Staffing Dashboard.
 Run: uvicorn server:app --reload --port 8000
 """
 
+import os
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
@@ -11,9 +13,15 @@ from db import get_engine, init_schema, read_schedule_df
 
 app = FastAPI()
 
+# Comma-separated list of allowed origins, set via env var in Coolify, e.g.
+# CORS_ORIGINS=https://schedule.adamrmunday.com
+_extra_origins = [
+    o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:4173"],
+    allow_origins=["http://localhost:5173", "http://localhost:4173", *_extra_origins],
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -1,10 +1,14 @@
-// In dev, Vite proxies '/api' to the local Flask server (see vite.config.js).
-// In production the frontend and backend are separate Render services, so
-// requests need the backend's absolute URL. Override with VITE_API_BASE at
-// build time if the backend URL ever changes.
-const API_BASE =
-  import.meta.env.VITE_API_BASE ??
-  (import.meta.env.DEV ? '' : 'https://msh-schedule-optimizer.onrender.com')
+// In dev, Vite proxies '/api' to the local FastAPI server (see vite.config.js).
+// In production the frontend and backend are separate Coolify services, so
+// requests need the backend's absolute URL, supplied at build time via
+// VITE_API_BASE (set this in the Coolify frontend service's build args/env).
+const API_BASE = import.meta.env.VITE_API_BASE ?? ''
+
+if (!import.meta.env.DEV && !import.meta.env.VITE_API_BASE) {
+  console.warn(
+    'VITE_API_BASE is not set — API requests will be relative to the frontend origin.'
+  )
+}
 
 export async function fetchDemand() {
   const r = await fetch(`${API_BASE}/api/demand`)
