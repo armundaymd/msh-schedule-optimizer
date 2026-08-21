@@ -163,3 +163,4 @@ ed_staffing/
 **Blue line** = current capacity ceiling (teams × max PPH).
 
 The summary table bottom-left shows status across all time windows at a glance.
+
