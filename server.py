@@ -41,6 +41,22 @@ def api_summary():
     return load_processed(engine, "summary")
 
 
+@app.get("/api/demand-ci")
+def api_demand_ci():
+    try:
+        return load_processed(engine, "demand_ci")
+    except FileNotFoundError:
+        return {"status": "not_run"}
+
+
+@app.get("/api/validation")
+def api_validation():
+    try:
+        return load_processed(engine, "validation")
+    except FileNotFoundError:
+        return {"status": "not_run"}
+
+
 @app.get("/api/schedule")
 def api_schedule():
     df = read_schedule_df(engine)

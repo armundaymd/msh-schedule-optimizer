@@ -4,7 +4,7 @@ pipeline.py — Data ingestion and processing for ED Staffing Dashboard
 DROP NEW EXCEL FILES INTO:  data/raw/
 UPDATE THE SCHEDULE VIA:    schedule_shifts table (Render Postgres)
 
-Then either restart app.py or click "Refresh Data" in the dashboard.
+Then either restart the server or click "Refresh Data" in the dashboard.
 """
 
 import math
