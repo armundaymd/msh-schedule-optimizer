@@ -8,9 +8,11 @@
 // shift), so solo throughput cannot be estimated from this dataset. Do not present
 // these numbers in the UI as empirical.
 // pa/pgy1-4/offService = Resident & PA max PPH, single value app-wide.
+// fasttrackPa overrides `pa` for PA shifts on FastTrack, who see primary
+// patients solo at their own rate rather than Main/ERU's shared PA rate.
 export const DEFAULT_PPH = {
   main: 2.1,  mainOwn: 1.3,
   fasttrack: 3.5, fasttrackOwn: 2.2,
   eru: 0.8,   eruOwn: 0.6,
-  pa: 1.2, pgy1: 0.5, pgy2: 0.8, pgy3: 1.1, pgy4: 1.4, offService: 0.8,
+  pa: 1.2, fasttrackPa: 1.2, pgy1: 0.5, pgy2: 0.8, pgy3: 1.1, pgy4: 1.4, offService: 0.8,
 }

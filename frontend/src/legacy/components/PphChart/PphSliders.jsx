@@ -6,10 +6,12 @@ const ATTENDING_SLIDERS = [
   { key: 'eru',       label: 'Attending supervision ceiling (PPH)', min: 0.5, max: 3.0, step: 0.1 },
 ]
 
+// min 0: some areas (Main, ERU) never have attendings seeing patients solo,
+// so it must be possible to zero this out, not just turn it down.
 const OWN_SLIDERS = [
-  { key: 'mainOwn',      label: 'Attending solo throughput (PPH)', min: 0.3, max: 4.0, step: 0.1 },
-  { key: 'fasttrackOwn', label: 'Attending solo throughput (PPH)', min: 0.3, max: 4.0, step: 0.1 },
-  { key: 'eruOwn',       label: 'Attending solo throughput (PPH)', min: 0.3, max: 4.0, step: 0.1 },
+  { key: 'mainOwn',      label: 'Attending solo throughput (PPH)', min: 0, max: 4.0, step: 0.1 },
+  { key: 'fasttrackOwn', label: 'Attending solo throughput (PPH)', min: 0, max: 4.0, step: 0.1 },
+  { key: 'eruOwn',       label: 'Attending solo throughput (PPH)', min: 0, max: 4.0, step: 0.1 },
 ]
 
 const TEAM_TO_AREA = { Main: 'main', FastTrack: 'fasttrack', ERU: 'eru' }
@@ -22,6 +24,10 @@ const EXTENDER_SLIDERS = [
   { key: 'pgy4',       label: 'PGY-4 max PPH',      min: 0.2, max: 3.0, step: 0.1 },
   { key: 'offService', label: 'Off-Service max PPH',min: 0.2, max: 3.0, step: 0.1 },
 ]
+
+// FastTrack PAs see primary patients solo, at their own rate, so this
+// overrides the general 'pa' slider only when viewing FastTrack.
+const FASTTRACK_PA_SLIDER = { key: 'fasttrackPa', label: 'FastTrack PA max PPH (solo)', min: 0.2, max: 4.0, step: 0.1 }
 
 // Editable value box — keeps its own text while focused so partial input
 // (e.g. "1.") isn't clobbered by the controlled float on every keystroke.
@@ -90,6 +96,9 @@ export default function PphSliders({ pph, onChange, empiricalPph, activeTeam = '
   const ownSlider = OWN_SLIDERS.find(s => s.key === ownKey)
   const ceilingValue = pph[areaKey] ?? attendingSlider?.max ?? 4.0
   const ownSliderClamped = ownSlider && { ...ownSlider, max: Math.min(ownSlider.max, ceilingValue) }
+  const extenderSliders = activeTeam === 'FastTrack'
+    ? [FASTTRACK_PA_SLIDER, ...EXTENDER_SLIDERS.filter(s => s.key !== 'pa')]
+    : EXTENDER_SLIDERS
 
   return (
     <div className="pt-2 pb-1">
@@ -116,7 +125,7 @@ export default function PphSliders({ pph, onChange, empiricalPph, activeTeam = '
         className="grid gap-x-4 gap-y-2 px-3 py-1"
         style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))' }}
       >
-        {EXTENDER_SLIDERS.map(slider => (
+        {extenderSliders.map(slider => (
           <SliderControl key={slider.key} slider={slider} pph={pph} onChange={onChange} empiricalPph={empiricalPph} />
         ))}
       </div>

@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { teamCapacityForTeam, teamCapacity, shiftCoversHour } from './capacity'
+import { teamCapacityForTeam, teamCapacity, extenderCapacityForTeam, shiftCoversHour } from './capacity'
 
 const PPH = {
   main: 2.0, mainOwn: 1.0,
+  fasttrack: 3.0, fasttrackOwn: 0,
 }
 
 function shift({ team, role_type, resident_level = null, startMins, endMins }) {
@@ -66,5 +67,32 @@ describe('teamCapacityForTeam', () => {
     const pphWithBigExtender = { ...PPH, pa: 2.0 }
     const total = teamCapacity(shifts, pphWithBigExtender, [], 'main', 10)
     expect(total).toBeCloseTo(PPH.mainOwn + PPH.main, 5)
+  })
+
+  it('solo throughput can be zeroed for an area that never sees solo patients', () => {
+    // Main attending with mainOwn = 0 and no extenders -> capacity is 0, not floored at some minimum.
+    const shifts = [attending('Green', 0, 24 * 60)]
+    const cap = teamCapacityForTeam(shifts, { main: 2.0, mainOwn: 0 }, 'main', 'Green', 10)
+    expect(cap).toBe(0)
+  })
+})
+
+describe('extenderCapacityForTeam PA area override', () => {
+  it('uses the FastTrack-specific PA rate when set, not the general pa rate', () => {
+    const shifts = [pa('FastTrack', 0, 24 * 60)]
+    const pph = { ...PPH, pa: 1.2, fasttrackPa: 2.5 }
+    expect(extenderCapacityForTeam(shifts, pph, 'fasttrack', 'FastTrack', 10)).toBeCloseTo(2.5, 5)
+  })
+
+  it('falls back to the general pa rate when no FastTrack-specific override is set', () => {
+    const shifts = [pa('FastTrack', 0, 24 * 60)]
+    const pph = { ...PPH, pa: 1.2 }
+    expect(extenderCapacityForTeam(shifts, pph, 'fasttrack', 'FastTrack', 10)).toBeCloseTo(1.2, 5)
+  })
+
+  it('Main PAs are unaffected by a FastTrack-specific override', () => {
+    const shifts = [pa('Green', 0, 24 * 60)]
+    const pph = { ...PPH, pa: 1.2, fasttrackPa: 2.5 }
+    expect(extenderCapacityForTeam(shifts, pph, 'main', 'Green', 10)).toBeCloseTo(1.2, 5)
   })
 })

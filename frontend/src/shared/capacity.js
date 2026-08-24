@@ -56,13 +56,23 @@ export function teamArea(teamName, customTeams = []) {
 }
 
 // The pph object key an extender (PA/Resident) shift's max-PPH lives under.
-export function extenderPphKey(shift) {
-  if (shift.role_type === 'PA') return 'pa'
+// PAs can have an area-specific override (e.g. FastTrack PAs who see primary
+// patients solo, at a different rate than Main/ERU PAs) via `${area}Pa`;
+// falls back to the single area-agnostic `pa` key when no override is set.
+export function extenderPphKey(shift, area) {
+  if (shift.role_type === 'PA') return area ? `${area}Pa` : 'pa'
   if (shift.role_type === 'Resident') {
     const level = shift.resident_level || shift.role_detail
     return RESIDENT_LEVEL_TO_PPH_KEY[level] ?? DEFAULT_RESIDENT_PPH_KEY
   }
   return null
+}
+
+// Numeric PPH for one extender shift, honoring the PA area-override fallback.
+function extenderPphValue(shift, pph, area) {
+  const key = extenderPphKey(shift, area)
+  if (shift.role_type === 'PA') return pph[key] ?? pph.pa ?? 0
+  return pph[key] ?? 0
 }
 
 // Distinct team names with any shift active in `area` at `hour` — the set
@@ -101,13 +111,13 @@ export function ownThroughputForTeam(shifts, pph, area, teamName, hour) {
   return nAtt * (pph[`${area}Own`] ?? pph[area] ?? 0)
 }
 
-export function extenderCapacityForTeam(shifts, pph, teamName, hour) {
+export function extenderCapacityForTeam(shifts, pph, area, teamName, hour) {
   let total = 0
   for (const s of shifts) {
     if (s.role_type !== 'PA' && s.role_type !== 'Resident') continue
     if (s.team !== teamName) continue
     if (!shiftCoversHour(s, hour)) continue
-    total += pph[extenderPphKey(s)] ?? 0
+    total += extenderPphValue(s, pph, area)
   }
   return total
 }
@@ -117,7 +127,7 @@ export function teamCapacityForTeam(shifts, pph, area, teamName, hour) {
   if (nAtt === 0) return 0
   const supervisionCeiling = attendingCapacityForTeam(shifts, pph, area, teamName, hour)
   const ownThroughput = ownThroughputForTeam(shifts, pph, area, teamName, hour)
-  const extenders = extenderCapacityForTeam(shifts, pph, teamName, hour)
+  const extenders = extenderCapacityForTeam(shifts, pph, area, teamName, hour)
   return Math.min(supervisionCeiling, ownThroughput + extenders)
 }
 
@@ -129,7 +139,7 @@ export function teamBreakdown(shifts, pph, customTeams, area, hour) {
     .map(team => {
       const supervisionCeiling = attendingCapacityForTeam(shifts, pph, area, team, hour)
       const ownThroughput = ownThroughputForTeam(shifts, pph, area, team, hour)
-      const extender = extenderCapacityForTeam(shifts, pph, team, hour)
+      const extender = extenderCapacityForTeam(shifts, pph, area, team, hour)
       return { team, supervisionCeiling, ownThroughput, extender, cap: Math.min(supervisionCeiling, ownThroughput + extender) }
     })
 }
@@ -146,7 +156,7 @@ export function ownThroughput(shifts, pph, customTeams, area, hour) {
 
 export function extenderCapacity(shifts, pph, customTeams, area, hour) {
   return activeTeamsInArea(shifts, customTeams, area, hour)
-    .reduce((sum, team) => sum + extenderCapacityForTeam(shifts, pph, team, hour), 0)
+    .reduce((sum, team) => sum + extenderCapacityForTeam(shifts, pph, area, team, hour), 0)
 }
 
 export function teamCapacity(shifts, pph, customTeams, area, hour) {
