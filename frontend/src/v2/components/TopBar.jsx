@@ -104,7 +104,7 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
         </button>
         <button
           onClick={onOpenGenerator}
-          className="text-xs px-3 py-1 rounded bg-teal-700 hover:bg-teal-600 text-[var(--c-text-strong)] transition-colors"
+          className="text-xs px-3 py-1 rounded bg-teal-700 hover:bg-teal-600 text-white transition-colors"
         >
           ✦ Generate schedule
         </button>
@@ -134,7 +134,7 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
               />
               <button
                 onClick={confirm}
-                className="w-full text-xs py-1 rounded bg-blue-700 hover:bg-blue-600 text-[var(--c-text-strong)] transition-colors"
+                className="w-full text-xs py-1 rounded bg-blue-700 hover:bg-blue-600 text-white transition-colors"
               >
                 Save
               </button>
@@ -146,7 +146,7 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
             onClick={onAutoOptimize}
             disabled={optimizing}
             title={`Auto-optimize ${activeTeam ?? 'Main'} for this day (uses the area selected in the chart tab)`}
-            className="text-xs px-3 py-1 rounded-l bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-[var(--c-text-strong)] transition-colors"
+            className="text-xs px-3 py-1 rounded-l bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white transition-colors"
           >
             {optimizing ? '⚡ Optimizing…' : `⚡ Auto-optimize ${activeTeam ?? 'Main'}`}
           </button>
@@ -154,7 +154,7 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
             onClick={() => setOptimizeMenuOpen(v => !v)}
             disabled={optimizing}
             title="More optimize options"
-            className="text-xs px-1.5 rounded-r bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-[var(--c-text-strong)] transition-colors border-l border-amber-900"
+            className="text-xs px-1.5 rounded-r bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white transition-colors border-l border-amber-900"
           >
             ▾
           </button>
@@ -198,7 +198,7 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
         <button
           onClick={onRefresh}
           disabled={refreshing}
-          className="text-xs px-3 py-1 rounded bg-blue-700 hover:bg-blue-600 disabled:opacity-50 text-[var(--c-text-strong)] transition-colors"
+          className="text-xs px-3 py-1 rounded bg-blue-700 hover:bg-blue-600 disabled:opacity-50 text-white transition-colors"
         >
           {refreshing ? 'Refreshing…' : '↻ Refresh data'}
         </button>

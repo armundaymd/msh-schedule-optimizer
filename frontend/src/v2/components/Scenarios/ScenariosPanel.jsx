@@ -100,7 +100,7 @@ export default function ScenariosPanel({
                       <div className="flex gap-2 pt-1">
                         <button
                           onClick={() => { onResetToScenario(sc.id); onClose() }}
-                          className="text-xs px-3 py-1 rounded bg-blue-700 hover:bg-blue-600 text-[var(--c-text-strong)] transition-colors"
+                          className="text-xs px-3 py-1 rounded bg-blue-700 hover:bg-blue-600 text-white transition-colors"
                         >
                           Load into working schedule
                         </button>

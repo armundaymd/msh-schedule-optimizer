@@ -291,7 +291,7 @@ export default function Timeline({
                         <select value={newArea} onChange={e => setNewArea(e.target.value)} className="w-full bg-[var(--c-btn-bg)] border border-[var(--c-border-strong)] rounded px-2 py-1 text-xs text-[var(--c-text-strong)] outline-none mb-2">
                           {AREAS.map(a => <option key={a} value={a}>{a}</option>)}
                         </select>
-                        <button onClick={handleAddConfirm} className="w-full text-xs py-1 rounded bg-blue-700 hover:bg-blue-600 text-[var(--c-text-strong)] transition-colors">
+                        <button onClick={handleAddConfirm} className="w-full text-xs py-1 rounded bg-blue-700 hover:bg-blue-600 text-white transition-colors">
                           Add team
                         </button>
                       </div>
@@ -302,7 +302,7 @@ export default function Timeline({
 
               <DragOverlay dropAnimation={null}>
                 {activeDrag && activeDrag.mode === 'move' && (
-                  <div style={{ background: activeDrag.color, borderRadius: 3, padding: '4px 6px', width: 140, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', opacity: 0.9, pointerEvents: 'none' }} className="text-[var(--c-text-strong)]">
+                  <div style={{ background: activeDrag.color, borderRadius: 3, padding: '4px 6px', width: 140, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', opacity: 0.9, pointerEvents: 'none' }} className="text-white">
                     <div className="text-[10px] font-semibold truncate">
                       {activeDrag.shift.role_type}{activeDrag.shift.role_detail ? ` — ${activeDrag.shift.role_detail}` : ''}
                     </div>

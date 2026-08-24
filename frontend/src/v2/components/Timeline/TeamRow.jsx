@@ -37,7 +37,7 @@ export default function TeamRow({
     <button
       onClick={e => { e.stopPropagation(); onToggleHidden?.(team) }}
       title={hidden ? `Show ${team}` : `Hide ${team}`}
-      style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}
+      style={{ fontSize: 11, color: 'var(--c-text-muted)', lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}
     >
       👁
     </button>
@@ -71,7 +71,7 @@ export default function TeamRow({
           {isCustom && (
             <button
               onClick={e => { e.stopPropagation(); onRemove?.() }}
-              style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}
+              style={{ fontSize: 10, color: 'var(--c-text-faint)', lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}
               title={`Remove ${team}`}
             >
               ×

@@ -80,6 +80,7 @@ function App() {
   const [generating, setGenerating] = useState(false)
   const [generatorResult, setGeneratorResult] = useState(null)
   const [generatorPreCustomTeams, setGeneratorPreCustomTeams] = useState(null)
+  const [generatorPreview, setGeneratorPreview] = useState('generated') // 'generated' | 'current'
   const [hoverHour, setHoverHour] = useState(null)
   const [hiddenTeams, setHiddenTeams] = useState(() => new Set())
   const [scenariosOpen, setScenariosOpen] = useState(false)
@@ -89,6 +90,13 @@ function App() {
 
   useEffect(() => {
     try { localStorage.setItem('v2-theme', theme) } catch { /* private browsing, storage disabled */ }
+    // Also mirrored onto document.body: ShiftTooltip portals to
+    // document.body to escape Timeline's clipping scroll container, which
+    // means it renders outside this component's data-theme div and can't
+    // inherit the CSS variables from it. Legacy has no CSS keyed off
+    // data-theme, so this is a no-op there.
+    document.body.dataset.theme = theme
+    return () => { delete document.body.dataset.theme }
   }, [theme])
   const [removeTeamConfirm, setRemoveTeamConfirm] = useState(null) // team name | null
 
@@ -263,18 +271,29 @@ function App() {
     setGeneratorPreCustomTeams(customTeams)
 
     let accumulatedCustomTeams = [...customTeams]
+    // Overflow teams ("Generated Team N") minted for one scope group are
+    // reused by the next group/day in this same run instead of each group
+    // minting its own fresh set -- otherwise a 3-group (or 7-day) generate
+    // multiplies the same handful of needed overflow teams by the group
+    // count.
+    let reusableAreaTeams = []
     let remainingBudget = constraints.objective === 'maximize-coverage' ? constraints.weeklyHourBudget : null
     const costPerHour = constraints.costPerHour ?? 250
 
     const resultGroups = []
     const patternCounts = {}
+    const preShiftsByDay = {}
+    const postShiftsByDay = {}
     let totalHours = 0, totalShiftCount = 0, totalCost = 0, totalUncovered = 0, baselineHours = 0, baselineCost = 0
 
     for (const group of groups) {
       const runConstraints = { ...constraints, hourBudget: remainingBudget }
       const genResult = generateSchedule({ demand, target: genTarget, day: group.anchorDay, area, patterns, constraints: runConstraints, pph })
-      const { shifts: assigned, newTeams } = assignTeams(genResult.shifts, area, accumulatedCustomTeams.map(t => t.name))
-      if (newTeams.length > 0) accumulatedCustomTeams = [...accumulatedCustomTeams, ...newTeams]
+      const { shifts: assigned, newTeams } = assignTeams(genResult.shifts, area, reusableAreaTeams)
+      if (newTeams.length > 0) {
+        accumulatedCustomTeams = [...accumulatedCustomTeams, ...newTeams]
+        reusableAreaTeams = [...reusableAreaTeams, ...newTeams]
+      }
 
       const groupHours = assigned.reduce((s, sh) => s + (sh.endMins - sh.startMins) / 60, 0)
       const groupCost = groupHours * costPerHour
@@ -285,7 +304,7 @@ function App() {
         patternCounts[key] = { start: p.start, end: p.end, count: (patternCounts[key]?.count ?? 0) + p.count }
       }
 
-      const c = pph[`${area}Own`] ?? pph[area] ?? 0
+      const c = pph[area] ?? 0
       const coverageSeries = Array.from({ length: 24 }, (_, h) =>
         assigned.filter(s => shiftCoversHour(s, h)).length * c
       )
@@ -298,7 +317,10 @@ function App() {
         const existing = schedState.getShiftsForDay(day)
         const keep = existing.filter(s => !areaTeamNames.includes(s.team))
         const dayShifts = assigned.map(s => ({ ...s, day, id: `${s.id}-${day}` }))
-        schedState.applyDayShifts(day, [...keep, ...dayShifts])
+        const merged = [...keep, ...dayShifts]
+        preShiftsByDay[day] = existing
+        postShiftsByDay[day] = merged
+        schedState.applyDayShifts(day, merged)
 
         const baselineDay = (schedState.baseline?.filter(s => s.day === day) ?? []).filter(s => areaTeamNames.includes(s.team))
         baselineHours += attendingHrs(baselineDay)
@@ -317,13 +339,31 @@ function App() {
       area: AREA_LABEL[area],
       groups: resultGroups,
       totals: { hours: totalHours, shiftCount: totalShiftCount, cost: totalCost, baselineHours, baselineCost, uncoveredHours: totalUncovered, patternCounts },
+      preShiftsByDay,
+      postShiftsByDay,
     })
+    setGeneratorPreview('generated')
     setGenerating(false)
   }
 
+  // Pure view swap -- lets the panel flip the live Timeline between the
+  // pre-generate and generated shifts without touching the undo stack
+  // (the single command already pushed at the start of handleGenerate still
+  // owns the real undo/redo snapshot regardless of which view is showing).
+  function handleToggleGeneratorPreview(mode) {
+    if (!generatorResult) return
+    setGeneratorPreview(mode)
+    const source = mode === 'current' ? generatorResult.preShiftsByDay : generatorResult.postShiftsByDay
+    Object.entries(source).forEach(([day, dayShifts]) => schedState.applyDayShifts(day, dayShifts))
+  }
+
   function handleAcceptGenerate() {
+    // Accept always finalizes the generated result, even if the panel was
+    // left on the "Current" preview when clicked.
+    Object.entries(generatorResult.postShiftsByDay).forEach(([day, dayShifts]) => schedState.applyDayShifts(day, dayShifts))
     setGeneratorResult(null)
     setGeneratorPreCustomTeams(null)
+    setGeneratorPreview('generated')
   }
 
   function handleDiscardGenerate() {
@@ -331,6 +371,7 @@ function App() {
     if (generatorPreCustomTeams) setCustomTeams(generatorPreCustomTeams)
     setGeneratorResult(null)
     setGeneratorPreCustomTeams(null)
+    setGeneratorPreview('generated')
   }
 
   // 5.5: copy the active day's shifts onto other days.
@@ -582,6 +623,8 @@ function App() {
       onDiscard={handleDiscardGenerate}
       costModeEnabled={costModeEnabled}
       theme={theme}
+      previewMode={generatorPreview}
+      onPreviewModeChange={handleToggleGeneratorPreview}
     />
 
     {removeTeamConfirm && (

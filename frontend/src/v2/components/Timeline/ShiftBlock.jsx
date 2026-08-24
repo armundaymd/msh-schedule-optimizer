@@ -6,9 +6,13 @@ const ROLE_OPACITY = { Attending: 1, PA: 0.62, Resident: 0.42 }
 const HANDLE_PX = 6
 const GAP = 1
 
+// Fixed white, not themed: this sits on the shift block's own team color
+// (always a fairly dark, saturated fill regardless of app theme), not on
+// the page background, so it must stay legible against that color rather
+// than switching to near-black text in light mode.
 function ShiftLabel({ roleType, roleDetail }) {
   return (
-    <div className="px-1 leading-tight overflow-hidden whitespace-nowrap text-[var(--c-text-strong)]" style={{ fontSize: 9, pointerEvents: 'none' }}>
+    <div className="px-1 leading-tight overflow-hidden whitespace-nowrap text-white" style={{ fontSize: 9, pointerEvents: 'none' }}>
       <span className="font-semibold">{roleType}</span>
       {roleDetail && <span className="opacity-75"> · {roleDetail}</span>}
     </div>

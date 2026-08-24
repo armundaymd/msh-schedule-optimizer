@@ -84,7 +84,7 @@ export default function PphChart({
                 title={disabled ? 'Percentile demand needs a pipeline refresh with raw data' : undefined}
                 className={`px-2 py-1 text-[10px] font-medium transition-colors ${
                   target === t
-                    ? 'bg-blue-700 text-[var(--c-text-strong)]'
+                    ? 'bg-blue-700 text-white'
                     : disabled
                       ? 'bg-[var(--c-bg-panel)] text-[var(--c-text-faint)] cursor-not-allowed'
                       : 'bg-[var(--c-bg-surface)] text-[var(--c-text-muted)] hover:text-[var(--c-text-secondary)]'

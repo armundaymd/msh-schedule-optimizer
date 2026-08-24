@@ -14,8 +14,8 @@ function flatDemand(value, hours = null) {
 const BASE_CONSTRAINTS = { minConcurrent: 0, maxConcurrent: 3, overnightMin: 0, overnightHours: [], costPerHour: 100 }
 
 describe('generateSchedule', () => {
-  it('covers flat daytime demand within a solo-throughput multiple, near zero uncovered', () => {
-    // demand 2/hr for hours 8-16, solo throughput = 1/hr -> need ~2 concurrent attendings
+  it('covers flat daytime demand within a capacity multiple, near zero uncovered', () => {
+    // demand 2/hr for hours 8-16, attending capacity (ceiling) = 2/hr -> need ~1 concurrent attending
     const demand = flatDemand(2, [8, 9, 10, 11, 12, 13, 14, 15])
     const result = generateSchedule({
       demand, target: 'mean', day: 'Monday', area: 'main',
@@ -27,14 +27,14 @@ describe('generateSchedule', () => {
   })
 
   it('respects maxConcurrent: demand beyond what maxConcurrent*c can supply stays uncovered', () => {
-    // demand 10/hr all day, solo throughput 1/hr, maxConcurrent 2 -> cap is 2/hr, so ~8/hr uncovered
+    // demand 10/hr all day, capacity (ceiling) 2/hr, maxConcurrent 2 -> cap is 4/hr, so ~6/hr uncovered
     const demand = flatDemand(10)
     const result = generateSchedule({
       demand, target: 'mean', day: 'Monday', area: 'main',
       patterns: anyStartPatterns(8), constraints: { ...BASE_CONSTRAINTS, maxConcurrent: 2 }, pph: PPH,
     })
     for (let h = 0; h < 24; h++) {
-      expect(result.uncovered[h]).toBeGreaterThan(7)
+      expect(result.uncovered[h]).toBeGreaterThan(5)
     }
     // never exceeds maxConcurrent at any hour
     for (let h = 0; h < 24; h++) {

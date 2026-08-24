@@ -121,7 +121,7 @@ export default function OptimizeModal({ result, onAccept, onDiscard, theme }) {
           </button>
           <button
             onClick={onAccept}
-            className="text-xs px-4 py-1.5 rounded bg-blue-700 hover:bg-blue-600 text-[var(--c-text-strong)] transition-colors"
+            className="text-xs px-4 py-1.5 rounded bg-blue-700 hover:bg-blue-600 text-white transition-colors"
           >
             Accept changes
           </button>

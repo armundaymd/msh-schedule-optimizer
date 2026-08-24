@@ -85,7 +85,7 @@ export default function ConstraintsPanel({
                 <button
                   key={a.key}
                   onClick={() => handleAreaChange(a.key)}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${area === a.key ? 'bg-teal-700 text-[var(--c-text-strong)]' : 'bg-[var(--c-bg-surface)] text-[var(--c-text-muted)] hover:text-[var(--c-text-secondary)]'}`}
+                  className={`px-3 py-1 text-xs rounded transition-colors ${area === a.key ? 'bg-teal-700 text-white' : 'bg-[var(--c-bg-surface)] text-[var(--c-text-muted)] hover:text-[var(--c-text-secondary)]'}`}
                 >
                   {a.label}
                 </button>
@@ -106,7 +106,7 @@ export default function ConstraintsPanel({
                     disabled={disabled}
                     title={disabled ? 'Percentile demand needs a pipeline refresh with raw data' : undefined}
                     className={`px-3 py-1 text-xs rounded transition-colors ${
-                      panelTarget === t ? 'bg-teal-700 text-[var(--c-text-strong)]' : disabled ? 'bg-[var(--c-bg-panel)] text-[var(--c-text-faint)] cursor-not-allowed' : 'bg-[var(--c-bg-surface)] text-[var(--c-text-muted)] hover:text-[var(--c-text-secondary)]'
+                      panelTarget === t ? 'bg-teal-700 text-white' : disabled ? 'bg-[var(--c-bg-panel)] text-[var(--c-text-faint)] cursor-not-allowed' : 'bg-[var(--c-bg-surface)] text-[var(--c-text-muted)] hover:text-[var(--c-text-secondary)]'
                     }`}
                   >
                     {TARGET_LABEL[t]}
@@ -231,7 +231,7 @@ export default function ConstraintsPanel({
           <button onClick={onClose} className="text-xs px-4 py-1.5 rounded bg-[var(--c-btn-bg)] hover:bg-[var(--c-btn-bg-hover)] text-[var(--c-text-secondary)] transition-colors">
             Cancel
           </button>
-          <button onClick={handleGenerateClick} className="text-xs px-4 py-1.5 rounded bg-teal-700 hover:bg-teal-600 text-[var(--c-text-strong)] transition-colors">
+          <button onClick={handleGenerateClick} className="text-xs px-4 py-1.5 rounded bg-teal-700 hover:bg-teal-600 text-white transition-colors">
             Generate
           </button>
         </div>

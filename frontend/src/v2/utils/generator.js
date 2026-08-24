@@ -6,11 +6,15 @@ import { getDemandSeries } from '../../shared/demandSeries'
 //   S        = menu of allowable shift patterns, each (start_hour, length_hours)
 //   x[s]     = integer count of attendings assigned to pattern s
 //   d[h]     = target demand at hour h
-//   c        = attending SOLO throughput for the area (pph[area+'Own']) --
-//              not the supervision ceiling, because this pass places
-//              attendings on an otherwise empty board (see 4.1 in the brief:
-//              residents/APPs layer on afterwards against residual headroom,
-//              a later phase).
+//   c        = attending capacity for the area (pph[area], the supervision
+//              ceiling) -- NOT solo throughput. Main/ERU attendings
+//              realistically never see patients alone (their "Own" PPH is
+//              intentionally near-zero), so sizing this pass off solo
+//              throughput would demand far more attendings than the
+//              schedule actually needs once residents/PAs are layered in
+//              afterward (a later phase) -- the ceiling is what one
+//              attending's staffed team can actually handle, which is the
+//              right number to scaffold against.
 //   u[h]     = uncovered demand at hour h, >= 0
 //
 //   minimise  sum_s x[s] * length(s) * costPerHour  +  M * sum_h u[h]
@@ -237,7 +241,7 @@ function localSearch(shifts, demandSeries, allowedLengths, constraints, c, costP
 // by slicing the budget across days/templates and passing the remainder).
 export function generateSchedule({ demand, target, day, area, patterns, constraints, pph }) {
   const demandSeries = getDemandSeries(demand, AREA_LABEL[area], day, target)
-  const c = pph[`${area}Own`] ?? pph[area] ?? 0
+  const c = pph[area] ?? 0
   const costPerHour = constraints.costPerHour ?? 250
   const allowedLengths = [...new Set(patterns.map(p => p.length))]
 
@@ -277,12 +281,19 @@ function shiftsOverlap(a, b) {
 // area's first named team, then the next, ...), creating an additional
 // (custom) team only when concurrency exceeds the named team count.
 // maxConcurrent therefore controls how many teams get created.
-export function assignTeams(shifts, area, existingCustomTeamNames = []) {
-  const namedTeams = AREA_NAMED_TEAMS[area] ?? []
+//
+// `reusableAreaTeams` is this area's already-created overflow teams (from
+// an earlier group/day in the same generate run, or a prior run), in
+// creation order -- they fill lane slots ahead of minting a new "Generated
+// Team N", so a multi-group generate (e.g. weekday/Saturday/Sunday
+// templates) doesn't mint a fresh set of overflow teams per group.
+export function assignTeams(shifts, area, reusableAreaTeams = []) {
+  const namedTeams = [...(AREA_NAMED_TEAMS[area] ?? []), ...reusableAreaTeams.map(t => t.name)]
+  const baseCount = (AREA_NAMED_TEAMS[area] ?? []).length
   const sorted = [...shifts].sort((a, b) => a.startMins - b.startMins)
   const lanes = [] // [{ name, shifts: [] }]
   const newTeams = []
-  let extraCount = 0
+  let extraCount = reusableAreaTeams.length
 
   for (const shift of sorted) {
     let lane = lanes.find(l => !l.shifts.some(s => shiftsOverlap(s, shift)))
@@ -290,11 +301,9 @@ export function assignTeams(shifts, area, existingCustomTeamNames = []) {
       const idx = lanes.length
       let name = namedTeams[idx]
       if (!name) {
-        do {
-          extraCount++
-          name = `Generated Team ${extraCount}`
-        } while (existingCustomTeamNames.includes(name))
-        newTeams.push({ name, color: GENERATOR_COLORS[(idx - namedTeams.length) % GENERATOR_COLORS.length], area: AREA_LABEL[area] })
+        extraCount++
+        name = `Generated Team ${extraCount}`
+        newTeams.push({ name, color: GENERATOR_COLORS[(idx - baseCount) % GENERATOR_COLORS.length], area: AREA_LABEL[area] })
       }
       lane = { name, shifts: [] }
       lanes.push(lane)

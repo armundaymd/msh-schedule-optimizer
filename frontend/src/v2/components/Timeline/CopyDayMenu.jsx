@@ -51,7 +51,7 @@ export default function CopyDayMenu({ day, onCopyTo }) {
           <button
             onClick={() => apply(selected)}
             disabled={selected.length === 0}
-            className="w-full text-xs py-1 rounded bg-blue-700 hover:bg-blue-600 disabled:opacity-40 text-[var(--c-text-strong)] transition-colors mb-2"
+            className="w-full text-xs py-1 rounded bg-blue-700 hover:bg-blue-600 disabled:opacity-40 text-white transition-colors mb-2"
           >
             Copy to selected
           </button>

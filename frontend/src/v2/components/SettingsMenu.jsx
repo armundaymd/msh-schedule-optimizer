@@ -30,7 +30,7 @@ export default function SettingsMenu({ theme, onThemeChange, costModeEnabled, on
                 key={t}
                 onClick={() => onThemeChange(t)}
                 className={`flex-1 px-2 py-1 text-xs font-medium capitalize transition-colors ${
-                  theme === t ? 'bg-blue-700 text-[var(--c-text-strong)]' : 'bg-[var(--c-btn-bg)] text-[var(--c-text-muted)] hover:text-[var(--c-text-secondary)]'
+                  theme === t ? 'bg-blue-700 text-white' : 'bg-[var(--c-btn-bg)] text-[var(--c-text-muted)] hover:text-[var(--c-text-secondary)]'
                 }`}
               >
                 {t}
