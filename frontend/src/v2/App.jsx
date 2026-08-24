@@ -289,7 +289,7 @@ function App() {
     for (const group of groups) {
       const runConstraints = { ...constraints, hourBudget: remainingBudget }
       const genResult = generateSchedule({ demand, target: genTarget, day: group.anchorDay, area, patterns, constraints: runConstraints, pph })
-      const { shifts: assigned, newTeams } = assignTeams(genResult.shifts, area, reusableAreaTeams)
+      const { shifts: assigned, newTeams } = assignTeams(genResult.shifts, area, reusableAreaTeams, accumulatedCustomTeams.map(t => t.name))
       if (newTeams.length > 0) {
         accumulatedCustomTeams = [...accumulatedCustomTeams, ...newTeams]
         reusableAreaTeams = [...reusableAreaTeams, ...newTeams]

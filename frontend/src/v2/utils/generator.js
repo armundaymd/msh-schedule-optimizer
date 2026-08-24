@@ -287,7 +287,11 @@ function shiftsOverlap(a, b) {
 // creation order -- they fill lane slots ahead of minting a new "Generated
 // Team N", so a multi-group generate (e.g. weekday/Saturday/Sunday
 // templates) doesn't mint a fresh set of overflow teams per group.
-export function assignTeams(shifts, area, reusableAreaTeams = []) {
+// `allExistingNames` is every team name currently known (any area, any
+// source) purely to avoid a naming collision when minting a brand new
+// "Generated Team N" -- e.g. a name left over from an earlier generate run
+// that was never accepted/discarded, or a team the user created by hand.
+export function assignTeams(shifts, area, reusableAreaTeams = [], allExistingNames = []) {
   const namedTeams = [...(AREA_NAMED_TEAMS[area] ?? []), ...reusableAreaTeams.map(t => t.name)]
   const baseCount = (AREA_NAMED_TEAMS[area] ?? []).length
   const sorted = [...shifts].sort((a, b) => a.startMins - b.startMins)
@@ -301,8 +305,10 @@ export function assignTeams(shifts, area, reusableAreaTeams = []) {
       const idx = lanes.length
       let name = namedTeams[idx]
       if (!name) {
-        extraCount++
-        name = `Generated Team ${extraCount}`
+        do {
+          extraCount++
+          name = `Generated Team ${extraCount}`
+        } while (allExistingNames.includes(name))
         newTeams.push({ name, color: GENERATOR_COLORS[(idx - baseCount) % GENERATOR_COLORS.length], area: AREA_LABEL[area] })
       }
       lane = { name, shifts: [] }
