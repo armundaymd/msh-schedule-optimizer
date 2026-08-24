@@ -17,8 +17,13 @@ export default function GeneratorResult({ result, onAccept, onDiscard, costModeE
           <div className="text-sm font-semibold text-[var(--c-text-strong)]">✦ Generated schedule — {area}</div>
           <div className={`text-xs mt-0.5 ${totals.uncoveredHours <= 0 ? 'text-green-400' : 'text-amber-400'}`}>
             {totals.uncoveredHours <= 0
-              ? '✓ Target demand fully covered'
-              : `⚠ ${totals.uncoveredHours.toFixed(1)} patient-hours of target demand left uncovered`}
+              ? '✓ Target demand fully covered, assuming attendings reach their supervision ceiling'
+              : `⚠ ${totals.uncoveredHours.toFixed(1)} patient-hours of target demand left uncovered even at full ceiling`}
+          </div>
+          <div className="text-[11px] text-[var(--c-text-muted)] mt-0.5 max-w-xl">
+            This places attendings only, sized against their supervision ceiling (patients/hr they can be responsible for once
+            backed by residents/PAs). Until you add that coverage, the live Demand vs Capacity chart will correctly show far
+            less than this — an attending with nobody to supervise and no solo-seeing throughput has near-zero real capacity.
           </div>
         </div>
 
@@ -88,14 +93,16 @@ export default function GeneratorResult({ result, onAccept, onDiscard, costModeE
 
         {/* Coverage curves */}
         <div>
-          <div className="text-[10px] text-[var(--c-text-muted)] uppercase tracking-wide mb-1.5">Generated coverage vs target</div>
+          <div className="text-[10px] text-[var(--c-text-muted)] uppercase tracking-wide mb-1.5">
+            Assumed coverage vs target (at full ceiling, once staffed — not current live capacity)
+          </div>
           <div className="flex gap-2 overflow-x-auto">
             {groups.map(g => (
               <CoverageMiniChart
                 key={g.label}
                 label={`${g.label} (${g.days.join(', ')})`}
                 demandSeries={g.demandSeries}
-                lines={[{ key: 'coverage', name: 'Generated coverage', color: '#2dd4bf', data: g.coverageSeries }]}
+                lines={[{ key: 'coverage', name: 'Assumed coverage', color: '#2dd4bf', data: g.coverageSeries }]}
                 theme={theme}
               />
             ))}
