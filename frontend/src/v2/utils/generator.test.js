@@ -71,9 +71,14 @@ describe('generateSchedule', () => {
       patterns: [{ start: 23, length: 8 }], constraints: BASE_CONSTRAINTS, pph: PPH,
     })
     expect(result.shifts.length).toBeGreaterThan(0)
-    const s = result.shifts[0]
-    expect(s.startMins).toBe(23 * 60)
-    expect(s.endMins).toBe(31 * 60) // 23 + 8 = 31, past midnight
+    // Local search may re-center a shift around the demand block it's
+    // covering (see the peak-centering objective term) rather than leaving
+    // it at greedy's original pick, so this only checks the wraparound
+    // arithmetic itself: any shift that starts before midnight and covers
+    // hour 0 must have endMins > 1440.
+    const wrapping = result.shifts.find(s => s.startMins < 1440 && s.endMins > 1440)
+    expect(wrapping).toBeDefined()
+    expect(wrapping.endMins).toBe(wrapping.startMins + 8 * 60)
   })
 
   it('hourBudget caps total shift-hours added', () => {
@@ -165,5 +170,24 @@ describe('assignTeams', () => {
     expect(assigned.some(s => s.team === 'FastTrack')).toBe(true)
     expect(newTeams).toHaveLength(1)
     expect(newTeams[0].area).toBe('FastTrack')
+  })
+
+  it('prefers the lane with the smaller gap over the first available one', () => {
+    // Green's morning shift ends at 13:00, Red's ends at 15:00. A new
+    // shift starting at 15:00 fits in either lane without overlapping, but
+    // only Red's is adjacent (gap 0) -- picking Green instead (the
+    // first-available lane, ignoring gap size) would leave Green idle for
+    // 2 hours and an unrelated pair sharing Red's lane with a gap.
+    const shifts = [
+      { startMins: 7 * 60, endMins: 13 * 60 },  // -> Green (lane 0, shorter)
+      { startMins: 7 * 60, endMins: 15 * 60 },  // -> Red (lane 1, longer)
+      { startMins: 15 * 60, endMins: 23 * 60 }, // touches Red's end exactly
+    ]
+    const { shifts: assigned } = assignTeams(shifts, 'main', [])
+    const red = assigned.filter(s => s.team === 'Red').sort((a, b) => a.startMins - b.startMins)
+    expect(red).toHaveLength(2)
+    expect(red[1].startMins).toBe(red[0].endMins) // back-to-back, no gap
+    const green = assigned.filter(s => s.team === 'Green')
+    expect(green).toHaveLength(1) // left alone, not stretched with a gap
   })
 })

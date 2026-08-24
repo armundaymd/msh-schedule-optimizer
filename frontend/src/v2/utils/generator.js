@@ -123,12 +123,58 @@ function surplusSeries(shifts, demandSeries, c) {
   return Array.from({ length: 24 }, (_, h) => Math.max(0, capacityAt(shifts, h, c) - (demandSeries[h] ?? 0)))
 }
 
+// How far a shift's busiest hour (by raw demand, not remaining deficit --
+// a fixed fact about the day, not something that shifts during
+// construction) sits from that shift's own midpoint. A provider walking in
+// right as their busiest hour begins has no runway to pick up those
+// patients before also needing to start dispositioning them before signing
+// out; centering it gives ramp-up time before and wind-down time after.
+// Computed post-construction (local search only) rather than as a greedy
+// tiebreak: a candidate window that structurally straddles the day's peak
+// looks "centered" on every construction step regardless of how many times
+// it's already been picked, which just reintroduces needless clustering.
+function shiftCenteringPenalty(shift, demandSeries) {
+  const startHour = shift.startMins / 60
+  const length = (shift.endMins - shift.startMins) / 60
+  let peakOffset = 0, peakDemand = -Infinity
+  for (let i = 0; i < length; i++) {
+    const h = Math.floor(startHour + i) % 24
+    const d = demandSeries[h] ?? 0
+    if (d > peakDemand) { peakDemand = d; peakOffset = i }
+  }
+  return Math.abs((peakOffset + 0.5) - length / 2)
+}
+
+// Returns [primary, surplus, centering] instead of one scalar: cost/coverage
+// must always dominate, surplus must always dominate centering, and folding
+// all three into one weighted sum lets a strong-enough centering gain
+// outbid a surplus improvement (that happened in testing -- it undid the
+// staggered-start fix above by drifting a shift back to a clustered
+// position for slightly better centering). isBetterObjective below compares
+// these lexicographically instead, so a lower-priority term can only ever
+// break a tie left by the ones before it.
 function objectiveValue(shifts, demandSeries, c, costPerHour) {
   const laborCost = shifts.reduce((sum, s) => sum + (s.endMins - s.startMins) / 60 * costPerHour, 0)
   const uncovered = uncoveredSeries(shifts, demandSeries, c).reduce((a, b) => a + b, 0)
-  const surplus = surplusSeries(shifts, demandSeries, c).reduce((a, b) => a + b, 0)
-  const surplusWeight = costPerHour * 0.01
-  return laborCost + M_UNCOVERED_PENALTY * uncovered + surplusWeight * surplus
+  // Sum of SQUARES, not a plain sum: two configurations spending the same
+  // total surplus hours can tie exactly on a plain sum regardless of
+  // whether that surplus is spread thin across the day or piled onto one
+  // hour (confirmed in testing -- a staggered vs. clustered pair of shifts
+  // came out identical on total surplus). Squaring penalizes a single
+  // concentrated spike more than the same total spread evenly, which is
+  // what "don't overbook one hour just to reach a later peak" actually
+  // means.
+  const surplus = surplusSeries(shifts, demandSeries, c).reduce((sum, v) => sum + v * v, 0)
+  const centering = shifts.reduce((sum, s) => sum + shiftCenteringPenalty(s, demandSeries), 0)
+  return [laborCost + M_UNCOVERED_PENALTY * uncovered, surplus, centering]
+}
+
+function isBetterObjective(a, b) {
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] < b[i] - 1e-9) return true
+    if (a[i] > b[i] + 1e-9) return false
+  }
+  return false
 }
 
 // Greedy: repeatedly add whichever pattern closes the most weighted deficit
@@ -151,6 +197,13 @@ function objectiveValue(shifts, demandSeries, c, costPerHour) {
 // tie is broken toward the LATER start hour, so the first commitments lean
 // toward covering the middle of the day rather than exhausting the
 // earliest pattern first and forcing a second one at the same hour later.
+// (A "center the peak within the shift" tiebreak was tried here instead,
+// but a window that structurally straddles the demand peak looks
+// well-centered on every iteration regardless of how many times it's
+// already been picked -- it reintroduced the exact clustering this
+// tiebreak chain exists to prevent. Peak-centering is applied later, as a
+// small term in local search's objective instead, so it polishes the
+// final shift placements without fighting construction order.)
 function greedyCover(shifts, demandSeries, patterns, constraints, c, day, costPerHour, hourBudget) {
   let hoursUsed = shifts.reduce((sum, s) => sum + (s.endMins - s.startMins) / 60, 0)
   let guard = 0
@@ -256,7 +309,7 @@ function localSearch(shifts, demandSeries, allowedLengths, constraints, c, costP
         if (iterations >= LOCAL_SEARCH_ITERATION_CAP) break
         if (violatesConstraints(cand, constraints)) continue
         const obj = objectiveValue(cand, demandSeries, c, costPerHour)
-        if (obj < currentObj - 1e-9) {
+        if (isBetterObjective(obj, currentObj)) {
           current = cand
           currentObj = obj
           improved = true
@@ -288,7 +341,7 @@ export function generateSchedule({ demand, target, day, area, patterns, constrai
   shifts = localSearch(shifts, demandSeries, allowedLengths, constraints, c, costPerHour)
 
   const uncovered = uncoveredSeries(shifts, demandSeries, c).map(v => parseFloat(v.toFixed(3)))
-  const objective = objectiveValue(shifts, demandSeries, c, costPerHour)
+  const objective = objectiveValue(shifts, demandSeries, c, costPerHour)[0]
 
   const patternCounts = {}
   for (const s of shifts) {
@@ -337,7 +390,23 @@ export function assignTeams(shifts, area, reusableAreaTeams = [], allExistingNam
   let extraCount = reusableAreaTeams.length
 
   for (const shift of sorted) {
-    let lane = lanes.find(l => !l.shifts.some(s => shiftsOverlap(s, shift)))
+    // Among lanes that can take this shift without overlapping, prefer the
+    // one whose most recent shift ends closest to this one's start --
+    // ideally touching (gap 0) -- so the same team's shifts land back to
+    // back for a handoff instead of an unrelated pair sharing a lane with
+    // an idle gap between them just because both happened to fit somewhere.
+    const openLanes = lanes.filter(l => !l.shifts.some(s => shiftsOverlap(s, shift)))
+    let lane = null
+    let bestGap = Infinity
+    for (const l of openLanes) {
+      const lastEnd = Math.max(...l.shifts.map(s => s.endMins))
+      const gap = shift.startMins - lastEnd
+      if (gap >= 0 && gap < bestGap) { lane = l; bestGap = gap }
+    }
+    // Overnight-spanning shifts can make "gap" come out negative even
+    // though shiftsOverlap() correctly found no real conflict -- fall back
+    // to the first open lane rather than minting an unneeded new team.
+    if (!lane) lane = openLanes[0]
     if (!lane) {
       const idx = lanes.length
       let name = namedTeams[idx]
