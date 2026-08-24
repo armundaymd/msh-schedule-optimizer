@@ -36,9 +36,9 @@ function attendingHours(shifts) {
 
 function MetricCard({ label, value, valueColor, title }) {
   return (
-    <div className="bg-slate-900/60 rounded px-3 py-1.5 min-w-[90px]" title={title}>
-      <div className="text-[10px] text-slate-500 uppercase tracking-wide leading-tight">{label}</div>
-      <div className="text-sm font-semibold mt-0.5" style={{ color: valueColor ?? '#e2e8f0' }}>
+    <div className="bg-[var(--c-bg-tile)] rounded px-3 py-1.5 min-w-[90px]" title={title}>
+      <div className="text-[10px] text-[var(--c-text-muted)] uppercase tracking-wide leading-tight">{label}</div>
+      <div className="text-sm font-semibold mt-0.5" style={{ color: valueColor ?? 'var(--c-text-strong)' }}>
         {value}
       </div>
     </div>
@@ -83,7 +83,7 @@ export default function SummaryStatsBar({ shifts, baselineShifts, demand, day, p
   const weekCostDelta = weekCost - weekCostBase
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2 bg-[#131620] border-b border-slate-800 shrink-0 flex-wrap">
+    <div className="flex items-center gap-3 px-4 py-2 bg-[var(--c-bg-panel)] border-b border-[var(--c-border-subtle)] shrink-0 flex-wrap">
       {/* Today metrics */}
       <MetricCard label={`${day.slice(0,3)} attending hrs`} value={stats.totalHours.toFixed(1)} />
       <MetricCard
@@ -120,7 +120,7 @@ export default function SummaryStatsBar({ shifts, baselineShifts, demand, day, p
 
       {weekBreakdown && <>
         {/* Divider */}
-        <div className="w-px self-stretch bg-slate-700 mx-1" />
+        <div className="w-px self-stretch bg-[var(--c-btn-bg)] mx-1" />
 
         {/* Week aggregate cards */}
         <MetricCard label="Week attending hrs" value={weekTotal.toFixed(1)} />
@@ -140,7 +140,7 @@ export default function SummaryStatsBar({ shifts, baselineShifts, demand, day, p
         )}
 
         {/* Divider */}
-        <div className="w-px self-stretch bg-slate-700 mx-1" />
+        <div className="w-px self-stretch bg-[var(--c-btn-bg)] mx-1" />
 
         {/* Per-day breakdown */}
         {weekBreakdown.map(({ day: d, proposed, delta }) => {
@@ -153,8 +153,8 @@ export default function SummaryStatsBar({ shifts, baselineShifts, demand, day, p
               className="flex flex-col items-center px-2 py-1 rounded"
               style={{ minWidth: 44, background: isActive ? 'rgba(96,165,250,0.08)' : 'transparent', borderBottom: isActive ? '2px solid #60a5fa' : '2px solid transparent' }}
             >
-              <div className="text-[9px] text-slate-500 uppercase tracking-wide leading-tight">{d.slice(0,3)}</div>
-              <div className="text-xs font-semibold text-slate-200 mt-0.5">{proposed.toFixed(0)}</div>
+              <div className="text-[9px] text-[var(--c-text-muted)] uppercase tracking-wide leading-tight">{d.slice(0,3)}</div>
+              <div className="text-xs font-semibold text-[var(--c-text-secondary)] mt-0.5">{proposed.toFixed(0)}</div>
               <div className="text-[9px] font-medium" style={{ color: deltaColor }}>{s}{delta.toFixed(0)}</div>
             </div>
           )

@@ -205,34 +205,34 @@ export default function Timeline({
   }
 
   return (
-    <div ref={containerRef} className="flex flex-col bg-[#0f1117]" onClick={() => setSelectedId(null)}>
+    <div ref={containerRef} className="h-full flex flex-col bg-[var(--c-bg-app)]" onClick={() => setSelectedId(null)}>
       {/* Toolbar */}
-      <div className="flex items-center justify-between gap-2 px-3 shrink-0 border-b border-slate-800" style={{ height: 32 }}>
+      <div className="flex items-center justify-between gap-2 px-3 shrink-0 border-b border-[var(--c-border-subtle)]" style={{ height: 32 }}>
         <CopyDayMenu day={day} onCopyTo={onCopyDayTo} />
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-slate-400 select-none">{showAllStaff ? 'All staff' : 'Attendings only'}</span>
+          <span className="text-[11px] text-[var(--c-text-muted)] select-none">{showAllStaff ? 'All staff' : 'Attendings only'}</span>
           <PillToggle checked={showAllStaff} onChange={setShowAllStaff} />
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <div style={{ width: ROW_HEADER_W + totalW }}>
-          {/* Team rows scroll independently, capped so the coverage ribbon
-              and demand chart below are always reachable without paging
-              through the whole team list (rather than the page growing
-              unbounded with however many teams/lanes are shown). */}
-          <div style={{ maxHeight: '44vh', overflowY: 'auto' }}>
+      <div className="flex-1 min-h-0 overflow-x-auto flex flex-col">
+        <div style={{ width: ROW_HEADER_W + totalW }} className="flex-1 min-h-0 flex flex-col">
+          {/* Team rows scroll independently within the column's available
+              height, so the coverage ribbon and demand chart (in the
+              sibling column) are always visible without paging through the
+              whole team list. */}
+          <div className="flex-1 min-h-0" style={{ overflowY: 'auto' }}>
             {/* Hour axis — shared x scale with the chart below. Sticky so it
                 stays visible while scrolling through team rows. */}
             <div
-              className="flex border-b border-slate-800 sticky top-0 z-10 bg-[#0f1117]"
+              className="flex border-b border-[var(--c-border-subtle)] sticky top-0 z-10 bg-[var(--c-bg-app)]"
               style={{ height: HEADER_H }}
               onMouseMove={e => { const h = hourFromClientX(e.currentTarget, e.clientX); if (h != null) onHoverHour?.(h) }}
               onMouseLeave={() => onHoverHour?.(null)}
             >
               <div style={{ width: ROW_HEADER_W }} className="shrink-0" />
               {Array.from({ length: 24 }, (_, h) => (
-                <div key={h} style={{ width: hourPx }} className="text-center text-[10px] text-slate-500 leading-[28px]">
+                <div key={h} style={{ width: hourPx }} className="text-center text-[10px] text-[var(--c-text-muted)] leading-[28px]">
                   {String(h).padStart(2, '0')}
                 </div>
               ))}
@@ -265,33 +265,33 @@ export default function Timeline({
                 ))}
 
                 {/* Add team */}
-                <div className="flex items-center border-b border-slate-800" style={{ height: 28 }}>
+                <div className="flex items-center border-b border-[var(--c-border-subtle)]" style={{ height: 28 }}>
                   <div style={{ width: ROW_HEADER_W }} className="shrink-0 relative px-2" ref={addRef}>
-                    <button onClick={() => setAddOpen(v => !v)} className="text-slate-500 hover:text-slate-200 text-sm leading-none transition-colors" title="Add team">
+                    <button onClick={() => setAddOpen(v => !v)} className="text-[var(--c-text-muted)] hover:text-[var(--c-text-secondary)] text-sm leading-none transition-colors" title="Add team">
                       ＋ Add team
                     </button>
                     {addOpen && (
-                      <div className="absolute left-0 top-7 z-50 bg-slate-800 border border-slate-600 rounded shadow-xl p-3 w-56">
-                        <div className="text-xs text-slate-400 mb-1">Team name</div>
+                      <div className="absolute left-0 top-7 z-50 bg-[var(--c-bg-surface)] border border-[var(--c-border-strong)] rounded shadow-xl p-3 w-56">
+                        <div className="text-xs text-[var(--c-text-muted)] mb-1">Team name</div>
                         <input
                           autoFocus
                           value={newName}
                           onChange={e => setNewName(e.target.value)}
                           onKeyDown={e => e.key === 'Enter' && handleAddConfirm()}
                           placeholder="e.g. Triage"
-                          className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-slate-100 outline-none focus:border-blue-500 mb-2"
+                          className="w-full bg-[var(--c-btn-bg)] border border-[var(--c-border-strong)] rounded px-2 py-1 text-xs text-[var(--c-text-strong)] outline-none focus:border-blue-500 mb-2"
                         />
-                        <div className="text-xs text-slate-400 mb-1">Color</div>
+                        <div className="text-xs text-[var(--c-text-muted)] mb-1">Color</div>
                         <div className="flex gap-1 flex-wrap mb-2">
                           {PRESET_COLORS.map(c => (
                             <button key={c} onClick={() => setNewColor(c)} style={{ background: c, width: 20, height: 20, borderRadius: 3, border: newColor === c ? '2px solid white' : '2px solid transparent' }} />
                           ))}
                         </div>
-                        <div className="text-xs text-slate-400 mb-1">PPH area</div>
-                        <select value={newArea} onChange={e => setNewArea(e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-slate-100 outline-none mb-2">
+                        <div className="text-xs text-[var(--c-text-muted)] mb-1">PPH area</div>
+                        <select value={newArea} onChange={e => setNewArea(e.target.value)} className="w-full bg-[var(--c-btn-bg)] border border-[var(--c-border-strong)] rounded px-2 py-1 text-xs text-[var(--c-text-strong)] outline-none mb-2">
                           {AREAS.map(a => <option key={a} value={a}>{a}</option>)}
                         </select>
-                        <button onClick={handleAddConfirm} className="w-full text-xs py-1 rounded bg-blue-700 hover:bg-blue-600 text-white transition-colors">
+                        <button onClick={handleAddConfirm} className="w-full text-xs py-1 rounded bg-blue-700 hover:bg-blue-600 text-[var(--c-text-strong)] transition-colors">
                           Add team
                         </button>
                       </div>
@@ -302,7 +302,7 @@ export default function Timeline({
 
               <DragOverlay dropAnimation={null}>
                 {activeDrag && activeDrag.mode === 'move' && (
-                  <div style={{ background: activeDrag.color, borderRadius: 3, padding: '4px 6px', width: 140, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', opacity: 0.9, pointerEvents: 'none' }} className="text-white">
+                  <div style={{ background: activeDrag.color, borderRadius: 3, padding: '4px 6px', width: 140, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', opacity: 0.9, pointerEvents: 'none' }} className="text-[var(--c-text-strong)]">
                     <div className="text-[10px] font-semibold truncate">
                       {activeDrag.shift.role_type}{activeDrag.shift.role_detail ? ` — ${activeDrag.shift.role_detail}` : ''}
                     </div>
@@ -321,10 +321,12 @@ export default function Timeline({
           {/* Coverage ribbon, live during drag — always visible, outside the
               scrollable rows region above. */}
           {demandSeries && (
-            <CoverageRibbon hourPx={hourPx} rowHeaderW={ROW_HEADER_W} values={ribbonValues} hoverHour={hoverHour} />
+            <div className="shrink-0">
+              <CoverageRibbon hourPx={hourPx} rowHeaderW={ROW_HEADER_W} values={ribbonValues} hoverHour={hoverHour} />
+            </div>
           )}
           {dragPreview && dragReadout && (
-            <div className="text-[10px] text-slate-400 px-2 py-1" style={{ marginLeft: ROW_HEADER_W }}>
+            <div className="shrink-0 text-[10px] text-[var(--c-text-muted)] px-2 py-1" style={{ marginLeft: ROW_HEADER_W }}>
               resolves {dragReadout.resolved} deficit hour{dragReadout.resolved === 1 ? '' : 's'}, creates {dragReadout.created}
             </div>
           )}

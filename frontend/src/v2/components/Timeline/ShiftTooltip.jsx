@@ -34,7 +34,7 @@ function TimeField({ label, value, onCommit }) {
   }
 
   return (
-    <label className="flex items-center gap-1 text-[11px] text-slate-400">
+    <label className="flex items-center gap-1 text-[11px] text-[var(--c-text-muted)]">
       {label}
       <input
         value={text}
@@ -44,7 +44,7 @@ function TimeField({ label, value, onCommit }) {
         onKeyDown={e => { if (e.key === 'Enter') e.target.blur() }}
         onMouseDown={e => e.stopPropagation()}
         style={{ pointerEvents: 'auto' }}
-        className="w-12 bg-slate-800 border border-slate-600 rounded px-1 py-0.5 text-slate-100 text-center"
+        className="w-12 bg-[var(--c-bg-surface)] border border-[var(--c-border-strong)] rounded px-1 py-0.5 text-[var(--c-text-strong)] text-center"
       />
     </label>
   )
@@ -93,7 +93,7 @@ export default function ShiftTooltip({ shift, allDayShifts, hoverHour, anchorX, 
     <div
       ref={ref}
       style={{ position: 'fixed', left: pos?.left ?? anchorX, top: pos?.top ?? anchorY, visibility: pos ? 'visible' : 'hidden', zIndex: 1000 }}
-      className="bg-slate-900 border border-slate-600 rounded shadow-xl p-2 text-xs text-slate-200 w-48"
+      className="bg-[var(--c-bg-panel)] border border-[var(--c-border-strong)] rounded shadow-xl p-2 text-xs text-[var(--c-text-secondary)] w-48"
       onMouseDown={e => e.stopPropagation()}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
@@ -105,7 +105,7 @@ export default function ShiftTooltip({ shift, allDayShifts, hoverHour, anchorX, 
           onMouseDown={e => e.stopPropagation()}
           onChange={e => onUpdate(shift.id, { role_detail: e.target.value, resident_level: e.target.value })}
           style={{ pointerEvents: 'auto' }}
-          className="mb-2 w-full bg-slate-800 border border-slate-600 rounded px-1 py-0.5 text-slate-200"
+          className="mb-2 w-full bg-[var(--c-bg-surface)] border border-[var(--c-border-strong)] rounded px-1 py-0.5 text-[var(--c-text-secondary)]"
         >
           {RESIDENT_LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
         </select>
@@ -113,17 +113,17 @@ export default function ShiftTooltip({ shift, allDayShifts, hoverHour, anchorX, 
       {onUpdate ? (
         <div className="flex items-center gap-1.5 mb-2" style={{ pointerEvents: 'auto' }}>
           <TimeField label="From" value={minsToDisplay(shift.startMins)} onCommit={commitStart} />
-          <span className="text-slate-600">→</span>
+          <span className="text-[var(--c-text-faint)]">→</span>
           <TimeField label="" value={minsToDisplay(shift.endMins)} onCommit={commitEnd} />
         </div>
       ) : (
-        <div className="text-slate-400 mb-2">{minsToDisplay(shift.startMins)} → {minsToDisplay(shift.endMins)}</div>
+        <div className="text-[var(--c-text-muted)] mb-2">{minsToDisplay(shift.startMins)} → {minsToDisplay(shift.endMins)}</div>
       )}
-      <div className="border-t border-slate-700 pt-1 space-y-0.5">
+      <div className="border-t border-[var(--c-border)] pt-1 space-y-0.5">
         <div>At {String(hoverHour).padStart(2,'0')}:00</div>
-        <div>Attending: <span className="text-white">{attending}</span></div>
-        <div>PA: <span className="text-white">{pa}</span></div>
-        <div>Resident: <span className="text-white">{resident}</span></div>
+        <div>Attending: <span className="text-[var(--c-text-strong)]">{attending}</span></div>
+        <div>PA: <span className="text-[var(--c-text-strong)]">{pa}</span></div>
+        <div>Resident: <span className="text-[var(--c-text-strong)]">{resident}</span></div>
       </div>
     </div>,
     document.body,

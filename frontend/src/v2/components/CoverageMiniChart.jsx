@@ -10,21 +10,25 @@ import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip } from '
 // OptimizeModal (a "before"/"after" pair) -- `lines` is a list of
 // { key, name, color, dashed?, data } capacity series to overlay on the
 // same target-demand bars.
-export default function CoverageMiniChart({ label, demandSeries, lines }) {
+export default function CoverageMiniChart({ label, demandSeries, lines, theme = 'dark' }) {
   const data = Array.from({ length: 24 }, (_, h) => {
     const row = { hour: h, demand: demandSeries[h] ?? 0 }
     for (const line of lines) row[line.key] = parseFloat((line.data[h] ?? 0).toFixed(2))
     return row
   })
+  const gridColor = theme === 'light' ? '#e2e8f0' : '#1e293b'
+  const axisColor = '#64748b'
+  const tooltipBg = theme === 'light' ? '#ffffff' : '#0f172a'
+  const tooltipBorder = theme === 'light' ? '#cbd5e1' : '#334155'
   return (
-    <div className="bg-slate-950/40 rounded p-2">
-      {label && <div className="text-[11px] text-slate-400 mb-1">{label}</div>}
+    <div className="bg-[var(--c-bg-deep-tile)] rounded p-2">
+      {label && <div className="text-[11px] text-[var(--c-text-muted)] mb-1">{label}</div>}
       <ComposedChart width={280} height={110} data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-        <XAxis dataKey="hour" tick={{ fontSize: 9, fill: '#64748b' }} tickFormatter={h => `${h}h`} interval={5} />
-        <YAxis tick={{ fontSize: 9, fill: '#64748b' }} width={24} />
+        <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+        <XAxis dataKey="hour" tick={{ fontSize: 9, fill: axisColor }} tickFormatter={h => `${h}h`} interval={5} />
+        <YAxis tick={{ fontSize: 9, fill: axisColor }} width={24} />
         <Tooltip
-          contentStyle={{ background: '#0f172a', border: '1px solid #334155', fontSize: 11 }}
+          contentStyle={{ background: tooltipBg, border: `1px solid ${tooltipBorder}`, fontSize: 11 }}
           labelFormatter={h => `${String(h).padStart(2, '0')}:00`}
         />
         <Bar dataKey="demand" name="Target demand" fill="#38bdf8" opacity={0.45} barSize={6} />

@@ -5,3 +5,41 @@
 * { box-sizing: border-box; }
 body { margin: 0; font-family: system-ui, sans-serif; background: #0f1117; color: #e2e8f0; }
 #root { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* v2 theme tokens. Scoped to /v2's own root element (data-theme attribute),
+   never to :root/html, so /legacy's hardcoded dark styling is untouched. */
+[data-theme="dark"] {
+  --c-bg-app: #0f1117;
+  --c-bg-panel: #0f172a;
+  --c-bg-surface: #1e293b;
+  --c-bg-surface-hover: rgba(30, 41, 59, 0.6);
+  --c-bg-tile: rgba(15, 23, 42, 0.6);
+  --c-bg-deep-tile: rgba(2, 6, 23, 0.4);
+  --c-border: #334155;
+  --c-border-subtle: #1e293b;
+  --c-border-strong: #475569;
+  --c-text-strong: #f1f5f9;
+  --c-text-secondary: #cbd5e1;
+  --c-text-muted: #94a3b8;
+  --c-text-faint: #475569;
+  --c-btn-bg: #334155;
+  --c-btn-bg-hover: #475569;
+}
+
+[data-theme="light"] {
+  --c-bg-app: #f1f5f9;
+  --c-bg-panel: #ffffff;
+  --c-bg-surface: #f1f5f9;
+  --c-bg-surface-hover: rgba(226, 232, 240, 0.8);
+  --c-bg-tile: rgba(241, 245, 249, 0.9);
+  --c-bg-deep-tile: rgba(226, 232, 240, 0.6);
+  --c-border: #cbd5e1;
+  --c-border-subtle: #e2e8f0;
+  --c-border-strong: #94a3b8;
+  --c-text-strong: #0f172a;
+  --c-text-secondary: #334155;
+  --c-text-muted: #64748b;
+  --c-text-faint: #94a3b8;
+  --c-btn-bg: #e2e8f0;
+  --c-btn-bg-hover: #cbd5e1;
+}

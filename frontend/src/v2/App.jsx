@@ -83,6 +83,13 @@ function App() {
   const [hoverHour, setHoverHour] = useState(null)
   const [hiddenTeams, setHiddenTeams] = useState(() => new Set())
   const [scenariosOpen, setScenariosOpen] = useState(false)
+  const [theme, setTheme] = useState(() => {
+    try { return localStorage.getItem('v2-theme') ?? 'dark' } catch { return 'dark' }
+  })
+
+  useEffect(() => {
+    try { localStorage.setItem('v2-theme', theme) } catch { /* private browsing, storage disabled */ }
+  }, [theme])
   const [removeTeamConfirm, setRemoveTeamConfirm] = useState(null) // team name | null
 
   const activeArea = AREA_KEY[activeTeam] ?? 'main'
@@ -399,7 +406,7 @@ function App() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen text-slate-400 text-lg">
+      <div className="flex items-center justify-center h-screen text-[var(--c-text-muted)] text-lg">
         Loading…
       </div>
     )
@@ -423,8 +430,8 @@ function App() {
   })
 
   return (
-    <>
-    <div className="flex flex-col h-screen overflow-hidden bg-[#0f1117]">
+    <div data-theme={theme}>
+    <div className="flex flex-col h-screen overflow-hidden bg-[var(--c-bg-app)]">
       <TopBar
         summary={summary}
         onRefresh={handleRefresh}
@@ -454,6 +461,10 @@ function App() {
         activeTeam={activeTeam}
         onOpenGenerator={() => setGeneratorOpen(true)}
         onOpenScenarios={() => setScenariosOpen(true)}
+        theme={theme}
+        onThemeChange={setTheme}
+        costModeEnabled={costModeEnabled}
+        onToggleCostMode={setCostModeEnabled}
       />
       <DowTabs days={DAYS} active={activeDow} onChange={setActiveDow} />
       <SummaryStatsBar
@@ -469,62 +480,67 @@ function App() {
         costModeEnabled={costModeEnabled}
         target={target}
       />
-      <div className="flex-1 overflow-y-auto min-h-0">
-        <Timeline
-          day={activeDow}
-          shifts={shifts}
-          onAdd={(team, roleType, level) => {
-            commandStack.pushCommand('day', [activeDow], 'Add shift')
-            schedState.addShift(activeDow, team, roleType, level)
-          }}
-          onDelete={(id) => {
-            commandStack.pushCommand('day', [activeDow], 'Delete shift')
-            schedState.deleteShift(activeDow, id)
-          }}
-          onUpdate={(id, patch) => {
-            commandStack.pushCommand('day', [activeDow], 'Edit shift')
-            schedState.updateShift(activeDow, id, patch)
-          }}
-          customTeams={customTeams}
-          onAddCustomTeam={handleAddCustomTeam}
-          onRemoveCustomTeam={setRemoveTeamConfirm}
-          demandSeries={demandSeries}
-          pph={pph}
-          area={activeArea}
-          hoverHour={hoverHour}
-          onHoverHour={setHoverHour}
-          hiddenTeams={hiddenTeams}
-          onToggleTeamHidden={handleToggleTeamHidden}
-          onCopyDayTo={handleCopyDayTo}
-        />
-        <PphChart
-          day={activeDow}
-          demand={demand}
-          shifts={shifts}
-          baselineShifts={baselineShifts}
-          pph={pph}
-          onPphChange={handlePphChange}
-          scenarios={scenarios}
-          comparisonScenarioId={comparisonScenarioId}
-          onSelectComparison={setComparisonScenarioId}
-          onDeleteScenario={handleDeleteScenario}
-          onResetToScenario={handleResetToScenario}
-          customTeams={customTeams}
-          costRates={costRates}
-          costModeEnabled={costModeEnabled}
-          onCostRateChange={handleCostRateChange}
-          onToggleCostMode={setCostModeEnabled}
-          activeTeam={activeTeam}
-          onActiveTeamChange={setActiveTeam}
-          target={target}
-          onTargetChange={setTarget}
-          hoverHour={hoverHour}
-          onHoverHour={setHoverHour}
-        />
+      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
+        <div className="w-full lg:w-3/5 overflow-hidden border-b lg:border-b-0 lg:border-r border-[var(--c-border)] min-h-0">
+          <Timeline
+            day={activeDow}
+            shifts={shifts}
+            onAdd={(team, roleType, level) => {
+              commandStack.pushCommand('day', [activeDow], 'Add shift')
+              schedState.addShift(activeDow, team, roleType, level)
+            }}
+            onDelete={(id) => {
+              commandStack.pushCommand('day', [activeDow], 'Delete shift')
+              schedState.deleteShift(activeDow, id)
+            }}
+            onUpdate={(id, patch) => {
+              commandStack.pushCommand('day', [activeDow], 'Edit shift')
+              schedState.updateShift(activeDow, id, patch)
+            }}
+            customTeams={customTeams}
+            onAddCustomTeam={handleAddCustomTeam}
+            onRemoveCustomTeam={setRemoveTeamConfirm}
+            demandSeries={demandSeries}
+            pph={pph}
+            area={activeArea}
+            hoverHour={hoverHour}
+            onHoverHour={setHoverHour}
+            hiddenTeams={hiddenTeams}
+            onToggleTeamHidden={handleToggleTeamHidden}
+            onCopyDayTo={handleCopyDayTo}
+          />
+        </div>
+        <div className="w-full lg:w-2/5 overflow-y-auto min-h-0">
+          <PphChart
+            day={activeDow}
+            demand={demand}
+            shifts={shifts}
+            baselineShifts={baselineShifts}
+            pph={pph}
+            onPphChange={handlePphChange}
+            scenarios={scenarios}
+            comparisonScenarioId={comparisonScenarioId}
+            onSelectComparison={setComparisonScenarioId}
+            onDeleteScenario={handleDeleteScenario}
+            onResetToScenario={handleResetToScenario}
+            customTeams={customTeams}
+            costRates={costRates}
+            costModeEnabled={costModeEnabled}
+            onCostRateChange={handleCostRateChange}
+            activeTeam={activeTeam}
+            onActiveTeamChange={setActiveTeam}
+            target={target}
+            onTargetChange={setTarget}
+            hoverHour={hoverHour}
+            onHoverHour={setHoverHour}
+            theme={theme}
+          />
+        </div>
       </div>
     </div>
 
     <OptimizeModal
+      theme={theme}
       result={optimizeResult}
       onAccept={handleAcceptOptimize}
       onDiscard={handleDiscardOptimize}
@@ -540,6 +556,7 @@ function App() {
       onResetToScenario={handleResetToScenario}
       currentShiftsByDay={Object.fromEntries(DAYS.map(d => [d, schedState.getShiftsForDay(d)]))}
       costRates={costRates}
+      costModeEnabled={costModeEnabled}
     />
 
     {generatorOpen && (
@@ -555,7 +572,7 @@ function App() {
 
     {generating && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-        <div className="text-slate-300 text-sm">✦ Generating…</div>
+        <div className="text-[var(--c-text-secondary)] text-sm">✦ Generating…</div>
       </div>
     )}
 
@@ -563,6 +580,8 @@ function App() {
       result={generatorResult}
       onAccept={handleAcceptGenerate}
       onDiscard={handleDiscardGenerate}
+      costModeEnabled={costModeEnabled}
+      theme={theme}
     />
 
     {removeTeamConfirm && (
@@ -576,11 +595,11 @@ function App() {
     )}
 
     {toast && (
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 border border-green-600 rounded-lg px-4 py-2 text-sm text-green-300 shadow-xl z-50 pointer-events-none whitespace-nowrap">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[var(--c-bg-surface)] border border-green-600 rounded-lg px-4 py-2 text-sm text-green-300 shadow-xl z-50 pointer-events-none whitespace-nowrap">
         {toast}
       </div>
     )}
-    </>
+    </div>
   )
 }
 

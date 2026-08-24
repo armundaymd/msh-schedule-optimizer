@@ -12,8 +12,8 @@ function colorFor(v) {
 // schedule, so dragging isn't blind to its own effect on coverage.
 export default function CoverageRibbon({ hourPx, rowHeaderW, values, hoverHour }) {
   return (
-    <div className="flex border-b border-slate-800">
-      <div style={{ width: rowHeaderW }} className="shrink-0 flex items-center px-2 text-[10px] text-slate-500 uppercase tracking-wide">
+    <div className="flex border-b border-[var(--c-border-subtle)]">
+      <div style={{ width: rowHeaderW }} className="shrink-0 flex items-center px-2 text-[10px] text-[var(--c-text-muted)] uppercase tracking-wide">
         Coverage
       </div>
       <div className="relative flex" style={{ width: hourPx * 24, height: 14 }}>

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import PphSliders from './PphSliders'
 import CapacityChart from './CapacityChart'
-import PillToggle from '../../../shared/components/PillToggle'
 import { fetchDemandCI, fetchValidation } from '../../../shared/api'
 import { hasPercentiles } from '../../../shared/demandSeries'
 import { scenarioPayloadToSnapshot } from '../../../shared/scenarioPayload'
@@ -14,9 +13,9 @@ export default function PphChart({
   day, demand, shifts, baselineShifts, pph, onPphChange,
   scenarios, comparisonScenarioId, onSelectComparison, onDeleteScenario, onResetToScenario,
   customTeams,
-  costRates, costModeEnabled, onCostRateChange, onToggleCostMode,
+  costRates, costModeEnabled, onCostRateChange,
   activeTeam, onActiveTeamChange, target, onTargetChange,
-  hoverHour, onHoverHour,
+  hoverHour, onHoverHour, theme,
 }) {
   const [demandCI, setDemandCI]         = useState(null)
   const [empiricalPph, setEmpiricalPph] = useState(null)
@@ -45,18 +44,18 @@ export default function PphChart({
     : null
 
   return (
-    <div className="flex flex-col h-full bg-[#0f1117]">
+    <div className="flex flex-col h-full bg-[var(--c-bg-app)]">
 
       {/* Title + ⓘ */}
-      <div className="px-3 py-2 text-xs font-semibold text-slate-400 border-b border-slate-700 shrink-0 flex items-center gap-1.5">
+      <div className="px-3 py-2 text-xs font-semibold text-[var(--c-text-muted)] border-b border-[var(--c-border)] shrink-0 flex items-center gap-1.5">
         Demand vs Capacity — {day}
         {ciTitle && (
-          <span title={ciTitle} className="text-slate-600 cursor-help select-none" style={{ fontSize: 11 }}>ⓘ</span>
+          <span title={ciTitle} className="text-[var(--c-text-faint)] cursor-help select-none" style={{ fontSize: 11 }}>ⓘ</span>
         )}
       </div>
 
       {/* Team-type tabs */}
-      <div className="flex items-center justify-between border-b border-slate-700 shrink-0 pr-2">
+      <div className="flex items-center justify-between border-b border-[var(--c-border)] shrink-0 pr-2">
         <div className="flex">
           {TEAM_VIEWS.map(t => (
             <button
@@ -64,8 +63,8 @@ export default function PphChart({
               onClick={() => onActiveTeamChange?.(t)}
               className={`px-4 py-1.5 text-xs font-medium transition-colors ${
                 activeTeam === t
-                  ? 'text-blue-300 border-b-2 border-blue-500 bg-slate-800/40'
-                  : 'text-slate-500 hover:text-slate-300'
+                  ? 'text-blue-300 border-b-2 border-blue-500 bg-[var(--c-bg-surface-hover)]'
+                  : 'text-[var(--c-text-muted)] hover:text-[var(--c-text-secondary)]'
               }`}
             >
               {t}
@@ -74,7 +73,7 @@ export default function PphChart({
         </div>
 
         {/* Demand target: mean, or a percentile once the pipeline has computed one */}
-        <div className="flex rounded overflow-hidden border border-slate-700">
+        <div className="flex rounded overflow-hidden border border-[var(--c-border)]">
           {TARGETS.map(t => {
             const disabled = t !== 'mean' && !percentilesAvailable
             return (
@@ -85,10 +84,10 @@ export default function PphChart({
                 title={disabled ? 'Percentile demand needs a pipeline refresh with raw data' : undefined}
                 className={`px-2 py-1 text-[10px] font-medium transition-colors ${
                   target === t
-                    ? 'bg-blue-700 text-white'
+                    ? 'bg-blue-700 text-[var(--c-text-strong)]'
                     : disabled
-                      ? 'bg-slate-900 text-slate-700 cursor-not-allowed'
-                      : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                      ? 'bg-[var(--c-bg-panel)] text-[var(--c-text-faint)] cursor-not-allowed'
+                      : 'bg-[var(--c-bg-surface)] text-[var(--c-text-muted)] hover:text-[var(--c-text-secondary)]'
                 }`}
               >
                 {TARGET_LABEL[t]}
@@ -101,7 +100,7 @@ export default function PphChart({
       <PphSliders pph={pph} onChange={onPphChange} empiricalPph={empiricalPph} activeTeam={activeTeam} />
 
       {/* Bottleneck dot legend */}
-      <div className="flex items-center gap-3 px-3 pt-1 text-[10px] text-slate-500">
+      <div className="flex items-center gap-3 px-3 pt-1 text-[10px] text-[var(--c-text-muted)]">
         <span className="flex items-center gap-1">
           <span className="inline-block w-2 h-2 rounded-full" style={{ background: '#f59e0b' }} />
           Supervision-limited
@@ -112,37 +111,34 @@ export default function PphChart({
         </span>
       </div>
 
-      {/* Cost modeling toggle */}
-      <div className="flex items-center gap-3 px-3 py-1.5 border-t border-slate-800">
-        <span className="text-[11px] text-slate-400 select-none">💰 Cost modeling</span>
-        <PillToggle checked={!!costModeEnabled} onChange={onToggleCostMode} />
-        {costModeEnabled && (
-          <div className="flex items-center gap-3 ml-2">
-            <label className="flex items-center gap-1 text-[11px] text-slate-400">
-              Attending $/hr
-              <input
-                type="number"
-                min={0}
-                step={5}
-                value={costRates?.attending ?? 0}
-                onChange={e => onCostRateChange('attending', parseFloat(e.target.value) || 0)}
-                className="w-16 bg-slate-800 border border-slate-600 rounded px-1.5 py-0.5 text-xs text-slate-100 outline-none focus:border-blue-500"
-              />
-            </label>
-            <label className="flex items-center gap-1 text-[11px] text-slate-400">
-              PA $/hr
-              <input
-                type="number"
-                min={0}
-                step={5}
-                value={costRates?.pa ?? 0}
-                onChange={e => onCostRateChange('pa', parseFloat(e.target.value) || 0)}
-                className="w-16 bg-slate-800 border border-slate-600 rounded px-1.5 py-0.5 text-xs text-slate-100 outline-none focus:border-blue-500"
-              />
-            </label>
-          </div>
-        )}
-      </div>
+      {/* $/hr rate inputs — cost mode itself is toggled from the settings
+          menu now; this row only appears when it's on. */}
+      {costModeEnabled && (
+        <div className="flex items-center gap-3 px-3 py-1.5 border-t border-[var(--c-border-subtle)]">
+          <label className="flex items-center gap-1 text-[11px] text-[var(--c-text-muted)]">
+            Attending $/hr
+            <input
+              type="number"
+              min={0}
+              step={5}
+              value={costRates?.attending ?? 0}
+              onChange={e => onCostRateChange('attending', parseFloat(e.target.value) || 0)}
+              className="w-16 bg-[var(--c-bg-surface)] border border-[var(--c-border-strong)] rounded px-1.5 py-0.5 text-xs text-[var(--c-text-strong)] outline-none focus:border-blue-500"
+            />
+          </label>
+          <label className="flex items-center gap-1 text-[11px] text-[var(--c-text-muted)]">
+            PA $/hr
+            <input
+              type="number"
+              min={0}
+              step={5}
+              value={costRates?.pa ?? 0}
+              onChange={e => onCostRateChange('pa', parseFloat(e.target.value) || 0)}
+              className="w-16 bg-[var(--c-bg-surface)] border border-[var(--c-border-strong)] rounded px-1.5 py-0.5 text-xs text-[var(--c-text-strong)] outline-none focus:border-blue-500"
+            />
+          </label>
+        </div>
+      )}
 
       <div className="flex-1 min-h-0 p-2">
         <CapacityChart
@@ -160,12 +156,13 @@ export default function PphChart({
           target={target}
           hoverHour={hoverHour}
           onHoverHour={onHoverHour}
+          theme={theme}
         />
       </div>
 
       {scenarios?.length > 0 && (
-        <div className="shrink-0 border-t border-slate-800 px-3 py-2">
-          <div className="text-[10px] text-slate-500 uppercase tracking-wide mb-1.5">Scenarios</div>
+        <div className="shrink-0 border-t border-[var(--c-border-subtle)] px-3 py-2">
+          <div className="text-[10px] text-[var(--c-text-muted)] uppercase tracking-wide mb-1.5">Scenarios</div>
           <div className="flex flex-wrap gap-1.5">
             {scenarios.map(sc => (
               <div
@@ -173,19 +170,19 @@ export default function PphChart({
                 className={`flex items-center gap-1 px-2 py-1 rounded text-xs cursor-pointer transition-colors ${
                   comparisonScenarioId === sc.id
                     ? 'bg-orange-900/60 border border-orange-600 text-orange-200'
-                    : 'bg-slate-800 border border-slate-700 text-slate-300 hover:border-slate-500'
+                    : 'bg-[var(--c-bg-surface)] border border-[var(--c-border)] text-[var(--c-text-secondary)] hover:border-[var(--c-border-strong)]'
                 }`}
                 onClick={() => onSelectComparison(sc.id === comparisonScenarioId ? null : sc.id)}
               >
                 <span className="max-w-[80px] truncate">{sc.name}</span>
                 <button
                   onClick={e => { e.stopPropagation(); onResetToScenario(sc.id) }}
-                  className="text-[10px] text-slate-400 hover:text-slate-200 ml-0.5"
+                  className="text-[10px] text-[var(--c-text-muted)] hover:text-[var(--c-text-secondary)] ml-0.5"
                   title="Restore this scenario"
                 >↩</button>
                 <button
                   onClick={e => { e.stopPropagation(); onDeleteScenario(sc.id) }}
-                  className="text-[10px] text-slate-500 hover:text-red-400 ml-0.5"
+                  className="text-[10px] text-[var(--c-text-muted)] hover:text-red-400 ml-0.5"
                   title="Delete scenario"
                 >×</button>
               </div>

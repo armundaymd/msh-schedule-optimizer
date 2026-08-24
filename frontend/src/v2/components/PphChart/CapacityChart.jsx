@@ -19,11 +19,13 @@ const STAFFING_LIMITED_COLOR    = '#2dd4bf'  // teal — distinct from the blue 
 
 // Small colored marker on the "Proposed cap" line showing which side is the
 // bottleneck at that hour: amber = supervision-limited, teal = staffing-limited.
-function BottleneckDot({ cx, cy, payload }) {
+// stroke cuts the dot out against the chart's own background, so it must
+// track the theme rather than staying hardcoded to the dark app bg.
+function BottleneckDot({ cx, cy, payload, bgColor }) {
   if (cx == null || cy == null || payload.supervisionCeiling == null || payload.ownPlusExtender == null) return null
   if (payload.supervisionCeiling === payload.ownPlusExtender) return null
   const color = payload.supervisionCeiling < payload.ownPlusExtender ? SUPERVISION_LIMITED_COLOR : STAFFING_LIMITED_COLOR
-  return <circle cx={cx} cy={cy} r={3} fill={color} stroke="#0f1117" strokeWidth={1} />
+  return <circle cx={cx} cy={cy} r={3} fill={color} stroke={bgColor} strokeWidth={1} />
 }
 
 // Supervision ceiling vs own throughput + extenders, for the tooltip bottleneck breakdown
@@ -55,42 +57,42 @@ function CustomTooltip({ active, payload, label, target }) {
     : null
   const demandLabel = target && target !== 'mean' ? `Demand (${target})` : 'Demand'
   return (
-    <div className="bg-slate-900 border border-slate-600 rounded p-2 text-xs text-slate-200 space-y-0.5">
+    <div className="bg-[var(--c-bg-panel)] border border-[var(--c-border-strong)] rounded p-2 text-xs text-[var(--c-text-secondary)] space-y-0.5">
       <div className="font-semibold mb-1">{String(label).padStart(2, '0')}:00</div>
-      {byKey.demand    != null && <div>{demandLabel}: <span className="text-sky-300">{Number(byKey.demand).toFixed(2)}</span>{ciLow && <span className="text-slate-500 ml-1">({ciLow}–{ciHigh} 95% CI)</span>}</div>}
-      {byKey.meanOverlay != null && <div>Mean (reference): <span className="text-slate-400">{Number(byKey.meanOverlay).toFixed(2)}</span></div>}
-      {byKey.baseline  != null && <div>Baseline cap: <span className="text-slate-300">{Number(byKey.baseline).toFixed(2)}</span></div>}
+      {byKey.demand    != null && <div>{demandLabel}: <span className="text-sky-300">{Number(byKey.demand).toFixed(2)}</span>{ciLow && <span className="text-[var(--c-text-muted)] ml-1">({ciLow}–{ciHigh} 95% CI)</span>}</div>}
+      {byKey.meanOverlay != null && <div>Mean (reference): <span className="text-[var(--c-text-muted)]">{Number(byKey.meanOverlay).toFixed(2)}</span></div>}
+      {byKey.baseline  != null && <div>Baseline cap: <span className="text-[var(--c-text-secondary)]">{Number(byKey.baseline).toFixed(2)}</span></div>}
       {byKey.proposed  != null && <div>Proposed cap: <span className="text-blue-300">{Number(byKey.proposed).toFixed(2)}</span></div>}
       {byKey.empirical != null && <div>Empirical cap: <span className="text-teal-300">{Number(byKey.empirical).toFixed(2)}</span></div>}
       {byKey.comparison != null && <div>Comparison: <span className="text-orange-300">{Number(byKey.comparison).toFixed(2)}</span></div>}
       {(byKey.supervisionCeiling != null || byKey.ownPlusExtender != null) && (
-        <div className="border-t border-slate-700 mt-1 pt-1 text-slate-400">
+        <div className="border-t border-[var(--c-border)] mt-1 pt-1 text-[var(--c-text-muted)]">
           <div>
             Supervision ceiling: {Number(byKey.supervisionCeiling).toFixed(2)}
             {byKey.supervisionCeiling < byKey.ownPlusExtender && <span className="text-amber-400 ml-1">(supervision-limited)</span>}
           </div>
           <div>
             Own throughput + Resident/PA cap: {Number(byKey.ownPlusExtender).toFixed(2)}
-            <span className="text-slate-500 ml-1">(own {Number(byKey.ownThroughput).toFixed(2)} + ext {Number(byKey.extender).toFixed(2)})</span>
+            <span className="text-[var(--c-text-muted)] ml-1">(own {Number(byKey.ownThroughput).toFixed(2)} + ext {Number(byKey.extender).toFixed(2)})</span>
             {byKey.ownPlusExtender < byKey.supervisionCeiling && <span className="text-teal-400 ml-1">(staffing-limited)</span>}
           </div>
           {byKey.solo > 0 && (
             <div>
-              + Solo PA cap (uncapped): <span className="text-slate-200">{Number(byKey.solo).toFixed(2)}</span>
+              + Solo PA cap (uncapped): <span className="text-[var(--c-text-secondary)]">{Number(byKey.solo).toFixed(2)}</span>
             </div>
           )}
         </div>
       )}
       {byKey.teamBreakdown?.length > 0 && (
-        <div className="border-t border-slate-700 mt-1 pt-1 text-slate-400 space-y-0.5">
-          <div className="text-slate-500">By team:</div>
+        <div className="border-t border-[var(--c-border)] mt-1 pt-1 text-[var(--c-text-muted)] space-y-0.5">
+          <div className="text-[var(--c-text-muted)]">By team:</div>
           {byKey.teamBreakdown.map(t => {
             const ownPlusExt = t.ownThroughput + t.extender
             const limiter = t.supervisionCeiling === ownPlusExt ? null : t.supervisionCeiling < ownPlusExt ? 'supervision' : 'staffing'
             return (
               <div key={t.team}>
                 {t.team}: cap {t.cap.toFixed(2)}
-                <span className="text-slate-500"> (ceiling {t.supervisionCeiling.toFixed(2)} / own+ext {ownPlusExt.toFixed(2)}{t.solo > 0 ? ` / solo ${t.solo.toFixed(2)}` : ''})</span>
+                <span className="text-[var(--c-text-muted)]"> (ceiling {t.supervisionCeiling.toFixed(2)} / own+ext {ownPlusExt.toFixed(2)}{t.solo > 0 ? ` / solo ${t.solo.toFixed(2)}` : ''})</span>
                 {limiter && (
                   <span className={limiter === 'supervision' ? 'text-amber-400 ml-1' : 'text-teal-400 ml-1'}>
                     {limiter === 'supervision' ? '(supervision-limited)' : '(staffing-limited)'}
@@ -114,8 +116,11 @@ export default function CapacityChart({
   day, demand, shifts, baselineShifts, pph,
   comparisonShifts, comparisonPph, customTeams,
   demandCI, empiricalPph, activeTeam = 'Main', target = 'mean',
-  hoverHour, onHoverHour,
+  hoverHour, onHoverHour, theme = 'dark',
 }) {
+  const gridColor = theme === 'light' ? '#e2e8f0' : '#1e293b'
+  const axisColor = theme === 'light' ? '#64748b' : '#94a3b8'
+  const chartBg = theme === 'light' ? '#ffffff' : '#0f1117'
   // Demand series for the active team, at the selected target (mean or a percentile)
   const demandSeries = getDemandSeries(demand, activeTeam, day, target)
   // When a percentile is selected, show the mean as a faint reference line
@@ -175,14 +180,14 @@ export default function CapacityChart({
         onMouseMove={e => { if (e?.activeLabel != null) onHoverHour?.(e.activeLabel) }}
         onMouseLeave={() => onHoverHour?.(null)}
       >
-        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+        <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
         <XAxis
           dataKey="hour"
-          tick={{ fontSize: 10, fill: '#94a3b8' }}
+          tick={{ fontSize: 10, fill: axisColor }}
           tickFormatter={h => `${String(h).padStart(2, '0')}h`}
           interval={3}
         />
-        <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} width={SHARED_ROW_HEADER_W - 60} />
+        <YAxis tick={{ fontSize: 10, fill: axisColor }} width={SHARED_ROW_HEADER_W - 60} />
         <Tooltip content={<CustomTooltip target={target} />} />
         {hoverHour != null && <ReferenceLine x={hoverHour} stroke="#60a5fa" strokeOpacity={0.4} />}
 
@@ -202,7 +207,7 @@ export default function CapacityChart({
         <Area dataKey="gapRed"   legendType="none" fill="#ef4444" stroke="none" opacity={0.35} />
 
         <Line dataKey="baseline"   name="Baseline cap"  stroke="#94a3b8" strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
-        <Line dataKey="proposed"   name="Proposed cap"  stroke="#60a5fa" strokeWidth={2}   dot={<BottleneckDot />} />
+        <Line dataKey="proposed"   name="Proposed cap"  stroke="#60a5fa" strokeWidth={2}   dot={<BottleneckDot bgColor={chartBg} />} />
         {empiricalCap  && <Line dataKey="empirical"  name="Empirical cap" stroke="#2dd4bf" strokeWidth={1.5} dot={false} strokeDasharray="6 3" />}
         {comparisonCap && <Line dataKey="comparison" name="Comparison"    stroke="#fb923c" strokeWidth={1.5} dot={false} strokeDasharray="5 3" />}
       </ComposedChart>

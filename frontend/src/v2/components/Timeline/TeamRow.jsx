@@ -48,18 +48,18 @@ export default function TeamRow({
   // focused on Main), which also shrinks the row list's total height.
   if (hidden) {
     return (
-      <div className="flex items-center border-b border-slate-800 opacity-50" style={{ height: COLLAPSED_H }}>
+      <div className="flex items-center border-b border-[var(--c-border-subtle)] opacity-50" style={{ height: COLLAPSED_H }}>
         <div className="shrink-0 flex items-center gap-2 px-2 text-xs font-semibold" style={{ width: ROW_HEADER_W, color }}>
           {eyeButton}
           <span className="truncate">{team}</span>
         </div>
-        <div className="text-[10px] text-slate-600 px-2">hidden</div>
+        <div className="text-[10px] text-[var(--c-text-faint)] px-2">hidden</div>
       </div>
     )
   }
 
   return (
-    <div className="flex border-b border-slate-800">
+    <div className="flex border-b border-[var(--c-border-subtle)]">
       {/* row header */}
       <div
         className="shrink-0 flex items-center justify-between px-2 text-xs font-semibold"
@@ -86,12 +86,12 @@ export default function TeamRow({
               +
             </button>
             {pickerOpen && !residentSubmenu && (
-              <div className="absolute left-0 top-6 z-50 bg-slate-800 border border-slate-600 rounded shadow-xl py-1 w-28">
+              <div className="absolute left-0 top-6 z-50 bg-[var(--c-bg-surface)] border border-[var(--c-border-strong)] rounded shadow-xl py-1 w-28">
                 {ROLES.map(role => (
                   <button
                     key={role}
                     onClick={() => { if (role === 'Resident') setResidentSubmenu(true); else { onAdd(role); closePicker() } }}
-                    className="block w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-700 transition-colors"
+                    className="block w-full text-left px-3 py-1.5 text-xs text-[var(--c-text-secondary)] hover:bg-[var(--c-btn-bg)] transition-colors"
                   >
                     {role}
                   </button>
@@ -99,12 +99,12 @@ export default function TeamRow({
               </div>
             )}
             {pickerOpen && residentSubmenu && (
-              <div className="absolute left-0 top-6 z-50 bg-slate-800 border border-slate-600 rounded shadow-xl py-1 w-28">
+              <div className="absolute left-0 top-6 z-50 bg-[var(--c-bg-surface)] border border-[var(--c-border-strong)] rounded shadow-xl py-1 w-28">
                 {RESIDENT_LEVELS.map(level => (
                   <button
                     key={level}
                     onClick={() => { onAdd('Resident', level); closePicker() }}
-                    className="block w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-700 transition-colors"
+                    className="block w-full text-left px-3 py-1.5 text-xs text-[var(--c-text-secondary)] hover:bg-[var(--c-btn-bg)] transition-colors"
                   >
                     {level}
                   </button>

@@ -8,7 +8,7 @@ const GAP = 1
 
 function ShiftLabel({ roleType, roleDetail }) {
   return (
-    <div className="px-1 leading-tight overflow-hidden whitespace-nowrap text-white" style={{ fontSize: 9, pointerEvents: 'none' }}>
+    <div className="px-1 leading-tight overflow-hidden whitespace-nowrap text-[var(--c-text-strong)]" style={{ fontSize: 9, pointerEvents: 'none' }}>
       <span className="font-semibold">{roleType}</span>
       {roleDetail && <span className="opacity-75"> · {roleDetail}</span>}
     </div>

@@ -63,7 +63,7 @@ function PphValueInput({ value, min, max, onCommit }) {
       onFocus={e => e.target.select()}
       onBlur={commit}
       onKeyDown={e => { if (e.key === 'Enter') e.target.blur() }}
-      className="w-10 shrink-0 bg-slate-800 border border-slate-700 rounded text-xs text-slate-200 text-right px-1 py-0.5 outline-none focus:border-blue-500"
+      className="w-10 shrink-0 bg-[var(--c-bg-surface)] border border-[var(--c-border)] rounded text-xs text-[var(--c-text-secondary)] text-right px-1 py-0.5 outline-none focus:border-blue-500"
     />
   )
 }
@@ -73,7 +73,7 @@ function SliderControl({ slider, pph, onChange, empiricalPph }) {
   const emp = empiricalPph?.[key]
   return (
     <label className="flex flex-col gap-0.5 min-w-0">
-      <span className="text-xs text-slate-400 truncate">{label}</span>
+      <span className="text-xs text-[var(--c-text-muted)] truncate">{label}</span>
       <div className="flex items-center gap-1.5">
         <input
           type="range"
@@ -106,7 +106,7 @@ export default function PphSliders({ pph, onChange, empiricalPph, activeTeam = '
 
   return (
     <div className="pt-2 pb-1">
-      <div className="px-3 text-[10px] text-slate-500 uppercase tracking-wide">{activeTeam} attending PPH</div>
+      <div className="px-3 text-[10px] text-[var(--c-text-muted)] uppercase tracking-wide">{activeTeam} attending PPH</div>
       <div className="px-3 py-1 flex gap-4 flex-wrap">
         <div className="max-w-[220px]">
           {attendingSlider && (
@@ -124,7 +124,7 @@ export default function PphSliders({ pph, onChange, empiricalPph, activeTeam = '
           )}
         </div>
       </div>
-      <div className="px-3 text-[10px] text-slate-500 uppercase tracking-wide mt-1">Resident / PA max PPH (per provider)</div>
+      <div className="px-3 text-[10px] text-[var(--c-text-muted)] uppercase tracking-wide mt-1">Resident / PA max PPH (per provider)</div>
       <div
         className="grid gap-x-4 gap-y-2 px-3 py-1"
         style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))' }}
