@@ -1,6 +1,6 @@
 import {
   STATIC_MAIN, shiftCoversHour, attendingCapacity, extenderCapacity, capacityAllAreas,
-} from './capacity'
+} from '../../shared/capacity'
 
 const SNAP = 30
 const CUSTOM_COLORS = ['#0d9488','#ec4899','#f59e0b','#6366f1','#84cc16','#06b6d4','#f43f5e','#64748b']

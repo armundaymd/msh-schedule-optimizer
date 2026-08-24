@@ -1,3 +1,6 @@
+// SHARED between /legacy and /v2. Changing the maths here changes both.
+// Version-specific behaviour belongs in legacy/ or v2/, not here.
+
 const SHORT = { Monday:'Mon', Tuesday:'Tue', Wednesday:'Wed', Thursday:'Thu', Friday:'Fri', Saturday:'Sat', Sunday:'Sun' }
 
 export default function DowTabs({ days, active, onChange }) {

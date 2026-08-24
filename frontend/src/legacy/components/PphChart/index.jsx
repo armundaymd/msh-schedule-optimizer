@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import PphSliders from './PphSliders'
 import CapacityChart from './CapacityChart'
-import PillToggle from '../PillToggle'
-import { fetchDemandCI, fetchValidation } from '../../api'
+import PillToggle from '../../../shared/components/PillToggle'
+import { fetchDemandCI, fetchValidation } from '../../../shared/api'
 
 const TEAM_VIEWS = ['Main', 'FastTrack', 'ERU']
 

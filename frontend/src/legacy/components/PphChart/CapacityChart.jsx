@@ -2,7 +2,7 @@ import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Area,
 } from 'recharts'
-import { teamCapacity, attendingCapacity, extenderCapacity, teamBreakdown } from '../../utils/capacity'
+import { teamCapacity, attendingCapacity, extenderCapacity, teamBreakdown } from '../../../shared/capacity'
 
 // Maps team name → area key used in pph object
 const AREA_KEY = { Main: 'main', FastTrack: 'fasttrack', ERU: 'eru' }

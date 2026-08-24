@@ -1,3 +1,6 @@
+// SHARED between /legacy and /v2. Changing the maths here changes both.
+// Version-specific behaviour belongs in legacy/ or v2/, not here.
+
 import { Component } from 'react'
 
 export default class ErrorBoundary extends Component {

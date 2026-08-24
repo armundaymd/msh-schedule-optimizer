@@ -1,3 +1,6 @@
+// SHARED between /legacy and /v2. Changing the maths here changes both.
+// Version-specific behaviour belongs in legacy/ or v2/, not here.
+
 // Shared capacity math — single source of truth for how many patients/hour
 // a team can handle, used by the demand chart, summary stats, and the
 // auto-optimizer.

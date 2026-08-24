@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 
 export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onSaveScenario, scenarioCount, onUndo, onRedo, canUndo, canRedo, onAutoOptimize, onAutoOptimizeWeek, optimizing, onExport }) {
   const [popoverOpen, setPopoverOpen] = useState(false)
@@ -47,6 +48,13 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
     <div className="flex items-center justify-between px-4 py-2 bg-[#161b22] border-b border-slate-700 shrink-0">
       <div className="flex items-center gap-3">
         <span className="text-white font-semibold text-sm tracking-wide">ED Staffing</span>
+        <Link
+          to="/"
+          title="Back to version chooser"
+          className="text-[10px] font-semibold uppercase tracking-wide text-slate-300 bg-slate-700 hover:bg-slate-600 px-1.5 py-0.5 rounded transition-colors"
+        >
+          Classic
+        </Link>
         {summary && (
           <span className="text-xs text-slate-400 bg-slate-800 px-2 py-0.5 rounded">
             {summary.total_encounters.toLocaleString()} encounters · {summary.date_range} · {summary.unique_days} days

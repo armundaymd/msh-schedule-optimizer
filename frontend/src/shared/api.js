@@ -1,3 +1,6 @@
+// SHARED between /legacy and /v2. Changing the maths here changes both.
+// Version-specific behaviour belongs in legacy/ or v2/, not here.
+
 // In dev, Vite proxies '/api' to the local FastAPI server (see vite.config.js).
 // In production the frontend and backend are separate Coolify services, so
 // requests need the backend's absolute URL, supplied at build time via

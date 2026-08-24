@@ -1,15 +1,15 @@
 import { useEffect, useState, useCallback } from 'react'
-import { fetchSchedule, fetchDemand, fetchSummary, postRefresh } from './api'
-import { useScheduleState } from './hooks/useScheduleState'
+import { fetchSchedule, fetchDemand, fetchSummary, postRefresh } from '../shared/api'
+import { useScheduleState } from '../shared/hooks/useScheduleState'
 import TopBar from './components/TopBar'
-import DowTabs from './components/DowTabs'
+import DowTabs from '../shared/components/DowTabs'
 import ScheduleEditor from './components/ScheduleEditor'
 import PphChart from './components/PphChart'
 import SummaryStatsBar from './components/SummaryStatsBar'
 import OptimizeModal from './components/OptimizeModal'
 import { getOverflowHours, runOptimizer } from './utils/optimizer'
 import { exportScheduleAs } from './utils/exportSchedule'
-import { computeShiftCost } from './utils/cost'
+import { computeShiftCost } from '../shared/cost'
 
 // main/fasttrack/eru = Attending max PPH per area (existing).
 // pa/pgy1-4/offService = Resident & PA max PPH, single value app-wide.

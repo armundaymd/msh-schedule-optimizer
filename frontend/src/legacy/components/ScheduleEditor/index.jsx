@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core'
 import TeamColumn from './TeamColumn'
-import PillToggle from '../PillToggle'
+import PillToggle from '../../../shared/components/PillToggle'
 
 const TEAMS = ['Green', 'Red', 'Blue', 'FastTrack', 'ERU']
 const TEAM_COLORS = {

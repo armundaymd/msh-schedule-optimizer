@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import { capacityAllAreas } from '../utils/capacity'
-import { computeShiftCost } from '../utils/cost'
+import { capacityAllAreas } from '../../shared/capacity'
+import { computeShiftCost } from '../../shared/cost'
 
 function computeCapacity(shifts, pph, customTeams) {
   return Array.from({ length: 24 }, (_, h) => {

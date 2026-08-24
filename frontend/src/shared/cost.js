@@ -1,3 +1,6 @@
+// SHARED between /legacy and /v2. Changing the maths here changes both.
+// Version-specific behaviour belongs in legacy/ or v2/, not here.
+
 // Shift cost modeling — Attending and PA only (no resident rate, per product
 // decision). Optional/toggle-able: callers gate this behind costModeEnabled.
 
