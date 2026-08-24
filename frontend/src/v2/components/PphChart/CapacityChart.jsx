@@ -1,0 +1,199 @@
+import {
+  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, Area,
+} from 'recharts'
+import { teamCapacity, attendingCapacity, ownThroughput, extenderCapacity, soloExtenderCapacity, teamBreakdown } from '../../../shared/capacity'
+import { getDemandSeries } from '../../../shared/demandSeries'
+
+// Maps team name → area key used in pph object
+const AREA_KEY = { Main: 'main', FastTrack: 'fasttrack', ERU: 'eru' }
+
+// Capacity for one team type only — apples-to-apples with per-team demand
+function computeTeamCapacity(shifts, pph, customTeams, team) {
+  const areaKey = AREA_KEY[team] ?? 'main'
+  return Array.from({ length: 24 }, (_, h) => teamCapacity(shifts, pph, customTeams, areaKey, h))
+}
+
+const SUPERVISION_LIMITED_COLOR = '#f59e0b'  // amber — matches tooltip's "(limiting)" tag
+const STAFFING_LIMITED_COLOR    = '#2dd4bf'  // teal — distinct from the blue proposed-cap line
+
+// Small colored marker on the "Proposed cap" line showing which side is the
+// bottleneck at that hour: amber = supervision-limited, teal = staffing-limited.
+function BottleneckDot({ cx, cy, payload }) {
+  if (cx == null || cy == null || payload.supervisionCeiling == null || payload.ownPlusExtender == null) return null
+  if (payload.supervisionCeiling === payload.ownPlusExtender) return null
+  const color = payload.supervisionCeiling < payload.ownPlusExtender ? SUPERVISION_LIMITED_COLOR : STAFFING_LIMITED_COLOR
+  return <circle cx={cx} cy={cy} r={3} fill={color} stroke="#0f1117" strokeWidth={1} />
+}
+
+// Supervision ceiling vs own throughput + extenders, for the tooltip bottleneck breakdown
+function computeCapacityBreakdown(shifts, pph, customTeams, team) {
+  const areaKey = AREA_KEY[team] ?? 'main'
+  return Array.from({ length: 24 }, (_, h) => ({
+    supervisionCeiling: attendingCapacity(shifts, pph, customTeams, areaKey, h),
+    ownThroughput:      ownThroughput(shifts, pph, customTeams, areaKey, h),
+    extender:           extenderCapacity(shifts, pph, customTeams, areaKey, h),
+    solo:               soloExtenderCapacity(shifts, pph, customTeams, areaKey, h),
+  }))
+}
+
+// Per-individual-team breakdown (Green/Red/Blue, etc.), for the tooltip —
+// shows which specific team is dragging the area total down and why.
+function computeTeamBreakdowns(shifts, pph, customTeams, team) {
+  const areaKey = AREA_KEY[team] ?? 'main'
+  return Array.from({ length: 24 }, (_, h) => teamBreakdown(shifts, pph, customTeams, areaKey, h))
+}
+
+function CustomTooltip({ active, payload, label, target }) {
+  if (!active || !payload?.length) return null
+  // payload[].payload is the full source data row — includes fields (like
+  // supervisionCeiling/ownPlusExtender) that aren't individually rendered as a Line/Bar.
+  const byKey = { ...payload[0]?.payload, ...Object.fromEntries(payload.map(p => [p.dataKey, p.value])) }
+  const ciLow  = byKey.ciLow != null ? Number(byKey.ciLow).toFixed(2) : null
+  const ciHigh = ciLow != null && byKey.ciDiff != null
+    ? (Number(byKey.ciLow) + Number(byKey.ciDiff)).toFixed(2)
+    : null
+  const demandLabel = target && target !== 'mean' ? `Demand (${target})` : 'Demand'
+  return (
+    <div className="bg-slate-900 border border-slate-600 rounded p-2 text-xs text-slate-200 space-y-0.5">
+      <div className="font-semibold mb-1">{String(label).padStart(2, '0')}:00</div>
+      {byKey.demand    != null && <div>{demandLabel}: <span className="text-sky-300">{Number(byKey.demand).toFixed(2)}</span>{ciLow && <span className="text-slate-500 ml-1">({ciLow}–{ciHigh} 95% CI)</span>}</div>}
+      {byKey.meanOverlay != null && <div>Mean (reference): <span className="text-slate-400">{Number(byKey.meanOverlay).toFixed(2)}</span></div>}
+      {byKey.baseline  != null && <div>Baseline cap: <span className="text-slate-300">{Number(byKey.baseline).toFixed(2)}</span></div>}
+      {byKey.proposed  != null && <div>Proposed cap: <span className="text-blue-300">{Number(byKey.proposed).toFixed(2)}</span></div>}
+      {byKey.empirical != null && <div>Empirical cap: <span className="text-teal-300">{Number(byKey.empirical).toFixed(2)}</span></div>}
+      {byKey.comparison != null && <div>Comparison: <span className="text-orange-300">{Number(byKey.comparison).toFixed(2)}</span></div>}
+      {(byKey.supervisionCeiling != null || byKey.ownPlusExtender != null) && (
+        <div className="border-t border-slate-700 mt-1 pt-1 text-slate-400">
+          <div>
+            Supervision ceiling: {Number(byKey.supervisionCeiling).toFixed(2)}
+            {byKey.supervisionCeiling < byKey.ownPlusExtender && <span className="text-amber-400 ml-1">(supervision-limited)</span>}
+          </div>
+          <div>
+            Own throughput + Resident/PA cap: {Number(byKey.ownPlusExtender).toFixed(2)}
+            <span className="text-slate-500 ml-1">(own {Number(byKey.ownThroughput).toFixed(2)} + ext {Number(byKey.extender).toFixed(2)})</span>
+            {byKey.ownPlusExtender < byKey.supervisionCeiling && <span className="text-teal-400 ml-1">(staffing-limited)</span>}
+          </div>
+          {byKey.solo > 0 && (
+            <div>
+              + Solo PA cap (uncapped): <span className="text-slate-200">{Number(byKey.solo).toFixed(2)}</span>
+            </div>
+          )}
+        </div>
+      )}
+      {byKey.teamBreakdown?.length > 0 && (
+        <div className="border-t border-slate-700 mt-1 pt-1 text-slate-400 space-y-0.5">
+          <div className="text-slate-500">By team:</div>
+          {byKey.teamBreakdown.map(t => {
+            const ownPlusExt = t.ownThroughput + t.extender
+            const limiter = t.supervisionCeiling === ownPlusExt ? null : t.supervisionCeiling < ownPlusExt ? 'supervision' : 'staffing'
+            return (
+              <div key={t.team}>
+                {t.team}: cap {t.cap.toFixed(2)}
+                <span className="text-slate-500"> (ceiling {t.supervisionCeiling.toFixed(2)} / own+ext {ownPlusExt.toFixed(2)}{t.solo > 0 ? ` / solo ${t.solo.toFixed(2)}` : ''})</span>
+                {limiter && (
+                  <span className={limiter === 'supervision' ? 'text-amber-400 ml-1' : 'text-teal-400 ml-1'}>
+                    {limiter === 'supervision' ? '(supervision-limited)' : '(staffing-limited)'}
+                  </span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function CapacityChart({
+  day, demand, shifts, baselineShifts, pph,
+  comparisonShifts, comparisonPph, customTeams,
+  demandCI, empiricalPph, activeTeam = 'Main', target = 'mean',
+}) {
+  // Demand series for the active team, at the selected target (mean or a percentile)
+  const demandSeries = getDemandSeries(demand, activeTeam, day, target)
+  // When a percentile is selected, show the mean as a faint reference line
+  // so the gap between "average day" and "target" is visible.
+  const meanSeries = target !== 'mean' ? getDemandSeries(demand, activeTeam, day, 'mean') : null
+
+  // CI band is a bootstrap CI on the MEAN — only meaningful when comparing
+  // against the mean target, so it's hidden once a percentile is selected.
+  const ciSeries = target === 'mean' && demandCI
+    ? (demandCI[activeTeam]?.by_dow_ci?.[day] ?? demandCI[activeTeam]?.overall_ci ?? null)
+    : null
+
+  // Capacity lines — filtered to active team only
+  const baselineCap   = computeTeamCapacity(baselineShifts, pph,               customTeams, activeTeam)
+  const proposedCap   = computeTeamCapacity(shifts,         pph,               customTeams, activeTeam)
+  const proposedBreakdown = computeCapacityBreakdown(shifts, pph, customTeams, activeTeam)
+  const proposedTeamBreakdowns = computeTeamBreakdowns(shifts, pph, customTeams, activeTeam)
+  const empiricalCap  = empiricalPph
+    ? computeTeamCapacity(shifts, empiricalPph, customTeams, activeTeam)
+    : null
+  const comparisonCap = comparisonShifts
+    ? computeTeamCapacity(comparisonShifts, comparisonPph ?? pph, customTeams, activeTeam)
+    : null
+
+  const data = Array.from({ length: 24 }, (_, h) => {
+    const b = parseFloat(baselineCap[h].toFixed(2))
+    const p = parseFloat(proposedCap[h].toFixed(2))
+    const row = {
+      hour:     h,
+      demand:   demandSeries[h] ?? 0,
+      baseline: b,
+      proposed: p,
+      gapGreen: p >= b ? [b, p] : [b, b],
+      gapRed:   p <  b ? [p, b] : [b, b],
+      supervisionCeiling: parseFloat(proposedBreakdown[h].supervisionCeiling.toFixed(2)),
+      ownThroughput:      parseFloat(proposedBreakdown[h].ownThroughput.toFixed(2)),
+      extender:           parseFloat(proposedBreakdown[h].extender.toFixed(2)),
+      ownPlusExtender:    parseFloat((proposedBreakdown[h].ownThroughput + proposedBreakdown[h].extender).toFixed(2)),
+      solo:               parseFloat(proposedBreakdown[h].solo.toFixed(2)),
+      teamBreakdown: proposedTeamBreakdowns[h],
+    }
+    if (meanSeries) row.meanOverlay = meanSeries[h] ?? 0
+    if (ciSeries?.[h] && ciSeries[h].ci_low != null && ciSeries[h].ci_high != null) {
+      row.ciLow  = parseFloat(ciSeries[h].ci_low.toFixed(3))
+      row.ciDiff = parseFloat(Math.max(0, ciSeries[h].ci_high - ciSeries[h].ci_low).toFixed(3))
+    }
+    if (empiricalCap)  row.empirical  = parseFloat(empiricalCap[h].toFixed(2))
+    if (comparisonCap) row.comparison = parseFloat(comparisonCap[h].toFixed(2))
+    return row
+  })
+
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+        <XAxis
+          dataKey="hour"
+          tick={{ fontSize: 10, fill: '#94a3b8' }}
+          tickFormatter={h => `${String(h).padStart(2, '0')}h`}
+          interval={3}
+        />
+        <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} width={36} />
+        <Tooltip content={<CustomTooltip target={target} />} />
+
+        {/* 95% bootstrap CI band behind the demand bars (mean target only) */}
+        {ciSeries && (
+          <>
+            <Area dataKey="ciLow"  stackId="ci" fill="transparent"           stroke="none" legendType="none" isAnimationActive={false} />
+            <Area dataKey="ciDiff" stackId="ci" fill="rgba(56,189,248,0.13)" stroke="none" legendType="none" isAnimationActive={false} />
+          </>
+        )}
+
+        <Bar dataKey="demand" name={target !== 'mean' ? `Demand (${target})` : 'Demand'} fill="#38bdf8" opacity={0.45} barSize={10} />
+        {meanSeries && <Line dataKey="meanOverlay" name="Mean (reference)" stroke="#64748b" strokeWidth={1} strokeDasharray="2 3" dot={false} opacity={0.7} />}
+
+        {/* green/red fill showing proposed vs baseline capacity delta */}
+        <Area dataKey="gapGreen" legendType="none" fill="#22c55e" stroke="none" opacity={0.35} />
+        <Area dataKey="gapRed"   legendType="none" fill="#ef4444" stroke="none" opacity={0.35} />
+
+        <Line dataKey="baseline"   name="Baseline cap"  stroke="#94a3b8" strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
+        <Line dataKey="proposed"   name="Proposed cap"  stroke="#60a5fa" strokeWidth={2}   dot={<BottleneckDot />} />
+        {empiricalCap  && <Line dataKey="empirical"  name="Empirical cap" stroke="#2dd4bf" strokeWidth={1.5} dot={false} strokeDasharray="6 3" />}
+        {comparisonCap && <Line dataKey="comparison" name="Comparison"    stroke="#fb923c" strokeWidth={1.5} dot={false} strokeDasharray="5 3" />}
+      </ComposedChart>
+    </ResponsiveContainer>
+  )
+}
