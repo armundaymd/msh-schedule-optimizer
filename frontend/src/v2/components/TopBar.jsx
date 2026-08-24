@@ -1,11 +1,14 @@
 import { useRef, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import ConfirmDialog from '../../shared/components/ConfirmDialog'
 
 export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onSaveScenario, scenarioCount, onUndo, onRedo, canUndo, canRedo, onAutoOptimize, onAutoOptimizeWeek, optimizing, onExport, activeTeam, onClearDay, onClearWeek, onOpenGenerator }) {
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [name, setName] = useState('')
   const popoverRef = useRef(null)
   const inputRef = useRef(null)
+
+  const [clearConfirm, setClearConfirm] = useState(null) // null | 'day' | 'week'
 
   const [exportOpen, setExportOpen] = useState(false)
   const exportRef = useRef(null)
@@ -85,18 +88,14 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
           Reset day
         </button>
         <button
-          onClick={() => {
-            if (window.confirm('Clear all shifts for this day? This can be undone with Cmd+Z.')) onClearDay?.()
-          }}
+          onClick={() => setClearConfirm('day')}
           title="Clear this day to blank (different from Reset day, which reverts to baseline)"
           className="text-xs px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors"
         >
           Clear day
         </button>
         <button
-          onClick={() => {
-            if (window.confirm('Clear all shifts for the whole week? This can be undone with Cmd+Z, one day at a time.')) onClearWeek?.()
-          }}
+          onClick={() => setClearConfirm('week')}
           title="Clear every day this week to blank"
           className="text-xs px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors"
         >
@@ -197,6 +196,22 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
           {refreshing ? 'Refreshing…' : '↻ Refresh data'}
         </button>
       </div>
+
+      {clearConfirm && (
+        <ConfirmDialog
+          title={clearConfirm === 'day' ? 'Clear this day?' : 'Clear the whole week?'}
+          message={clearConfirm === 'day'
+            ? 'All shifts for this day will be removed. This can be undone with Cmd+Z.'
+            : 'All shifts for every day this week will be removed. This can be undone with Cmd+Z, one day at a time.'}
+          confirmLabel="Clear"
+          onCancel={() => setClearConfirm(null)}
+          onConfirm={() => {
+            if (clearConfirm === 'day') onClearDay?.()
+            else onClearWeek?.()
+            setClearConfirm(null)
+          }}
+        />
+      )}
     </div>
   )
 }
