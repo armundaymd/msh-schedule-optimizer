@@ -4,6 +4,7 @@ import CapacityChart from './CapacityChart'
 import PillToggle from '../../../shared/components/PillToggle'
 import { fetchDemandCI, fetchValidation } from '../../../shared/api'
 import { hasPercentiles } from '../../../shared/demandSeries'
+import { scenarioPayloadToSnapshot } from '../../../shared/scenarioPayload'
 
 const TEAM_VIEWS = ['Main', 'FastTrack', 'ERU']
 const TARGETS = ['mean', 'p50', 'p75', 'p90']
@@ -34,8 +35,8 @@ export default function PphChart({
   }, [])
 
   const compScenario     = scenarios?.find(s => s.id === comparisonScenarioId)
-  const comparisonShifts = compScenario ? (compScenario.proposed[day] ?? []) : null
-  const comparisonPph    = compScenario?.pph ?? null
+  const comparisonShifts = compScenario ? (scenarioPayloadToSnapshot(compScenario.payload)[day] ?? []) : null
+  const comparisonPph    = compScenario?.payload?.pph ?? null
 
   const nDays  = demandCI?.[activeTeam]?.n_days ?? null
   const ciTitle = nDays

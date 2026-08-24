@@ -4,12 +4,15 @@ Run: uvicorn server:app --reload --port 8000
 """
 
 import os
+import uuid
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
+from pydantic import BaseModel
+from sqlalchemy import select
 from pipeline import run_pipeline, load_processed
-from db import get_engine, init_schema, read_schedule_df
+from db import get_engine, init_schema, read_schedule_df, scenarios
 
 app = FastAPI()
 
@@ -80,3 +83,56 @@ def api_refresh():
         return {"status": "ok", "summary": summary}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+VALID_VERSIONS = ("legacy", "v2")
+
+
+class ScenarioIn(BaseModel):
+    version: str
+    name: str
+    payload: dict
+
+
+@app.get("/api/scenarios")
+def api_list_scenarios(version: str):
+    if version not in VALID_VERSIONS:
+        raise HTTPException(status_code=400, detail="version must be 'legacy' or 'v2'")
+    with engine.connect() as conn:
+        rows = conn.execute(
+            select(scenarios)
+            .where(scenarios.c.version == version)
+            .order_by(scenarios.c.created_at.desc())
+        ).mappings().all()
+    return [dict(r) for r in rows]
+
+
+@app.post("/api/scenarios")
+def api_create_scenario(body: ScenarioIn):
+    if body.version not in VALID_VERSIONS:
+        raise HTTPException(status_code=400, detail="version must be 'legacy' or 'v2'")
+    new_id = str(uuid.uuid4())
+    with engine.begin() as conn:
+        conn.execute(scenarios.insert().values(
+            id=new_id, version=body.version, name=body.name, payload=body.payload,
+        ))
+        row = conn.execute(select(scenarios).where(scenarios.c.id == new_id)).mappings().first()
+    return dict(row)
+
+
+@app.get("/api/scenarios/{scenario_id}")
+def api_get_scenario(scenario_id: str):
+    with engine.connect() as conn:
+        row = conn.execute(select(scenarios).where(scenarios.c.id == scenario_id)).mappings().first()
+    if row is None:
+        raise HTTPException(status_code=404, detail="scenario not found")
+    return dict(row)
+
+
+@app.delete("/api/scenarios/{scenario_id}")
+def api_delete_scenario(scenario_id: str):
+    with engine.begin() as conn:
+        result = conn.execute(scenarios.delete().where(scenarios.c.id == scenario_id))
+    if result.rowcount == 0:
+        raise HTTPException(status_code=404, detail="scenario not found")
+    return {"status": "ok"}

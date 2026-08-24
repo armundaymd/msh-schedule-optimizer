@@ -50,3 +50,26 @@ export async function fetchValidation() {
   const data = await r.json()
   return data?.status === 'not_run' ? null : data
 }
+
+// version: 'legacy' | 'v2' — scenarios saved in one version are listed only
+// in that version.
+export async function fetchScenarios(version) {
+  const r = await fetch(`${API_BASE}/api/scenarios?version=${encodeURIComponent(version)}`)
+  if (!r.ok) throw new Error('scenarios fetch failed')
+  return r.json()
+}
+
+export async function createScenario(version, name, payload) {
+  const r = await fetch(`${API_BASE}/api/scenarios`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ version, name, payload }),
+  })
+  if (!r.ok) throw new Error('scenario create failed')
+  return r.json()
+}
+
+export async function deleteScenario(id) {
+  const r = await fetch(`${API_BASE}/api/scenarios/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  if (!r.ok) throw new Error('scenario delete failed')
+}

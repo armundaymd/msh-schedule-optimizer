@@ -43,3 +43,22 @@ CREATE TABLE IF NOT EXISTS pipeline_outputs (
     payload      JSONB NOT NULL,
     generated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Saved scenarios, one row per save, for both /legacy and /v2 (kept
+-- separate by `version` so a scenario saved in one version isn't listed in
+-- the other). payload shape: { shifts: { Monday: [...], ... }, pph,
+-- costRates, customTeams, target, generatorSettings? }, with shift rows in
+-- the same column convention as schedule_shifts (day_type, team, role_type,
+-- role_detail, resident_level, start_time, end_time), never the frontend's
+-- internal id/startMins/endMins fields.
+CREATE TABLE IF NOT EXISTS scenarios (
+    id         TEXT PRIMARY KEY,
+    version    TEXT NOT NULL CHECK (version IN ('legacy','v2')),
+    name       TEXT NOT NULL,
+    payload    JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_scenarios_version_created
+    ON scenarios (version, created_at DESC);

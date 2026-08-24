@@ -17,7 +17,7 @@ function minsToTime(m) {
   return `${String(h).padStart(2,'0')}:${String(mn).padStart(2,'0')}`
 }
 
-function normalizeShifts(raw) {
+export function normalizeShifts(raw) {
   return raw.map((s, i) => ({
     ...s,
     id: `${s.day}-${s.team}-${s.role_type}-${i}`,
@@ -146,6 +146,27 @@ export function useScheduleState() {
     })
   }, [])
 
+  // Clear day/week to blank (distinct from resetDay, which reverts to
+  // baseline). Both push their own undo entry so Cmd-Z restores what was
+  // there before clearing — callers don't need to push one themselves.
+  const clearDay = useCallback((day) => {
+    const current = proposed[day] ?? (baseline?.filter(s => s.day === day) ?? [])
+    pushUndoForDay(day, current)
+    setProposed(prev => ({ ...prev, [day]: [] }))
+  }, [proposed, baseline, pushUndoForDay])
+
+  const clearWeek = useCallback(() => {
+    DAYS.forEach(day => {
+      const current = proposed[day] ?? (baseline?.filter(s => s.day === day) ?? [])
+      pushUndoForDay(day, current)
+    })
+    setProposed(prev => {
+      const next = { ...prev }
+      DAYS.forEach(day => { next[day] = [] })
+      return next
+    })
+  }, [proposed, baseline, pushUndoForDay])
+
   const loadSnapshot = useCallback((snap) => {
     setProposed(snap)
     undoStacks.current = {}
@@ -170,6 +191,8 @@ export function useScheduleState() {
     addShift,
     deleteShift,
     resetDay,
+    clearDay,
+    clearWeek,
     pushUndoForDay,
     undoForDay,
     redoForDay,

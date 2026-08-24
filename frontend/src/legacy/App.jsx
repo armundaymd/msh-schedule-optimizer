@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
-import { fetchSchedule, fetchDemand, fetchSummary, postRefresh } from '../shared/api'
+import { fetchSchedule, fetchDemand, fetchSummary, postRefresh, fetchScenarios, createScenario, deleteScenario } from '../shared/api'
 import { useScheduleState } from '../shared/hooks/useScheduleState'
+import { buildScenarioPayload, scenarioPayloadToSnapshot } from '../shared/scenarioPayload'
 import TopBar from './components/TopBar'
 import DowTabs from '../shared/components/DowTabs'
 import ScheduleEditor from './components/ScheduleEditor'
@@ -21,6 +22,9 @@ const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sun
 // on whichever area's chart tab is currently selected (see PHASE 2 brief,
 // 2.1: simpler option chosen over running all three areas and merging).
 const AREA_KEY = { Main: 'main', FastTrack: 'fasttrack', ERU: 'eru' }
+
+// Scenarios saved here are listed only here — see PHASE 3, 3.1.
+const SCENARIO_VERSION = 'legacy'
 
 function App() {
   const [activeDow, setActiveDow] = useState('Monday')
@@ -54,27 +58,36 @@ function App() {
     exportScheduleAs(schedState, format)
   }
 
-  function handleSaveScenario(name) {
-    const fullProposed = {}
-    DAYS.forEach(day => { fullProposed[day] = schedState.getShiftsForDay(day) })
-    setScenarios(prev => [
-      ...prev,
-      { id: `sc-${Date.now()}`, name, proposed: fullProposed, pph: { ...pph }, customTeams: [...customTeams], target },
-    ])
+  async function handleSaveScenario(name) {
+    const payload = buildScenarioPayload({ schedState, pph, costRates, customTeams, target })
+    try {
+      const saved = await createScenario(SCENARIO_VERSION, name, payload)
+      setScenarios(prev => [saved, ...prev])
+    } catch (e) {
+      console.error(e)
+      showToast('✗ Failed to save scenario')
+    }
   }
 
-  function handleDeleteScenario(id) {
-    setScenarios(prev => prev.filter(s => s.id !== id))
-    if (comparisonScenarioId === id) setComparisonScenarioId(null)
+  async function handleDeleteScenario(id) {
+    try {
+      await deleteScenario(id)
+      setScenarios(prev => prev.filter(s => s.id !== id))
+      if (comparisonScenarioId === id) setComparisonScenarioId(null)
+    } catch (e) {
+      console.error(e)
+      showToast('✗ Failed to delete scenario')
+    }
   }
 
   function handleResetToScenario(id) {
     const sc = scenarios.find(s => s.id === id)
     if (!sc) return
-    schedState.loadSnapshot(sc.proposed)
-    setPph({ ...sc.pph })
-    if (sc.customTeams) setCustomTeams([...sc.customTeams])
-    if (sc.target) setTarget(sc.target)
+    schedState.loadSnapshot(scenarioPayloadToSnapshot(sc.payload))
+    if (sc.payload.pph) setPph({ ...sc.payload.pph })
+    if (sc.payload.customTeams) setCustomTeams([...sc.payload.customTeams])
+    if (sc.payload.target) setTarget(sc.payload.target)
+    if (sc.payload.costRates) setCostRates({ ...sc.payload.costRates })
   }
 
   function showToast(msg) {
@@ -195,6 +208,7 @@ function App() {
         console.error(err)
         setLoading(false)
       })
+    fetchScenarios(SCENARIO_VERSION).then(setScenarios).catch(err => console.error(err))
   }, [])
 
   async function handleRefresh() {

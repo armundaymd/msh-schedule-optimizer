@@ -11,7 +11,8 @@ import os
 import pandas as pd
 from dotenv import load_dotenv
 from sqlalchemy import (
-    Column, Integer, MetaData, Table, Text, TIMESTAMP, create_engine, func,
+    CheckConstraint, Column, Index, Integer, MetaData, Table, Text, TIMESTAMP,
+    create_engine, func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -58,6 +59,19 @@ pipeline_outputs = Table(
     Column("generated_at", TIMESTAMP(timezone=True),
            server_default=func.now(), nullable=False),
 )
+
+scenarios = Table(
+    "scenarios", metadata,
+    Column("id", Text, primary_key=True),
+    Column("version", Text, nullable=False),
+    Column("name", Text, nullable=False),
+    Column("payload", JSONB, nullable=False),
+    Column("created_at", TIMESTAMP(timezone=True), server_default=func.now(), nullable=False),
+    Column("updated_at", TIMESTAMP(timezone=True), server_default=func.now(), nullable=False),
+    CheckConstraint("version IN ('legacy', 'v2')", name="scenarios_version_check"),
+)
+
+Index("idx_scenarios_version_created", scenarios.c.version, scenarios.c.created_at.desc())
 
 
 def init_schema(engine) -> None:
