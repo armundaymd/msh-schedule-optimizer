@@ -78,10 +78,10 @@ describe('teamCapacityForTeam', () => {
 })
 
 describe('extenderCapacityForTeam PA area override', () => {
-  it('uses the FastTrack-specific PA rate when set, not the general pa rate', () => {
+  it('FastTrack PA rate is solo + with-attending, summed (a PA can do both in the same hour)', () => {
     const shifts = [pa('FastTrack', 0, 24 * 60)]
-    const pph = { ...PPH, pa: 1.2, fasttrackPa: 2.5 }
-    expect(extenderCapacityForTeam(shifts, pph, 'fasttrack', 'FastTrack', 10)).toBeCloseTo(2.5, 5)
+    const pph = { ...PPH, pa: 1.2, fasttrackPa: 1.5, fasttrackPaWithAttending: 0.7 }
+    expect(extenderCapacityForTeam(shifts, pph, 'fasttrack', 'FastTrack', 10)).toBeCloseTo(2.2, 5)
   })
 
   it('falls back to the general pa rate when no FastTrack-specific override is set', () => {
@@ -90,9 +90,9 @@ describe('extenderCapacityForTeam PA area override', () => {
     expect(extenderCapacityForTeam(shifts, pph, 'fasttrack', 'FastTrack', 10)).toBeCloseTo(1.2, 5)
   })
 
-  it('Main PAs are unaffected by a FastTrack-specific override', () => {
+  it('Main PAs are unaffected by FastTrack-specific overrides', () => {
     const shifts = [pa('Green', 0, 24 * 60)]
-    const pph = { ...PPH, pa: 1.2, fasttrackPa: 2.5 }
+    const pph = { ...PPH, pa: 1.2, fasttrackPa: 1.5, fasttrackPaWithAttending: 0.7 }
     expect(extenderCapacityForTeam(shifts, pph, 'main', 'Green', 10)).toBeCloseTo(1.2, 5)
   })
 })

@@ -25,9 +25,13 @@ const EXTENDER_SLIDERS = [
   { key: 'offService', label: 'Off-Service max PPH',min: 0.2, max: 3.0, step: 0.1 },
 ]
 
-// FastTrack PAs see primary patients solo, at their own rate, so this
-// overrides the general 'pa' slider only when viewing FastTrack.
-const FASTTRACK_PA_SLIDER = { key: 'fasttrackPa', label: 'FastTrack PA max PPH (solo)', min: 0.2, max: 4.0, step: 0.1 }
+// FastTrack PAs do both, in the same hour: see patients solo, and co-manage
+// patients alongside an attending. Their combined rate replaces the general
+// 'pa' slider only when viewing FastTrack.
+const FASTTRACK_PA_SLIDERS = [
+  { key: 'fasttrackPa',              label: 'PA max PPH (solo)',           min: 0, max: 4.0, step: 0.1 },
+  { key: 'fasttrackPaWithAttending', label: 'PA max PPH (w/ attending)',   min: 0, max: 4.0, step: 0.1 },
+]
 
 // Editable value box — keeps its own text while focused so partial input
 // (e.g. "1.") isn't clobbered by the controlled float on every keystroke.
@@ -97,7 +101,7 @@ export default function PphSliders({ pph, onChange, empiricalPph, activeTeam = '
   const ceilingValue = pph[areaKey] ?? attendingSlider?.max ?? 4.0
   const ownSliderClamped = ownSlider && { ...ownSlider, max: Math.min(ownSlider.max, ceilingValue) }
   const extenderSliders = activeTeam === 'FastTrack'
-    ? [FASTTRACK_PA_SLIDER, ...EXTENDER_SLIDERS.filter(s => s.key !== 'pa')]
+    ? [...FASTTRACK_PA_SLIDERS, ...EXTENDER_SLIDERS.filter(s => s.key !== 'pa')]
     : EXTENDER_SLIDERS
 
   return (

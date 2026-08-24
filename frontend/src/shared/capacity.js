@@ -55,12 +55,8 @@ export function teamArea(teamName, customTeams = []) {
   return ct.area === 'FastTrack' ? 'fasttrack' : ct.area === 'ERU' ? 'eru' : 'main'
 }
 
-// The pph object key an extender (PA/Resident) shift's max-PPH lives under.
-// PAs can have an area-specific override (e.g. FastTrack PAs who see primary
-// patients solo, at a different rate than Main/ERU PAs) via `${area}Pa`;
-// falls back to the single area-agnostic `pa` key when no override is set.
-export function extenderPphKey(shift, area) {
-  if (shift.role_type === 'PA') return area ? `${area}Pa` : 'pa'
+// The pph object key a Resident extender shift's max-PPH lives under.
+export function extenderPphKey(shift) {
   if (shift.role_type === 'Resident') {
     const level = shift.resident_level || shift.role_detail
     return RESIDENT_LEVEL_TO_PPH_KEY[level] ?? DEFAULT_RESIDENT_PPH_KEY
@@ -68,11 +64,20 @@ export function extenderPphKey(shift, area) {
   return null
 }
 
-// Numeric PPH for one extender shift, honoring the PA area-override fallback.
+// Numeric PPH for one extender shift. FastTrack PAs do two things a Main/ERU
+// PA doesn't: see patients solo (fasttrackPa) AND co-manage patients
+// alongside an attending (fasttrackPaWithAttending) in the same hour, so
+// their rate is the SUM of both, not a single number. Falls back to the
+// single area-agnostic `pa` key when no FastTrack override is set, so
+// existing scenarios are unaffected.
 function extenderPphValue(shift, pph, area) {
-  const key = extenderPphKey(shift, area)
-  if (shift.role_type === 'PA') return pph[key] ?? pph.pa ?? 0
-  return pph[key] ?? 0
+  if (shift.role_type === 'PA') {
+    if (area === 'fasttrack' && (pph.fasttrackPa != null || pph.fasttrackPaWithAttending != null)) {
+      return (pph.fasttrackPa ?? pph.pa ?? 0) + (pph.fasttrackPaWithAttending ?? 0)
+    }
+    return pph.pa ?? 0
+  }
+  return pph[extenderPphKey(shift)] ?? 0
 }
 
 // Distinct team names with any shift active in `area` at `hour` — the set
