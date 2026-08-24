@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react'
 import { fetchSchedule, fetchDemand, fetchSummary, postRefresh, fetchScenarios, createScenario, deleteScenario } from '../shared/api'
 import { useScheduleState } from '../shared/hooks/useScheduleState'
+import { useCommandStack } from './hooks/useCommandStack'
 import { buildScenarioPayload, scenarioPayloadToSnapshot } from '../shared/scenarioPayload'
 import { STATIC_MAIN, shiftCoversHour } from '../shared/capacity'
 import { getDemandSeries, hasPercentiles } from '../shared/demandSeries'
 import TopBar from './components/TopBar'
 import DowTabs from '../shared/components/DowTabs'
-import ScheduleEditor from './components/ScheduleEditor'
+import Timeline from './components/Timeline'
 import PphChart from './components/PphChart'
 import SummaryStatsBar from './components/SummaryStatsBar'
 import OptimizeModal from './components/OptimizeModal'
 import ConstraintsPanel from './components/Generator/ConstraintsPanel'
 import GeneratorResult from './components/Generator/GeneratorResult'
+import ConfirmDialog from '../shared/components/ConfirmDialog'
 import { getOverflowHours, runOptimizer } from './utils/optimizer'
 import { exportScheduleAs } from './utils/exportSchedule'
 import { generateSchedule, assignTeams } from './utils/generator'
@@ -65,14 +67,25 @@ function App() {
   const [customTeams, setCustomTeams] = useState([])
   const [optimizing, setOptimizing] = useState(false)
   const [optimizeResult, setOptimizeResult] = useState(null)
+  const [optimizePreCustomTeams, setOptimizePreCustomTeams] = useState(null)
   const [toast, setToast] = useState(null)
   const [costRates, setCostRates] = useState(DEFAULT_COST_RATES)
   const [costModeEnabled, setCostModeEnabled] = useState(false)
   const [generatorOpen, setGeneratorOpen] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [generatorResult, setGeneratorResult] = useState(null)
+  const [generatorPreCustomTeams, setGeneratorPreCustomTeams] = useState(null)
+  const [hoverHour, setHoverHour] = useState(null)
+  const [removeTeamConfirm, setRemoveTeamConfirm] = useState(null) // team name | null
 
   const activeArea = AREA_KEY[activeTeam] ?? 'main'
+
+  const schedState = useScheduleState()
+  // One command stack for all of v2's shift edits (PHASE 5, 5.4) — day
+  // edits, drags, auto-optimize, and schedule generation all push through
+  // this instead of schedState's own per-day undo stacks (which legacy
+  // keeps using unchanged) or a bespoke preOptimizeSnapshot mechanism.
+  const commandStack = useCommandStack(schedState)
 
   function handlePphChange(key, val) {
     setPph(prev => ({ ...prev, [key]: val }))
@@ -111,6 +124,7 @@ function App() {
   function handleResetToScenario(id) {
     const sc = scenarios.find(s => s.id === id)
     if (!sc) return
+    commandStack.pushCommand('global', DAYS, `Restore scenario ${sc.name}`)
     schedState.loadSnapshot(scenarioPayloadToSnapshot(sc.payload))
     if (sc.payload.pph) setPph({ ...sc.payload.pph })
     if (sc.payload.customTeams) setCustomTeams([...sc.payload.customTeams])
@@ -132,10 +146,11 @@ function App() {
     setOptimizing(true)
     await new Promise(r => setTimeout(r, 280))
     const result = runOptimizer(shifts, demand, pph, activeDow, customTeams, activeArea, target)
-    schedState.pushUndoForDay(activeDow, shifts)
+    commandStack.pushCommand('day', [activeDow], `Auto-optimize ${activeTeam}`)
     schedState.applyDayShifts(activeDow, result.newShifts)
+    setOptimizePreCustomTeams(customTeams)
     if (result.newTeams.length > 0) setCustomTeams(prev => [...prev, ...result.newTeams])
-    setOptimizeResult({ ...result, preOptCustomTeams: customTeams })
+    setOptimizeResult(result)
     setOptimizing(false)
   }
 
@@ -150,9 +165,8 @@ function App() {
     setOptimizing(true)
     await new Promise(r => setTimeout(r, 280))
 
-    const preOptimizeSnapshot = {}
-    DAYS.forEach(day => { preOptimizeSnapshot[day] = schedState.getShiftsForDay(day) })
-    const preOptCustomTeams = customTeams
+    commandStack.pushCommand('week', DAYS, `Auto-optimize ${activeTeam} (week)`)
+    setOptimizePreCustomTeams(customTeams)
 
     let accumulatedCustomTeams = [...customTeams]
     const perDay = {}
@@ -175,30 +189,20 @@ function App() {
 
     if (allNewTeams.length > 0) setCustomTeams(accumulatedCustomTeams)
 
-    setOptimizeResult({
-      isWeek: true,
-      perDay,
-      resolvedCount: totalResolved,
-      totalOverflow,
-      changes: [],
-      preOptimizeSnapshot,
-      preOptCustomTeams,
-    })
+    setOptimizeResult({ isWeek: true, perDay, resolvedCount: totalResolved, totalOverflow, changes: [] })
     setOptimizing(false)
   }
 
   function handleAcceptOptimize() {
     setOptimizeResult(null)
+    setOptimizePreCustomTeams(null)
   }
 
   function handleDiscardOptimize() {
-    if (optimizeResult.isWeek) {
-      schedState.loadSnapshot(optimizeResult.preOptimizeSnapshot)
-    } else {
-      schedState.undoForDay(activeDow)
-    }
-    setCustomTeams(optimizeResult.preOptCustomTeams)
+    commandStack.undo()
+    if (optimizePreCustomTeams) setCustomTeams(optimizePreCustomTeams)
     setOptimizeResult(null)
+    setOptimizePreCustomTeams(null)
   }
 
   function handleAddCustomTeam(team) {
@@ -206,6 +210,7 @@ function App() {
   }
 
   function handleRemoveCustomTeam(name) {
+    commandStack.pushCommand('global', DAYS, `Remove team ${name}`)
     setCustomTeams(prev => prev.filter(t => t.name !== name))
     const snap = {}
     DAYS.forEach(day => {
@@ -224,10 +229,10 @@ function App() {
 
     const { area, target: genTarget, patterns, scope, constraints } = config
     const groups = resolveScopeGroups(scope, activeDow)
+    const affectedDays = [...new Set(groups.flatMap(g => g.days))]
 
-    const preGenSnapshot = {}
-    DAYS.forEach(d => { preGenSnapshot[d] = schedState.getShiftsForDay(d) })
-    const preGenCustomTeams = customTeams
+    commandStack.pushCommand(affectedDays.length > 1 ? 'week' : 'day', affectedDays, `Generate ${AREA_LABEL[area]} schedule`)
+    setGeneratorPreCustomTeams(customTeams)
 
     let accumulatedCustomTeams = [...customTeams]
     let remainingBudget = constraints.objective === 'maximize-coverage' ? constraints.weeklyHourBudget : null
@@ -256,13 +261,13 @@ function App() {
       const coverageSeries = Array.from({ length: 24 }, (_, h) =>
         assigned.filter(s => shiftCoversHour(s, h)).length * c
       )
-      const demandSeries = getDemandSeries(demand, AREA_LABEL[area], group.anchorDay, genTarget)
+      const demandSeriesForGroup = getDemandSeries(demand, AREA_LABEL[area], group.anchorDay, genTarget)
 
-      resultGroups.push({ label: group.label, days: group.days, demandSeries, coverageSeries })
+      resultGroups.push({ label: group.label, days: group.days, demandSeries: demandSeriesForGroup, coverageSeries })
 
       const areaTeamNames = teamsInArea(area, accumulatedCustomTeams)
       for (const day of group.days) {
-        const existing = preGenSnapshot[day]
+        const existing = schedState.getShiftsForDay(day)
         const keep = existing.filter(s => !areaTeamNames.includes(s.team))
         const dayShifts = assigned.map(s => ({ ...s, day, id: `${s.id}-${day}` }))
         schedState.applyDayShifts(day, [...keep, ...dayShifts])
@@ -284,23 +289,33 @@ function App() {
       area: AREA_LABEL[area],
       groups: resultGroups,
       totals: { hours: totalHours, shiftCount: totalShiftCount, cost: totalCost, baselineHours, baselineCost, uncoveredHours: totalUncovered, patternCounts },
-      preGenSnapshot,
-      preGenCustomTeams,
     })
     setGenerating(false)
   }
 
   function handleAcceptGenerate() {
     setGeneratorResult(null)
+    setGeneratorPreCustomTeams(null)
   }
 
   function handleDiscardGenerate() {
-    schedState.loadSnapshot(generatorResult.preGenSnapshot)
-    setCustomTeams(generatorResult.preGenCustomTeams)
+    commandStack.undo()
+    if (generatorPreCustomTeams) setCustomTeams(generatorPreCustomTeams)
     setGeneratorResult(null)
+    setGeneratorPreCustomTeams(null)
   }
 
-  const schedState = useScheduleState()
+  // 5.5: copy the active day's shifts onto other days.
+  function handleCopyDayTo(targetDays) {
+    if (!targetDays.length) return
+    commandStack.pushCommand('week', targetDays, `Copy ${activeDow} to ${targetDays.join(', ')}`)
+    const source = schedState.getShiftsForDay(activeDow)
+    for (const day of targetDays) {
+      const copied = source.map((s, i) => ({ ...s, day, id: `copy-${day}-${Date.now()}-${i}` }))
+      schedState.applyDayShifts(day, copied)
+    }
+    showToast(`✓ Copied ${activeDow} to ${targetDays.length} day${targetDays.length === 1 ? '' : 's'}`)
+  }
 
   useEffect(() => {
     Promise.all([fetchSchedule(), fetchDemand(), fetchSummary()])
@@ -315,6 +330,7 @@ function App() {
         setLoading(false)
       })
     fetchScenarios(SCENARIO_VERSION).then(setScenarios).catch(err => console.error(err))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function handleRefresh() {
@@ -325,6 +341,7 @@ function App() {
       schedState.loadBaseline(sched)
       setDemand(dem)
       setSummary(summ)
+      commandStack.clear()
     } catch (e) {
       console.error(e)
     }
@@ -337,15 +354,16 @@ function App() {
       if (!mod) return
       if (e.key === 'z' && !e.shiftKey) {
         e.preventDefault()
-        schedState.undoForDay(activeDow)
+        commandStack.undo()
       } else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
         e.preventDefault()
-        schedState.redoForDay(activeDow)
+        commandStack.redo()
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [activeDow, schedState.undoForDay, schedState.redoForDay])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commandStack.undo, commandStack.redo])
 
   if (loading) {
     return (
@@ -357,6 +375,7 @@ function App() {
 
   const shifts = schedState.getShiftsForDay(activeDow)
   const baselineShifts = schedState.baseline?.filter(s => s.day === activeDow) ?? []
+  const demandSeries = getDemandSeries(demand, activeTeam, activeDow, target)
 
   const weekBreakdown = DAYS.map(d => {
     const dayShifts = schedState.getShiftsForDay(d)
@@ -379,17 +398,23 @@ function App() {
         onRefresh={handleRefresh}
         refreshing={refreshing}
         onResetDay={() => {
-          schedState.pushUndoForDay(activeDow, shifts)
+          commandStack.pushCommand('day', [activeDow], 'Reset day')
           schedState.resetDay(activeDow)
         }}
-        onClearDay={() => schedState.clearDay(activeDow)}
-        onClearWeek={() => schedState.clearWeek()}
+        onClearDay={() => {
+          commandStack.pushCommand('day', [activeDow], 'Clear day')
+          schedState.applyDayShifts(activeDow, [])
+        }}
+        onClearWeek={() => {
+          commandStack.pushCommand('week', DAYS, 'Clear week')
+          DAYS.forEach(day => schedState.applyDayShifts(day, []))
+        }}
         onSaveScenario={handleSaveScenario}
         scenarioCount={scenarios.length}
-        onUndo={() => schedState.undoForDay(activeDow)}
-        onRedo={() => schedState.redoForDay(activeDow)}
-        canUndo={schedState.canUndo(activeDow)}
-        canRedo={schedState.canRedo(activeDow)}
+        onUndo={commandStack.undo}
+        onRedo={commandStack.redo}
+        canUndo={commandStack.canUndo()}
+        canRedo={commandStack.canRedo()}
         onAutoOptimize={handleAutoOptimize}
         onAutoOptimizeWeek={handleAutoOptimizeWeek}
         optimizing={optimizing}
@@ -411,50 +436,56 @@ function App() {
         costModeEnabled={costModeEnabled}
         target={target}
       />
-      <div className="flex flex-1 overflow-hidden min-h-0">
-        <div className="w-3/5 overflow-hidden border-r border-slate-700">
-          <ScheduleEditor
-            day={activeDow}
-            shifts={shifts}
-            onAdd={(team, roleType, level) => {
-              schedState.pushUndoForDay(activeDow, shifts)
-              schedState.addShift(activeDow, team, roleType, level)
-            }}
-            onDelete={(id) => {
-              schedState.pushUndoForDay(activeDow, shifts)
-              schedState.deleteShift(activeDow, id)
-            }}
-            onUpdate={(id, patch) => schedState.updateShift(activeDow, id, patch)}
-            onBeforeDrag={() => schedState.pushUndoForDay(activeDow, shifts)}
-            customTeams={customTeams}
-            onAddCustomTeam={handleAddCustomTeam}
-            onRemoveCustomTeam={handleRemoveCustomTeam}
-          />
-        </div>
-        <div className="w-2/5 overflow-hidden">
-          <PphChart
-            day={activeDow}
-            demand={demand}
-            shifts={shifts}
-            baselineShifts={baselineShifts}
-            pph={pph}
-            onPphChange={handlePphChange}
-            scenarios={scenarios}
-            comparisonScenarioId={comparisonScenarioId}
-            onSelectComparison={setComparisonScenarioId}
-            onDeleteScenario={handleDeleteScenario}
-            onResetToScenario={handleResetToScenario}
-            customTeams={customTeams}
-            costRates={costRates}
-            costModeEnabled={costModeEnabled}
-            onCostRateChange={handleCostRateChange}
-            onToggleCostMode={setCostModeEnabled}
-            activeTeam={activeTeam}
-            onActiveTeamChange={setActiveTeam}
-            target={target}
-            onTargetChange={setTarget}
-          />
-        </div>
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <Timeline
+          day={activeDow}
+          shifts={shifts}
+          onAdd={(team, roleType, level) => {
+            commandStack.pushCommand('day', [activeDow], 'Add shift')
+            schedState.addShift(activeDow, team, roleType, level)
+          }}
+          onDelete={(id) => {
+            commandStack.pushCommand('day', [activeDow], 'Delete shift')
+            schedState.deleteShift(activeDow, id)
+          }}
+          onUpdate={(id, patch) => {
+            commandStack.pushCommand('day', [activeDow], 'Edit shift')
+            schedState.updateShift(activeDow, id, patch)
+          }}
+          customTeams={customTeams}
+          onAddCustomTeam={handleAddCustomTeam}
+          onRemoveCustomTeam={setRemoveTeamConfirm}
+          demandSeries={demandSeries}
+          pph={pph}
+          area={activeArea}
+          hoverHour={hoverHour}
+          onHoverHour={setHoverHour}
+          onCopyDayTo={handleCopyDayTo}
+        />
+        <PphChart
+          day={activeDow}
+          demand={demand}
+          shifts={shifts}
+          baselineShifts={baselineShifts}
+          pph={pph}
+          onPphChange={handlePphChange}
+          scenarios={scenarios}
+          comparisonScenarioId={comparisonScenarioId}
+          onSelectComparison={setComparisonScenarioId}
+          onDeleteScenario={handleDeleteScenario}
+          onResetToScenario={handleResetToScenario}
+          customTeams={customTeams}
+          costRates={costRates}
+          costModeEnabled={costModeEnabled}
+          onCostRateChange={handleCostRateChange}
+          onToggleCostMode={setCostModeEnabled}
+          activeTeam={activeTeam}
+          onActiveTeamChange={setActiveTeam}
+          target={target}
+          onTargetChange={setTarget}
+          hoverHour={hoverHour}
+          onHoverHour={setHoverHour}
+        />
       </div>
     </div>
 
@@ -486,6 +517,16 @@ function App() {
       onAccept={handleAcceptGenerate}
       onDiscard={handleDiscardGenerate}
     />
+
+    {removeTeamConfirm && (
+      <ConfirmDialog
+        title="Remove team?"
+        message={`${removeTeamConfirm} and all its shifts will be removed from every day.`}
+        confirmLabel="Remove"
+        onCancel={() => setRemoveTeamConfirm(null)}
+        onConfirm={() => { handleRemoveCustomTeam(removeTeamConfirm); setRemoveTeamConfirm(null) }}
+      />
+    )}
 
     {toast && (
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-800 border border-green-600 rounded-lg px-4 py-2 text-sm text-green-300 shadow-xl z-50 pointer-events-none whitespace-nowrap">

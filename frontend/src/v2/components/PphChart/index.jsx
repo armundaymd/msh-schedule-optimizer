@@ -16,6 +16,7 @@ export default function PphChart({
   customTeams,
   costRates, costModeEnabled, onCostRateChange, onToggleCostMode,
   activeTeam, onActiveTeamChange, target, onTargetChange,
+  hoverHour, onHoverHour,
 }) {
   const [demandCI, setDemandCI]         = useState(null)
   const [empiricalPph, setEmpiricalPph] = useState(null)
@@ -157,6 +158,8 @@ export default function PphChart({
           empiricalPph={empiricalPph}
           activeTeam={activeTeam}
           target={target}
+          hoverHour={hoverHour}
+          onHoverHour={onHoverHour}
         />
       </div>
 

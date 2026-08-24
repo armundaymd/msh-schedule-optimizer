@@ -1,6 +1,6 @@
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Area,
+  Tooltip, ResponsiveContainer, Area, ReferenceLine,
 } from 'recharts'
 import { teamCapacity, attendingCapacity, ownThroughput, extenderCapacity, soloExtenderCapacity, teamBreakdown } from '../../../shared/capacity'
 import { getDemandSeries } from '../../../shared/demandSeries'
@@ -105,10 +105,16 @@ function CustomTooltip({ active, payload, label, target }) {
   )
 }
 
+// ROW_HEADER_W in Timeline/TeamRow.jsx — keeping this YAxis width the same
+// lines hour 0 in the chart up with hour 0 in the timeline above it, so the
+// two share one x scale (PHASE 5, 5.1).
+const SHARED_ROW_HEADER_W = 96
+
 export default function CapacityChart({
   day, demand, shifts, baselineShifts, pph,
   comparisonShifts, comparisonPph, customTeams,
   demandCI, empiricalPph, activeTeam = 'Main', target = 'mean',
+  hoverHour, onHoverHour,
 }) {
   // Demand series for the active team, at the selected target (mean or a percentile)
   const demandSeries = getDemandSeries(demand, activeTeam, day, target)
@@ -163,7 +169,12 @@ export default function CapacityChart({
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <ComposedChart data={data} margin={{ top: 8, right: 12, bottom: 8, left: 0 }}>
+      <ComposedChart
+        data={data}
+        margin={{ top: 8, right: 12, bottom: 8, left: 0 }}
+        onMouseMove={e => { if (e?.activeLabel != null) onHoverHour?.(e.activeLabel) }}
+        onMouseLeave={() => onHoverHour?.(null)}
+      >
         <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
         <XAxis
           dataKey="hour"
@@ -171,8 +182,9 @@ export default function CapacityChart({
           tickFormatter={h => `${String(h).padStart(2, '0')}h`}
           interval={3}
         />
-        <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} width={36} />
+        <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} width={SHARED_ROW_HEADER_W - 60} />
         <Tooltip content={<CustomTooltip target={target} />} />
+        {hoverHour != null && <ReferenceLine x={hoverHour} stroke="#60a5fa" strokeOpacity={0.4} />}
 
         {/* 95% bootstrap CI band behind the demand bars (mean target only) */}
         {ciSeries && (

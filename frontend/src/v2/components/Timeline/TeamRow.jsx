@@ -1,0 +1,140 @@
+import { useState, useRef, useEffect } from 'react'
+import { useDroppable } from '@dnd-kit/core'
+import ShiftBlock from './ShiftBlock'
+import { LANE_HEIGHT, ROW_HEADER_W, assignLanes } from './layout'
+
+const ROLES = ['Attending', 'PA', 'Resident']
+const RESIDENT_LEVELS = ['PGY-1', 'PGY-2', 'PGY-3', 'PGY-4', 'Off-Service']
+
+export default function TeamRow({
+  team, color, shifts, allDayShifts, hourPx, totalW, onAdd, onDelete, onUpdate,
+  dragPreview, isCustom, onRemove, selectedId, onSelect, hoverHour,
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [residentSubmenu, setResidentSubmenu] = useState(false)
+  const pickerRef = useRef(null)
+
+  function closePicker() {
+    setPickerOpen(false)
+    setResidentSubmenu(false)
+  }
+
+  useEffect(() => {
+    if (!pickerOpen) return
+    function onDown(e) { if (pickerRef.current && !pickerRef.current.contains(e.target)) closePicker() }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [pickerOpen])
+
+  const { lanes, numLanes } = assignLanes(shifts)
+  const rowH = numLanes * LANE_HEIGHT
+  const { setNodeRef, isOver } = useDroppable({ id: team })
+
+  return (
+    <div className="flex border-b border-slate-800">
+      {/* row header */}
+      <div
+        className="shrink-0 flex items-center justify-between px-2 text-xs font-semibold"
+        style={{ width: ROW_HEADER_W, height: rowH, color, borderRight: `1px solid ${color}40` }}
+      >
+        <span className="truncate">{team}</span>
+        <div className="flex items-center gap-1">
+          {isCustom && (
+            <button
+              onClick={e => { e.stopPropagation(); onRemove?.() }}
+              style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}
+              title={`Remove ${team}`}
+            >
+              ×
+            </button>
+          )}
+          <div ref={pickerRef} className="relative">
+            <button
+              onClick={() => { setPickerOpen(v => !v); setResidentSubmenu(false) }}
+              style={{ color, border: `1px solid ${color}`, borderRadius: 3 }}
+              className="text-xs px-1 hover:opacity-80 leading-4"
+            >
+              +
+            </button>
+            {pickerOpen && !residentSubmenu && (
+              <div className="absolute left-0 top-6 z-50 bg-slate-800 border border-slate-600 rounded shadow-xl py-1 w-28">
+                {ROLES.map(role => (
+                  <button
+                    key={role}
+                    onClick={() => { if (role === 'Resident') setResidentSubmenu(true); else { onAdd(role); closePicker() } }}
+                    className="block w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-700 transition-colors"
+                  >
+                    {role}
+                  </button>
+                ))}
+              </div>
+            )}
+            {pickerOpen && residentSubmenu && (
+              <div className="absolute left-0 top-6 z-50 bg-slate-800 border border-slate-600 rounded shadow-xl py-1 w-28">
+                {RESIDENT_LEVELS.map(level => (
+                  <button
+                    key={level}
+                    onClick={() => { onAdd('Resident', level); closePicker() }}
+                    className="block w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-700 transition-colors"
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* timeline row */}
+      <div
+        ref={setNodeRef}
+        className="relative transition-colors"
+        style={{
+          width: totalW, height: rowH,
+          background: isOver ? 'rgba(59,130,246,0.10)' : undefined,
+          boxShadow: isOver ? 'inset 0 0 0 2px rgba(59,130,246,0.5)' : undefined,
+        }}
+      >
+        {/* hour grid lines */}
+        {Array.from({ length: 24 }, (_, h) => (
+          <div key={h} style={{ position: 'absolute', left: h * hourPx, top: 0, bottom: 0, width: 1, background: '#1e293b' }} />
+        ))}
+        {hoverHour != null && (
+          <div style={{ position: 'absolute', left: hoverHour * hourPx, top: 0, bottom: 0, width: hourPx, background: 'rgba(96,165,250,0.08)', pointerEvents: 'none' }} />
+        )}
+
+        {/* drop-position preview */}
+        {dragPreview && dragPreview.segments.map((seg, i) => (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              left: seg.left, width: seg.width,
+              top: dragPreview.lane * LANE_HEIGHT, height: LANE_HEIGHT - 1,
+              background: color, opacity: 0.3, border: `2px dashed ${color}`, borderRadius: 3,
+              pointerEvents: 'none', zIndex: 5,
+            }}
+          />
+        ))}
+
+        {shifts.map(shift => (
+          <ShiftBlock
+            key={shift.id}
+            shift={shift}
+            color={color}
+            hourPx={hourPx}
+            lane={lanes[shift.id] ?? 0}
+            numLanes={numLanes}
+            laneHeight={LANE_HEIGHT}
+            allDayShifts={allDayShifts}
+            onDelete={onDelete}
+            onUpdate={onUpdate}
+            selected={selectedId === shift.id}
+            onSelect={onSelect}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
