@@ -36,6 +36,7 @@ export default function Timeline({
   demandSeries, pph, area,
   hoverHour, onHoverHour,
   onCopyDayTo,
+  hiddenTeams, onToggleTeamHidden,
 }) {
   const containerRef = useRef(null)
   const [containerW, setContainerW] = useState(0)
@@ -216,99 +217,109 @@ export default function Timeline({
 
       <div className="overflow-x-auto">
         <div style={{ width: ROW_HEADER_W + totalW }}>
-          {/* Hour axis — shared x scale with the chart below */}
-          <div
-            className="flex border-b border-slate-800"
-            style={{ height: HEADER_H }}
-            onMouseMove={e => { const h = hourFromClientX(e.currentTarget, e.clientX); if (h != null) onHoverHour?.(h) }}
-            onMouseLeave={() => onHoverHour?.(null)}
-          >
-            <div style={{ width: ROW_HEADER_W }} className="shrink-0" />
-            {Array.from({ length: 24 }, (_, h) => (
-              <div key={h} style={{ width: hourPx }} className="text-center text-[10px] text-slate-500 leading-[28px]">
-                {String(h).padStart(2, '0')}
-              </div>
-            ))}
-          </div>
-
-          {/* Team rows */}
-          <DndContext sensors={sensors} onDragStart={handleDragStart} onDragMove={handleDragMove} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
-            <div onClick={e => e.stopPropagation()}>
-              {allTeams.map(team => (
-                <TeamRow
-                  key={team.name}
-                  team={team.name}
-                  color={team.color}
-                  shifts={shifts.filter(s => s.team === team.name).filter(s => showAllStaff || s.role_type === 'Attending')}
-                  allDayShifts={shifts}
-                  hourPx={hourPx}
-                  totalW={totalW}
-                  onAdd={(roleType, level) => onAdd(team.name, roleType, level)}
-                  onDelete={onDelete}
-                  onUpdate={onUpdate}
-                  dragPreview={dragPreview?.team === team.name ? dragPreview : null}
-                  isCustom={team.isCustom}
-                  onRemove={() => onRemoveCustomTeam(team.name)}
-                  selectedId={selectedId}
-                  onSelect={setSelectedId}
-                  hoverHour={hoverHour}
-                />
-              ))}
-
-              {/* Add team */}
-              <div className="flex items-center border-b border-slate-800" style={{ height: 28 }}>
-                <div style={{ width: ROW_HEADER_W }} className="shrink-0 relative px-2" ref={addRef}>
-                  <button onClick={() => setAddOpen(v => !v)} className="text-slate-500 hover:text-slate-200 text-sm leading-none transition-colors" title="Add team">
-                    ＋ Add team
-                  </button>
-                  {addOpen && (
-                    <div className="absolute left-0 top-7 z-50 bg-slate-800 border border-slate-600 rounded shadow-xl p-3 w-56">
-                      <div className="text-xs text-slate-400 mb-1">Team name</div>
-                      <input
-                        autoFocus
-                        value={newName}
-                        onChange={e => setNewName(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && handleAddConfirm()}
-                        placeholder="e.g. Triage"
-                        className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-slate-100 outline-none focus:border-blue-500 mb-2"
-                      />
-                      <div className="text-xs text-slate-400 mb-1">Color</div>
-                      <div className="flex gap-1 flex-wrap mb-2">
-                        {PRESET_COLORS.map(c => (
-                          <button key={c} onClick={() => setNewColor(c)} style={{ background: c, width: 20, height: 20, borderRadius: 3, border: newColor === c ? '2px solid white' : '2px solid transparent' }} />
-                        ))}
-                      </div>
-                      <div className="text-xs text-slate-400 mb-1">PPH area</div>
-                      <select value={newArea} onChange={e => setNewArea(e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-slate-100 outline-none mb-2">
-                        {AREAS.map(a => <option key={a} value={a}>{a}</option>)}
-                      </select>
-                      <button onClick={handleAddConfirm} className="w-full text-xs py-1 rounded bg-blue-700 hover:bg-blue-600 text-white transition-colors">
-                        Add team
-                      </button>
-                    </div>
-                  )}
+          {/* Team rows scroll independently, capped so the coverage ribbon
+              and demand chart below are always reachable without paging
+              through the whole team list (rather than the page growing
+              unbounded with however many teams/lanes are shown). */}
+          <div style={{ maxHeight: '44vh', overflowY: 'auto' }}>
+            {/* Hour axis — shared x scale with the chart below. Sticky so it
+                stays visible while scrolling through team rows. */}
+            <div
+              className="flex border-b border-slate-800 sticky top-0 z-10 bg-[#0f1117]"
+              style={{ height: HEADER_H }}
+              onMouseMove={e => { const h = hourFromClientX(e.currentTarget, e.clientX); if (h != null) onHoverHour?.(h) }}
+              onMouseLeave={() => onHoverHour?.(null)}
+            >
+              <div style={{ width: ROW_HEADER_W }} className="shrink-0" />
+              {Array.from({ length: 24 }, (_, h) => (
+                <div key={h} style={{ width: hourPx }} className="text-center text-[10px] text-slate-500 leading-[28px]">
+                  {String(h).padStart(2, '0')}
                 </div>
-              </div>
+              ))}
             </div>
 
-            <DragOverlay dropAnimation={null}>
-              {activeDrag && activeDrag.mode === 'move' && (
-                <div style={{ background: activeDrag.color, borderRadius: 3, padding: '4px 6px', width: 140, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', opacity: 0.9, pointerEvents: 'none' }} className="text-white">
-                  <div className="text-[10px] font-semibold truncate">
-                    {activeDrag.shift.role_type}{activeDrag.shift.role_detail ? ` — ${activeDrag.shift.role_detail}` : ''}
-                  </div>
-                  <div className="text-[9px] opacity-80">{activeDrag.shift.start_time} – {activeDrag.shift.end_time}</div>
-                  {dragReadout && (
-                    <div className="text-[9px] mt-0.5 opacity-90">
-                      resolves {dragReadout.resolved} deficit hour{dragReadout.resolved === 1 ? '' : 's'}, creates {dragReadout.created}
-                    </div>
-                  )}
-                </div>
-              )}
-            </DragOverlay>
-          </DndContext>
+            {/* Team rows */}
+            <DndContext sensors={sensors} onDragStart={handleDragStart} onDragMove={handleDragMove} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
+              <div onClick={e => e.stopPropagation()}>
+                {allTeams.map(team => (
+                  <TeamRow
+                    key={team.name}
+                    team={team.name}
+                    color={team.color}
+                    shifts={shifts.filter(s => s.team === team.name).filter(s => showAllStaff || s.role_type === 'Attending')}
+                    allDayShifts={shifts}
+                    hourPx={hourPx}
+                    totalW={totalW}
+                    onAdd={(roleType, level) => onAdd(team.name, roleType, level)}
+                    onDelete={onDelete}
+                    onUpdate={onUpdate}
+                    dragPreview={dragPreview?.team === team.name ? dragPreview : null}
+                    isCustom={team.isCustom}
+                    onRemove={() => onRemoveCustomTeam(team.name)}
+                    selectedId={selectedId}
+                    onSelect={setSelectedId}
+                    hoverHour={hoverHour}
+                    hidden={hiddenTeams?.has(team.name)}
+                    onToggleHidden={onToggleTeamHidden}
+                  />
+                ))}
 
-          {/* Coverage ribbon, live during drag */}
+                {/* Add team */}
+                <div className="flex items-center border-b border-slate-800" style={{ height: 28 }}>
+                  <div style={{ width: ROW_HEADER_W }} className="shrink-0 relative px-2" ref={addRef}>
+                    <button onClick={() => setAddOpen(v => !v)} className="text-slate-500 hover:text-slate-200 text-sm leading-none transition-colors" title="Add team">
+                      ＋ Add team
+                    </button>
+                    {addOpen && (
+                      <div className="absolute left-0 top-7 z-50 bg-slate-800 border border-slate-600 rounded shadow-xl p-3 w-56">
+                        <div className="text-xs text-slate-400 mb-1">Team name</div>
+                        <input
+                          autoFocus
+                          value={newName}
+                          onChange={e => setNewName(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && handleAddConfirm()}
+                          placeholder="e.g. Triage"
+                          className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-slate-100 outline-none focus:border-blue-500 mb-2"
+                        />
+                        <div className="text-xs text-slate-400 mb-1">Color</div>
+                        <div className="flex gap-1 flex-wrap mb-2">
+                          {PRESET_COLORS.map(c => (
+                            <button key={c} onClick={() => setNewColor(c)} style={{ background: c, width: 20, height: 20, borderRadius: 3, border: newColor === c ? '2px solid white' : '2px solid transparent' }} />
+                          ))}
+                        </div>
+                        <div className="text-xs text-slate-400 mb-1">PPH area</div>
+                        <select value={newArea} onChange={e => setNewArea(e.target.value)} className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-slate-100 outline-none mb-2">
+                          {AREAS.map(a => <option key={a} value={a}>{a}</option>)}
+                        </select>
+                        <button onClick={handleAddConfirm} className="w-full text-xs py-1 rounded bg-blue-700 hover:bg-blue-600 text-white transition-colors">
+                          Add team
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <DragOverlay dropAnimation={null}>
+                {activeDrag && activeDrag.mode === 'move' && (
+                  <div style={{ background: activeDrag.color, borderRadius: 3, padding: '4px 6px', width: 140, boxShadow: '0 4px 12px rgba(0,0,0,0.5)', opacity: 0.9, pointerEvents: 'none' }} className="text-white">
+                    <div className="text-[10px] font-semibold truncate">
+                      {activeDrag.shift.role_type}{activeDrag.shift.role_detail ? ` — ${activeDrag.shift.role_detail}` : ''}
+                    </div>
+                    <div className="text-[9px] opacity-80">{activeDrag.shift.start_time} – {activeDrag.shift.end_time}</div>
+                    {dragReadout && (
+                      <div className="text-[9px] mt-0.5 opacity-90">
+                        resolves {dragReadout.resolved} deficit hour{dragReadout.resolved === 1 ? '' : 's'}, creates {dragReadout.created}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </DragOverlay>
+            </DndContext>
+          </div>
+
+          {/* Coverage ribbon, live during drag — always visible, outside the
+              scrollable rows region above. */}
           {demandSeries && (
             <CoverageRibbon hourPx={hourPx} rowHeaderW={ROW_HEADER_W} values={ribbonValues} hoverHour={hoverHour} />
           )}

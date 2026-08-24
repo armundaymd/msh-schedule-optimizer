@@ -3,7 +3,7 @@ import { fetchSchedule, fetchDemand, fetchSummary, postRefresh, fetchScenarios, 
 import { useScheduleState } from '../shared/hooks/useScheduleState'
 import { useCommandStack } from './hooks/useCommandStack'
 import { buildScenarioPayload, scenarioPayloadToSnapshot } from '../shared/scenarioPayload'
-import { STATIC_MAIN, shiftCoversHour } from '../shared/capacity'
+import { STATIC_MAIN, shiftCoversHour, teamCapacity } from '../shared/capacity'
 import { getDemandSeries, hasPercentiles } from '../shared/demandSeries'
 import TopBar from './components/TopBar'
 import DowTabs from '../shared/components/DowTabs'
@@ -13,6 +13,7 @@ import SummaryStatsBar from './components/SummaryStatsBar'
 import OptimizeModal from './components/OptimizeModal'
 import ConstraintsPanel from './components/Generator/ConstraintsPanel'
 import GeneratorResult from './components/Generator/GeneratorResult'
+import ScenariosPanel from './components/Scenarios/ScenariosPanel'
 import ConfirmDialog from '../shared/components/ConfirmDialog'
 import { getOverflowHours, runOptimizer } from './utils/optimizer'
 import { exportScheduleAs } from './utils/exportSchedule'
@@ -53,6 +54,10 @@ function attendingHrs(list) {
     .reduce((sum, s) => sum + (s.endMins - s.startMins) / 60, 0)
 }
 
+function capacitySeries(shifts, pph, customTeams, area) {
+  return Array.from({ length: 24 }, (_, h) => teamCapacity(shifts, pph, customTeams, area, h))
+}
+
 function App() {
   const [activeDow, setActiveDow] = useState('Monday')
   const [activeTeam, setActiveTeam] = useState('Main')
@@ -76,6 +81,8 @@ function App() {
   const [generatorResult, setGeneratorResult] = useState(null)
   const [generatorPreCustomTeams, setGeneratorPreCustomTeams] = useState(null)
   const [hoverHour, setHoverHour] = useState(null)
+  const [hiddenTeams, setHiddenTeams] = useState(() => new Set())
+  const [scenariosOpen, setScenariosOpen] = useState(false)
   const [removeTeamConfirm, setRemoveTeamConfirm] = useState(null) // team name | null
 
   const activeArea = AREA_KEY[activeTeam] ?? 'main'
@@ -149,8 +156,16 @@ function App() {
     commandStack.pushCommand('day', [activeDow], `Auto-optimize ${activeTeam}`)
     schedState.applyDayShifts(activeDow, result.newShifts)
     setOptimizePreCustomTeams(customTeams)
+    const afterCustomTeams = result.newTeams.length > 0 ? [...customTeams, ...result.newTeams] : customTeams
     if (result.newTeams.length > 0) setCustomTeams(prev => [...prev, ...result.newTeams])
-    setOptimizeResult(result)
+
+    const demandSeriesForDay = getDemandSeries(demand, activeTeam, activeDow, target)
+    setOptimizeResult({
+      ...result,
+      demandSeries: demandSeriesForDay,
+      beforeCoverage: capacitySeries(shifts, pph, customTeams, activeArea),
+      afterCoverage: capacitySeries(result.newShifts, pph, afterCustomTeams, activeArea),
+    })
     setOptimizing(false)
   }
 
@@ -176,13 +191,19 @@ function App() {
 
     DAYS.forEach(day => {
       const dayShifts = schedState.getShiftsForDay(day)
+      const beforeCoverage = capacitySeries(dayShifts, pph, customTeams, activeArea)
       const result = runOptimizer(dayShifts, demand, pph, day, accumulatedCustomTeams, activeArea, target)
       schedState.applyDayShifts(day, result.newShifts)
       if (result.newTeams.length > 0) {
         accumulatedCustomTeams = [...accumulatedCustomTeams, ...result.newTeams]
         allNewTeams.push(...result.newTeams)
       }
-      perDay[day] = result
+      perDay[day] = {
+        ...result,
+        demandSeries: getDemandSeries(demand, activeTeam, day, target),
+        beforeCoverage,
+        afterCoverage: capacitySeries(result.newShifts, pph, accumulatedCustomTeams, activeArea),
+      }
       totalResolved += result.resolvedCount
       totalOverflow += result.totalOverflow
     })
@@ -317,6 +338,17 @@ function App() {
     showToast(`✓ Copied ${activeDow} to ${targetDays.length} day${targetDays.length === 1 ? '' : 's'}`)
   }
 
+  // A viewing preference, not schedule data -- doesn't touch schedState or
+  // the undo stack, and persists across day-tab switches.
+  function handleToggleTeamHidden(team) {
+    setHiddenTeams(prev => {
+      const next = new Set(prev)
+      if (next.has(team)) next.delete(team)
+      else next.add(team)
+      return next
+    })
+  }
+
   useEffect(() => {
     Promise.all([fetchSchedule(), fetchDemand(), fetchSummary()])
       .then(([sched, dem, summ]) => {
@@ -421,6 +453,7 @@ function App() {
         onExport={handleExport}
         activeTeam={activeTeam}
         onOpenGenerator={() => setGeneratorOpen(true)}
+        onOpenScenarios={() => setScenariosOpen(true)}
       />
       <DowTabs days={DAYS} active={activeDow} onChange={setActiveDow} />
       <SummaryStatsBar
@@ -460,6 +493,8 @@ function App() {
           area={activeArea}
           hoverHour={hoverHour}
           onHoverHour={setHoverHour}
+          hiddenTeams={hiddenTeams}
+          onToggleTeamHidden={handleToggleTeamHidden}
           onCopyDayTo={handleCopyDayTo}
         />
         <PphChart
@@ -493,6 +528,18 @@ function App() {
       result={optimizeResult}
       onAccept={handleAcceptOptimize}
       onDiscard={handleDiscardOptimize}
+    />
+
+    <ScenariosPanel
+      open={scenariosOpen}
+      onClose={() => setScenariosOpen(false)}
+      scenarios={scenarios}
+      comparisonScenarioId={comparisonScenarioId}
+      onSelectComparison={setComparisonScenarioId}
+      onDeleteScenario={handleDeleteScenario}
+      onResetToScenario={handleResetToScenario}
+      currentShiftsByDay={Object.fromEntries(DAYS.map(d => [d, schedState.getShiftsForDay(d)]))}
+      costRates={costRates}
     />
 
     {generatorOpen && (

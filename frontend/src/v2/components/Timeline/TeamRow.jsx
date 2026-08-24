@@ -6,9 +6,12 @@ import { LANE_HEIGHT, ROW_HEADER_W, assignLanes } from './layout'
 const ROLES = ['Attending', 'PA', 'Resident']
 const RESIDENT_LEVELS = ['PGY-1', 'PGY-2', 'PGY-3', 'PGY-4', 'Off-Service']
 
+const COLLAPSED_H = 22
+
 export default function TeamRow({
   team, color, shifts, allDayShifts, hourPx, totalW, onAdd, onDelete, onUpdate,
   dragPreview, isCustom, onRemove, selectedId, onSelect, hoverHour,
+  hidden, onToggleHidden,
 }) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [residentSubmenu, setResidentSubmenu] = useState(false)
@@ -30,6 +33,31 @@ export default function TeamRow({
   const rowH = numLanes * LANE_HEIGHT
   const { setNodeRef, isOver } = useDroppable({ id: team })
 
+  const eyeButton = (
+    <button
+      onClick={e => { e.stopPropagation(); onToggleHidden?.(team) }}
+      title={hidden ? `Show ${team}` : `Hide ${team}`}
+      style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}
+    >
+      👁
+    </button>
+  )
+
+  // Collapsed: just the team name + eye button, no timeline content — lets
+  // you hide teams you don't care about right now (e.g. FastTrack/ERU while
+  // focused on Main), which also shrinks the row list's total height.
+  if (hidden) {
+    return (
+      <div className="flex items-center border-b border-slate-800 opacity-50" style={{ height: COLLAPSED_H }}>
+        <div className="shrink-0 flex items-center gap-2 px-2 text-xs font-semibold" style={{ width: ROW_HEADER_W, color }}>
+          {eyeButton}
+          <span className="truncate">{team}</span>
+        </div>
+        <div className="text-[10px] text-slate-600 px-2">hidden</div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex border-b border-slate-800">
       {/* row header */}
@@ -39,6 +67,7 @@ export default function TeamRow({
       >
         <span className="truncate">{team}</span>
         <div className="flex items-center gap-1">
+          {eyeButton}
           {isCustom && (
             <button
               onClick={e => { e.stopPropagation(); onRemove?.() }}

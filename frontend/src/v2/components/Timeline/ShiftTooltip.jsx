@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { shiftCoversHour } from '../../../shared/capacity'
 
 function minsToDisplay(m) {
@@ -13,6 +14,7 @@ function timeToMins(t) {
 
 const RESIDENT_LEVELS = ['PGY-1', 'PGY-2', 'PGY-3', 'PGY-4', 'Off-Service']
 const SNAP = 30
+const VIEWPORT_MARGIN = 8
 
 // Editable numeric start/end time fields — ShiftTooltip previously exposed
 // a resident-level dropdown but not times, so every time edit had to be a
@@ -48,7 +50,28 @@ function TimeField({ label, value, onCommit }) {
   )
 }
 
-export default function ShiftTooltip({ shift, allDayShifts, hoverHour, style, onUpdate }) {
+// Portaled to document.body with position:fixed and clamped to the
+// viewport. It used to be position:absolute inside Timeline's
+// overflow-x-auto scroll container, which clips (not just visually hides)
+// any descendant that extends past its bounds -- that's why it could go
+// unreadable near the edges of the screen, not just cosmetically clipped.
+export default function ShiftTooltip({ shift, allDayShifts, hoverHour, anchorX, anchorY, onUpdate, onMouseEnter, onMouseLeave }) {
+  const ref = useRef(null)
+  const [pos, setPos] = useState(null)
+
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el || anchorX == null || anchorY == null) return
+    const rect = el.getBoundingClientRect()
+    let left = anchorX + 14
+    let top = anchorY + 14
+    if (left + rect.width > window.innerWidth - VIEWPORT_MARGIN) left = anchorX - rect.width - 14
+    if (left < VIEWPORT_MARGIN) left = VIEWPORT_MARGIN
+    if (top + rect.height > window.innerHeight - VIEWPORT_MARGIN) top = anchorY - rect.height - 14
+    if (top < VIEWPORT_MARGIN) top = VIEWPORT_MARGIN
+    setPos({ left, top })
+  }, [anchorX, anchorY, hoverHour, shift.startMins, shift.endMins, shift.resident_level])
+
   if (hoverHour == null) return null
 
   const teammates = allDayShifts.filter(s => s.team === shift.team && shiftCoversHour(s, hoverHour))
@@ -66,11 +89,14 @@ export default function ShiftTooltip({ shift, allDayShifts, hoverHour, style, on
     onUpdate(shift.id, { endMins, end_time: minsToDisplay(endMins % 1440) })
   }
 
-  return (
+  return createPortal(
     <div
-      style={{ ...style, zIndex: 100 }}
-      className="absolute bg-slate-900 border border-slate-600 rounded shadow-xl p-2 text-xs text-slate-200 w-48"
+      ref={ref}
+      style={{ position: 'fixed', left: pos?.left ?? anchorX, top: pos?.top ?? anchorY, visibility: pos ? 'visible' : 'hidden', zIndex: 1000 }}
+      className="bg-slate-900 border border-slate-600 rounded shadow-xl p-2 text-xs text-slate-200 w-48"
       onMouseDown={e => e.stopPropagation()}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       <div className="font-semibold mb-1">{shift.role_type} — {shift.role_detail}</div>
       {shift.role_type === 'Resident' && onUpdate && (
@@ -99,6 +125,7 @@ export default function ShiftTooltip({ shift, allDayShifts, hoverHour, style, on
         <div>PA: <span className="text-white">{pa}</span></div>
         <div>Resident: <span className="text-white">{resident}</span></div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

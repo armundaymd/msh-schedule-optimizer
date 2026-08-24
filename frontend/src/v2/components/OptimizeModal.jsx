@@ -1,4 +1,10 @@
 import { useState } from 'react'
+import CoverageMiniChart from './CoverageMiniChart'
+
+const COVERAGE_LINES = [
+  { key: 'before', name: 'Before', color: '#64748b', dashed: true },
+  { key: 'after', name: 'After', color: '#2dd4bf' },
+]
 
 function DayBreakdown({ day, result }) {
   const [open, setOpen] = useState(false)
@@ -18,7 +24,16 @@ function DayBreakdown({ day, result }) {
         </span>
       </button>
       {open && (
-        <div className="px-3 py-2 border-t border-slate-800">
+        <div className="px-3 py-2 border-t border-slate-800 space-y-2">
+          {result.demandSeries && (
+            <CoverageMiniChart
+              demandSeries={result.demandSeries}
+              lines={[
+                { ...COVERAGE_LINES[0], data: result.beforeCoverage },
+                { ...COVERAGE_LINES[1], data: result.afterCoverage },
+              ]}
+            />
+          )}
           {result.changes.length === 0 ? (
             <div className="text-xs text-slate-500">No changes were necessary.</div>
           ) : (
@@ -66,17 +81,31 @@ export default function OptimizeModal({ result, onAccept, onDiscard }) {
                 <DayBreakdown key={day} day={day} result={dayResult} />
               ))}
             </div>
-          ) : result.changes.length === 0 ? (
-            <div className="text-xs text-slate-400">No changes were necessary.</div>
           ) : (
-            <ul className="space-y-2">
-              {result.changes.map((c, i) => (
-                <li key={i} className="flex gap-2 text-xs text-slate-300">
-                  <span className="text-slate-600 shrink-0 mt-0.5">•</span>
-                  <span>{c}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="space-y-3">
+              {result.demandSeries && (
+                <CoverageMiniChart
+                  label="Coverage before vs after"
+                  demandSeries={result.demandSeries}
+                  lines={[
+                    { ...COVERAGE_LINES[0], data: result.beforeCoverage },
+                    { ...COVERAGE_LINES[1], data: result.afterCoverage },
+                  ]}
+                />
+              )}
+              {result.changes.length === 0 ? (
+                <div className="text-xs text-slate-400">No changes were necessary.</div>
+              ) : (
+                <ul className="space-y-2">
+                  {result.changes.map((c, i) => (
+                    <li key={i} className="flex gap-2 text-xs text-slate-300">
+                      <span className="text-slate-600 shrink-0 mt-0.5">•</span>
+                      <span>{c}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           )}
         </div>
 

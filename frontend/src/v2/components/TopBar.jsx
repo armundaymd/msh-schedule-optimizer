@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import ConfirmDialog from '../../shared/components/ConfirmDialog'
 
-export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onSaveScenario, scenarioCount, onUndo, onRedo, canUndo, canRedo, onAutoOptimize, onAutoOptimizeWeek, optimizing, onExport, activeTeam, onClearDay, onClearWeek, onOpenGenerator }) {
+export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onSaveScenario, scenarioCount, onUndo, onRedo, canUndo, canRedo, onAutoOptimize, onAutoOptimizeWeek, optimizing, onExport, activeTeam, onClearDay, onClearWeek, onOpenGenerator, onOpenScenarios }) {
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [name, setName] = useState('')
   const popoverRef = useRef(null)
@@ -106,6 +106,12 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
           className="text-xs px-3 py-1 rounded bg-teal-700 hover:bg-teal-600 text-white transition-colors"
         >
           ✦ Generate schedule
+        </button>
+        <button
+          onClick={onOpenScenarios}
+          className="text-xs px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors"
+        >
+          📊 Scenarios ({scenarioCount})
         </button>
         <div className="relative" ref={popoverRef}>
           <button

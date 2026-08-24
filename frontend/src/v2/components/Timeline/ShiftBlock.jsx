@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import ShiftTooltip from './ShiftTooltip'
 
@@ -29,6 +29,23 @@ export default function ShiftBlock({
   const primaryRef = useRef(null)
   const contRef = useRef(null)
   const [tooltip, setTooltip] = useState(null)
+  const hideTimeoutRef = useRef(null)
+
+  // Small grace period before hiding: without it, moving the pointer from
+  // the shift onto the (now portaled, so visually detached) tooltip to use
+  // its time fields would immediately hide the tooltip out from under the
+  // cursor.
+  function showTooltipAt(hour, clientX, clientY) {
+    if (hideTimeoutRef.current) { clearTimeout(hideTimeoutRef.current); hideTimeoutRef.current = null }
+    setTooltip({ hour, clientX, clientY })
+  }
+  function scheduleHideTooltip() {
+    hideTimeoutRef.current = setTimeout(() => setTooltip(null), 150)
+  }
+  function cancelHideTooltip() {
+    if (hideTimeoutRef.current) { clearTimeout(hideTimeoutRef.current); hideTimeoutRef.current = null }
+  }
+  useEffect(() => () => { if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current) }, [])
 
   const { setNodeRef: setMoveRef, listeners: moveListeners, attributes: moveAttrs, isDragging: movingThis } =
     useDraggable({ id: `${shift.id}::move`, data: { shift, mode: 'move', lane, numLanes } })
@@ -45,8 +62,6 @@ export default function ShiftBlock({
 
   const isOvernight = shift.endMins > 1440
   const opacity = ROLE_OPACITY[shift.role_type] ?? 1
-
-  const tooltipSide = lane < numLanes / 2 ? { top: 'calc(100% + 4px)' } : { bottom: 'calc(100% + 4px)' }
 
   const yTop = lane * laneHeight
   const yHeight = laneHeight - GAP
@@ -82,8 +97,8 @@ export default function ShiftBlock({
         <div
           ref={contRef}
           style={{ ...baseStyle, left: 0, width: wrapW, borderLeft: `2px solid ${color}` }}
-          onMouseMove={e => { const h = hourFromX(contRef.current, e.clientX); if (h != null) setTooltip({ hour: h, x: e.clientX - contRef.current.getBoundingClientRect().left }) }}
-          onMouseLeave={() => setTooltip(null)}
+          onMouseMove={e => { const h = hourFromX(contRef.current, e.clientX); if (h != null) showTooltipAt(h, e.clientX, e.clientY) }}
+          onMouseLeave={scheduleHideTooltip}
         >
           <div
             style={{ position: 'absolute', left: 0, top: 0, bottom: 0, right: HANDLE_PX, cursor: isDragging ? 'grabbing' : 'grab' }}
@@ -98,8 +113,9 @@ export default function ShiftBlock({
             {...endListeners} {...endAttrs}
           />
           {tooltip && (
-            <ShiftTooltip shift={shift} allDayShifts={allDayShifts} hoverHour={tooltip.hour} onUpdate={onUpdate}
-              style={{ left: tooltip.x - 20, ...tooltipSide, zIndex: 100 }} />
+            <ShiftTooltip shift={shift} allDayShifts={allDayShifts} hoverHour={tooltip.hour}
+              anchorX={tooltip.clientX} anchorY={tooltip.clientY} onUpdate={onUpdate}
+              onMouseEnter={cancelHideTooltip} onMouseLeave={scheduleHideTooltip} />
           )}
         </div>
       )}
@@ -107,8 +123,8 @@ export default function ShiftBlock({
       <div
         ref={setRefs}
         style={{ ...baseStyle, left: primaryLeft, width: primaryW, borderRight: isOvernight ? `2px solid ${color}` : undefined }}
-        onMouseMove={e => { const h = hourFromX(primaryRef.current, e.clientX); if (h != null) setTooltip({ hour: h, x: e.clientX - primaryRef.current.getBoundingClientRect().left }) }}
-        onMouseLeave={() => setTooltip(null)}
+        onMouseMove={e => { const h = hourFromX(primaryRef.current, e.clientX); if (h != null) showTooltipAt(h, e.clientX, e.clientY) }}
+        onMouseLeave={scheduleHideTooltip}
       >
         <div
           ref={setStartRef}
@@ -140,8 +156,9 @@ export default function ShiftBlock({
           ×
         </button>
         {tooltip && (
-          <ShiftTooltip shift={shift} allDayShifts={allDayShifts} hoverHour={tooltip.hour} onUpdate={onUpdate}
-            style={{ left: tooltip.x - 20, ...tooltipSide, zIndex: 100 }} />
+          <ShiftTooltip shift={shift} allDayShifts={allDayShifts} hoverHour={tooltip.hour}
+            anchorX={tooltip.clientX} anchorY={tooltip.clientY} onUpdate={onUpdate}
+            onMouseEnter={cancelHideTooltip} onMouseLeave={scheduleHideTooltip} />
         )}
       </div>
     </>

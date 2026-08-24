@@ -1,33 +1,4 @@
-import { ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
-
-// Fixed pixel size, not ResponsiveContainer: Recharts' ResponsiveContainer
-// measures its parent via ResizeObserver, which reads 0 on the first paint
-// inside a just-mounted modal and never re-measures without an actual
-// resize event afterward -- leaving the chart blank. A modal that renders
-// once and doesn't get resized needs a fixed size instead.
-function MiniChart({ label, demandSeries, coverageSeries }) {
-  const data = Array.from({ length: 24 }, (_, h) => ({
-    hour: h,
-    demand: demandSeries[h] ?? 0,
-    coverage: parseFloat((coverageSeries[h] ?? 0).toFixed(2)),
-  }))
-  return (
-    <div className="bg-slate-950/40 rounded p-2">
-      <div className="text-[11px] text-slate-400 mb-1">{label}</div>
-      <ComposedChart width={280} height={110} data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-        <XAxis dataKey="hour" tick={{ fontSize: 9, fill: '#64748b' }} tickFormatter={h => `${h}h`} interval={5} />
-        <YAxis tick={{ fontSize: 9, fill: '#64748b' }} width={24} />
-        <Tooltip
-          contentStyle={{ background: '#0f172a', border: '1px solid #334155', fontSize: 11 }}
-          labelFormatter={h => `${String(h).padStart(2, '0')}:00`}
-        />
-        <Bar dataKey="demand" name="Target demand" fill="#38bdf8" opacity={0.45} barSize={6} />
-        <Line dataKey="coverage" name="Generated coverage" stroke="#2dd4bf" strokeWidth={1.5} dot={false} />
-      </ComposedChart>
-    </div>
-  )
-}
+import CoverageMiniChart from '../CoverageMiniChart'
 
 const currency = n => `$${Math.round(n).toLocaleString()}`
 
@@ -90,7 +61,12 @@ export default function GeneratorResult({ result, onAccept, onDiscard }) {
             <div className="text-[10px] text-slate-500 uppercase tracking-wide mb-1.5">Generated coverage vs target</div>
             <div className="grid grid-cols-2 gap-2">
               {groups.map(g => (
-                <MiniChart key={g.label} label={`${g.label} (${g.days.join(', ')})`} demandSeries={g.demandSeries} coverageSeries={g.coverageSeries} />
+                <CoverageMiniChart
+                  key={g.label}
+                  label={`${g.label} (${g.days.join(', ')})`}
+                  demandSeries={g.demandSeries}
+                  lines={[{ key: 'coverage', name: 'Generated coverage', color: '#2dd4bf', data: g.coverageSeries }]}
+                />
               ))}
             </div>
           </div>
