@@ -8,10 +8,19 @@
 // An attending and their residents/PAs are tied to ONE specific team — an
 // attending on Blue can't be covered by residents staffed on Green. So
 // capacity is computed per INDIVIDUAL team first:
-//   teamCapacity(team) = min(attendingCapacity(team), extenderCapacity(team))
-//     attendingCapacity(team) = (# Attending shifts on that team) * pph[area]
+//   teamCapacity(team) = min(supervisionCeiling(team), ownThroughput(team) + extenderCapacity(team))
+//     supervisionCeiling(team) = (# Attending shifts on that team) * pph[area]
+//                                 the max total patients/hr one attending can
+//                                 be responsible for, INCLUDING work done by
+//                                 residents/PAs they supervise
+//     ownThroughput(team)      = (# Attending shifts on that team) * pph[area + 'Own']
+//                                 patients/hr an attending sees working alone
 //     extenderCapacity(team)  = sum of each Resident/PA shift's own max-PPH,
 //                               restricted to shifts on that team
+// A team with attendings and no residents/PAs is not zero capacity: the
+// attendings still see patients on their own (ownThroughput). A team with NO
+// attendings is zero capacity — residents/PAs are never staffed unsupervised
+// (deliberate, do not add unsupervised-PA capacity without asking).
 // Area-level totals (Main/FastTrack/ERU, used for the demand chart) are the
 // SUM of each team's own min() — never sum-then-min across teams, which
 // would let one team's extenders paper over another team's empty roster.
@@ -68,7 +77,7 @@ export function activeTeamsInArea(shifts, customTeams, area, hour) {
   return [...teams]
 }
 
-export function attendingCapacityForTeam(shifts, pph, area, teamName, hour) {
+export function attendingCountForTeam(shifts, teamName, hour) {
   let count = 0
   for (const s of shifts) {
     if (s.role_type !== 'Attending') continue
@@ -76,7 +85,20 @@ export function attendingCapacityForTeam(shifts, pph, area, teamName, hour) {
     if (!shiftCoversHour(s, hour)) continue
     count++
   }
-  return count * (pph[area] ?? 0)
+  return count
+}
+
+// Attending supervision ceiling: max total patients/hr one attending can be
+// responsible for, including work done by residents/PAs they supervise.
+export function attendingCapacityForTeam(shifts, pph, area, teamName, hour) {
+  return attendingCountForTeam(shifts, teamName, hour) * (pph[area] ?? 0)
+}
+
+// Attending solo throughput: patients/hr an attending on this team sees
+// working independently, with no supervision credit for residents/PAs.
+export function ownThroughputForTeam(shifts, pph, area, teamName, hour) {
+  const nAtt = attendingCountForTeam(shifts, teamName, hour)
+  return nAtt * (pph[`${area}Own`] ?? pph[area] ?? 0)
 }
 
 export function extenderCapacityForTeam(shifts, pph, teamName, hour) {
@@ -91,10 +113,12 @@ export function extenderCapacityForTeam(shifts, pph, teamName, hour) {
 }
 
 export function teamCapacityForTeam(shifts, pph, area, teamName, hour) {
-  return Math.min(
-    attendingCapacityForTeam(shifts, pph, area, teamName, hour),
-    extenderCapacityForTeam(shifts, pph, teamName, hour),
-  )
+  const nAtt = attendingCountForTeam(shifts, teamName, hour)
+  if (nAtt === 0) return 0
+  const supervisionCeiling = attendingCapacityForTeam(shifts, pph, area, teamName, hour)
+  const ownThroughput = ownThroughputForTeam(shifts, pph, area, teamName, hour)
+  const extenders = extenderCapacityForTeam(shifts, pph, teamName, hour)
+  return Math.min(supervisionCeiling, ownThroughput + extenders)
 }
 
 // Per-team breakdown for an area+hour — used by the chart tooltip so you can
@@ -103,15 +127,21 @@ export function teamBreakdown(shifts, pph, customTeams, area, hour) {
   return activeTeamsInArea(shifts, customTeams, area, hour)
     .sort()
     .map(team => {
-      const attending = attendingCapacityForTeam(shifts, pph, area, team, hour)
+      const supervisionCeiling = attendingCapacityForTeam(shifts, pph, area, team, hour)
+      const ownThroughput = ownThroughputForTeam(shifts, pph, area, team, hour)
       const extender = extenderCapacityForTeam(shifts, pph, team, hour)
-      return { team, attending, extender, cap: Math.min(attending, extender) }
+      return { team, supervisionCeiling, ownThroughput, extender, cap: Math.min(supervisionCeiling, ownThroughput + extender) }
     })
 }
 
 export function attendingCapacity(shifts, pph, customTeams, area, hour) {
   return activeTeamsInArea(shifts, customTeams, area, hour)
     .reduce((sum, team) => sum + attendingCapacityForTeam(shifts, pph, area, team, hour), 0)
+}
+
+export function ownThroughput(shifts, pph, customTeams, area, hour) {
+  return activeTeamsInArea(shifts, customTeams, area, hour)
+    .reduce((sum, team) => sum + ownThroughputForTeam(shifts, pph, area, team, hour), 0)
 }
 
 export function extenderCapacity(shifts, pph, customTeams, area, hour) {

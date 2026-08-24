@@ -2,7 +2,7 @@ import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Area,
 } from 'recharts'
-import { teamCapacity, attendingCapacity, extenderCapacity, teamBreakdown } from '../../../shared/capacity'
+import { teamCapacity, attendingCapacity, ownThroughput, extenderCapacity, teamBreakdown } from '../../../shared/capacity'
 
 // Maps team name → area key used in pph object
 const AREA_KEY = { Main: 'main', FastTrack: 'fasttrack', ERU: 'eru' }
@@ -13,24 +13,25 @@ function computeTeamCapacity(shifts, pph, customTeams, team) {
   return Array.from({ length: 24 }, (_, h) => teamCapacity(shifts, pph, customTeams, areaKey, h))
 }
 
-const ATTENDING_LIMITED_COLOR = '#f59e0b'  // amber — matches tooltip's "(limiting)" tag
-const EXTENDER_LIMITED_COLOR  = '#2dd4bf'  // teal — distinct from the blue proposed-cap line
+const SUPERVISION_LIMITED_COLOR = '#f59e0b'  // amber — matches tooltip's "(limiting)" tag
+const STAFFING_LIMITED_COLOR    = '#2dd4bf'  // teal — distinct from the blue proposed-cap line
 
 // Small colored marker on the "Proposed cap" line showing which side is the
-// bottleneck at that hour: amber = attending-limited, teal = resident/PA-limited.
+// bottleneck at that hour: amber = supervision-limited, teal = staffing-limited.
 function BottleneckDot({ cx, cy, payload }) {
-  if (cx == null || cy == null || payload.attendingCap == null || payload.extenderCap == null) return null
-  if (payload.attendingCap === payload.extenderCap) return null
-  const color = payload.attendingCap < payload.extenderCap ? ATTENDING_LIMITED_COLOR : EXTENDER_LIMITED_COLOR
+  if (cx == null || cy == null || payload.supervisionCeiling == null || payload.ownPlusExtender == null) return null
+  if (payload.supervisionCeiling === payload.ownPlusExtender) return null
+  const color = payload.supervisionCeiling < payload.ownPlusExtender ? SUPERVISION_LIMITED_COLOR : STAFFING_LIMITED_COLOR
   return <circle cx={cx} cy={cy} r={3} fill={color} stroke="#0f1117" strokeWidth={1} />
 }
 
-// Attending-only vs extender-only capacity, for the tooltip bottleneck breakdown
+// Supervision ceiling vs own throughput + extenders, for the tooltip bottleneck breakdown
 function computeCapacityBreakdown(shifts, pph, customTeams, team) {
   const areaKey = AREA_KEY[team] ?? 'main'
   return Array.from({ length: 24 }, (_, h) => ({
-    attending: attendingCapacity(shifts, pph, customTeams, areaKey, h),
-    extender:  extenderCapacity(shifts, pph, customTeams, areaKey, h),
+    supervisionCeiling: attendingCapacity(shifts, pph, customTeams, areaKey, h),
+    ownThroughput:      ownThroughput(shifts, pph, customTeams, areaKey, h),
+    extender:           extenderCapacity(shifts, pph, customTeams, areaKey, h),
   }))
 }
 
@@ -44,7 +45,7 @@ function computeTeamBreakdowns(shifts, pph, customTeams, team) {
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   // payload[].payload is the full source data row — includes fields (like
-  // attendingCap/extenderCap) that aren't individually rendered as a Line/Bar.
+  // supervisionCeiling/ownPlusExtender) that aren't individually rendered as a Line/Bar.
   const byKey = { ...payload[0]?.payload, ...Object.fromEntries(payload.map(p => [p.dataKey, p.value])) }
   const ciLow  = byKey.ciLow != null ? Number(byKey.ciLow).toFixed(2) : null
   const ciHigh = ciLow != null && byKey.ciDiff != null
@@ -58,15 +59,16 @@ function CustomTooltip({ active, payload, label }) {
       {byKey.proposed  != null && <div>Proposed cap: <span className="text-blue-300">{Number(byKey.proposed).toFixed(2)}</span></div>}
       {byKey.empirical != null && <div>Empirical cap: <span className="text-teal-300">{Number(byKey.empirical).toFixed(2)}</span></div>}
       {byKey.comparison != null && <div>Comparison: <span className="text-orange-300">{Number(byKey.comparison).toFixed(2)}</span></div>}
-      {(byKey.attendingCap != null || byKey.extenderCap != null) && (
+      {(byKey.supervisionCeiling != null || byKey.ownPlusExtender != null) && (
         <div className="border-t border-slate-700 mt-1 pt-1 text-slate-400">
           <div>
-            Attending cap: {Number(byKey.attendingCap).toFixed(2)}
-            {byKey.attendingCap < byKey.extenderCap && <span className="text-amber-400 ml-1">(limiting)</span>}
+            Supervision ceiling: {Number(byKey.supervisionCeiling).toFixed(2)}
+            {byKey.supervisionCeiling < byKey.ownPlusExtender && <span className="text-amber-400 ml-1">(supervision-limited)</span>}
           </div>
           <div>
-            Resident/PA cap: {Number(byKey.extenderCap).toFixed(2)}
-            {byKey.extenderCap < byKey.attendingCap && <span className="text-amber-400 ml-1">(limiting)</span>}
+            Own throughput + Resident/PA cap: {Number(byKey.ownPlusExtender).toFixed(2)}
+            <span className="text-slate-500 ml-1">(own {Number(byKey.ownThroughput).toFixed(2)} + ext {Number(byKey.extender).toFixed(2)})</span>
+            {byKey.ownPlusExtender < byKey.supervisionCeiling && <span className="text-teal-400 ml-1">(staffing-limited)</span>}
           </div>
         </div>
       )}
@@ -74,14 +76,15 @@ function CustomTooltip({ active, payload, label }) {
         <div className="border-t border-slate-700 mt-1 pt-1 text-slate-400 space-y-0.5">
           <div className="text-slate-500">By team:</div>
           {byKey.teamBreakdown.map(t => {
-            const limiter = t.attending === t.extender ? null : t.attending < t.extender ? 'attending' : 'resident/PA'
+            const ownPlusExt = t.ownThroughput + t.extender
+            const limiter = t.supervisionCeiling === ownPlusExt ? null : t.supervisionCeiling < ownPlusExt ? 'supervision' : 'staffing'
             return (
               <div key={t.team}>
                 {t.team}: cap {t.cap.toFixed(2)}
-                <span className="text-slate-500"> (att {t.attending.toFixed(2)} / ext {t.extender.toFixed(2)})</span>
+                <span className="text-slate-500"> (ceiling {t.supervisionCeiling.toFixed(2)} / own+ext {ownPlusExt.toFixed(2)})</span>
                 {limiter && (
-                  <span className={limiter === 'attending' ? 'text-amber-400 ml-1' : 'text-teal-400 ml-1'}>
-                    {limiter === 'attending' ? '(attending-limited)' : '(resident/PA-limited)'}
+                  <span className={limiter === 'supervision' ? 'text-amber-400 ml-1' : 'text-teal-400 ml-1'}>
+                    {limiter === 'supervision' ? '(supervision-limited)' : '(staffing-limited)'}
                   </span>
                 )}
               </div>
@@ -130,8 +133,10 @@ export default function CapacityChart({
       proposed: p,
       gapGreen: p >= b ? [b, p] : [b, b],
       gapRed:   p <  b ? [p, b] : [b, b],
-      attendingCap: parseFloat(proposedBreakdown[h].attending.toFixed(2)),
-      extenderCap:  parseFloat(proposedBreakdown[h].extender.toFixed(2)),
+      supervisionCeiling: parseFloat(proposedBreakdown[h].supervisionCeiling.toFixed(2)),
+      ownThroughput:      parseFloat(proposedBreakdown[h].ownThroughput.toFixed(2)),
+      extender:           parseFloat(proposedBreakdown[h].extender.toFixed(2)),
+      ownPlusExtender:    parseFloat((proposedBreakdown[h].ownThroughput + proposedBreakdown[h].extender).toFixed(2)),
       teamBreakdown: proposedTeamBreakdowns[h],
     }
     if (ciSeries?.[h] && ciSeries[h].ci_low != null && ciSeries[h].ci_high != null) {

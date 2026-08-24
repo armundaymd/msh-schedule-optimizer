@@ -10,14 +10,7 @@ import OptimizeModal from './components/OptimizeModal'
 import { getOverflowHours, runOptimizer } from './utils/optimizer'
 import { exportScheduleAs } from './utils/exportSchedule'
 import { computeShiftCost } from '../shared/cost'
-
-// main/fasttrack/eru = Attending max PPH per area (existing).
-// pa/pgy1-4/offService = Resident & PA max PPH, single value app-wide.
-// These extender values are placeholder starting points — tune via the sliders.
-const DEFAULT_PPH = {
-  main: 2.1, fasttrack: 3.5, eru: 0.8,
-  pa: 1.2, pgy1: 0.5, pgy2: 0.8, pgy3: 1.1, pgy4: 1.4, offService: 0.8,
-}
+import { DEFAULT_PPH } from '../shared/pph'
 
 // Placeholder $/hr starting points — tune via the cost-modeling toggle in the PPH panel.
 const DEFAULT_COST_RATES = { attending: 250, pa: 90 }

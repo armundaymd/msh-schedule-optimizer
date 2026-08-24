@@ -1,9 +1,15 @@
 import { useState } from 'react'
 
 const ATTENDING_SLIDERS = [
-  { key: 'main',      label: 'Attending max PPH', min: 1.0, max: 6.0, step: 0.1 },
-  { key: 'fasttrack', label: 'Attending max PPH', min: 1.0, max: 6.0, step: 0.1 },
-  { key: 'eru',       label: 'Attending max PPH', min: 0.5, max: 3.0, step: 0.1 },
+  { key: 'main',      label: 'Attending supervision ceiling (PPH)', min: 1.0, max: 6.0, step: 0.1 },
+  { key: 'fasttrack', label: 'Attending supervision ceiling (PPH)', min: 1.0, max: 6.0, step: 0.1 },
+  { key: 'eru',       label: 'Attending supervision ceiling (PPH)', min: 0.5, max: 3.0, step: 0.1 },
+]
+
+const OWN_SLIDERS = [
+  { key: 'mainOwn',      label: 'Attending solo throughput (PPH)', min: 0.3, max: 4.0, step: 0.1 },
+  { key: 'fasttrackOwn', label: 'Attending solo throughput (PPH)', min: 0.3, max: 4.0, step: 0.1 },
+  { key: 'eruOwn',       label: 'Attending solo throughput (PPH)', min: 0.3, max: 4.0, step: 0.1 },
 ]
 
 const TEAM_TO_AREA = { Main: 'main', FastTrack: 'fasttrack', ERU: 'eru' }
@@ -80,14 +86,28 @@ function SliderControl({ slider, pph, onChange, empiricalPph }) {
 export default function PphSliders({ pph, onChange, empiricalPph, activeTeam = 'Main' }) {
   const areaKey = TEAM_TO_AREA[activeTeam] ?? 'main'
   const attendingSlider = ATTENDING_SLIDERS.find(s => s.key === areaKey)
+  const ownKey = `${areaKey}Own`
+  const ownSlider = OWN_SLIDERS.find(s => s.key === ownKey)
+  const ceilingValue = pph[areaKey] ?? attendingSlider?.max ?? 4.0
+  const ownSliderClamped = ownSlider && { ...ownSlider, max: Math.min(ownSlider.max, ceilingValue) }
 
   return (
     <div className="pt-2 pb-1">
-      <div className="px-3 text-[10px] text-slate-500 uppercase tracking-wide">{activeTeam} attending max PPH</div>
-      <div className="px-3 py-1">
+      <div className="px-3 text-[10px] text-slate-500 uppercase tracking-wide">{activeTeam} attending PPH</div>
+      <div className="px-3 py-1 flex gap-4 flex-wrap">
         <div className="max-w-[220px]">
           {attendingSlider && (
             <SliderControl slider={attendingSlider} pph={pph} onChange={onChange} empiricalPph={empiricalPph} />
+          )}
+        </div>
+        <div className="max-w-[220px]">
+          {ownSliderClamped && (
+            <SliderControl
+              slider={ownSliderClamped}
+              pph={pph}
+              onChange={(key, v) => onChange(key, Math.min(v, ceilingValue))}
+              empiricalPph={empiricalPph}
+            />
           )}
         </div>
       </div>
