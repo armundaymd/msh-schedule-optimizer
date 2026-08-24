@@ -2,7 +2,7 @@ import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Area,
 } from 'recharts'
-import { teamCapacity, attendingCapacity, ownThroughput, extenderCapacity, teamBreakdown } from '../../../shared/capacity'
+import { teamCapacity, attendingCapacity, ownThroughput, extenderCapacity, soloExtenderCapacity, teamBreakdown } from '../../../shared/capacity'
 
 // Maps team name → area key used in pph object
 const AREA_KEY = { Main: 'main', FastTrack: 'fasttrack', ERU: 'eru' }
@@ -32,6 +32,7 @@ function computeCapacityBreakdown(shifts, pph, customTeams, team) {
     supervisionCeiling: attendingCapacity(shifts, pph, customTeams, areaKey, h),
     ownThroughput:      ownThroughput(shifts, pph, customTeams, areaKey, h),
     extender:           extenderCapacity(shifts, pph, customTeams, areaKey, h),
+    solo:               soloExtenderCapacity(shifts, pph, customTeams, areaKey, h),
   }))
 }
 
@@ -70,6 +71,11 @@ function CustomTooltip({ active, payload, label }) {
             <span className="text-slate-500 ml-1">(own {Number(byKey.ownThroughput).toFixed(2)} + ext {Number(byKey.extender).toFixed(2)})</span>
             {byKey.ownPlusExtender < byKey.supervisionCeiling && <span className="text-teal-400 ml-1">(staffing-limited)</span>}
           </div>
+          {byKey.solo > 0 && (
+            <div>
+              + Solo PA cap (uncapped): <span className="text-slate-200">{Number(byKey.solo).toFixed(2)}</span>
+            </div>
+          )}
         </div>
       )}
       {byKey.teamBreakdown?.length > 0 && (
@@ -81,7 +87,7 @@ function CustomTooltip({ active, payload, label }) {
             return (
               <div key={t.team}>
                 {t.team}: cap {t.cap.toFixed(2)}
-                <span className="text-slate-500"> (ceiling {t.supervisionCeiling.toFixed(2)} / own+ext {ownPlusExt.toFixed(2)})</span>
+                <span className="text-slate-500"> (ceiling {t.supervisionCeiling.toFixed(2)} / own+ext {ownPlusExt.toFixed(2)}{t.solo > 0 ? ` / solo ${t.solo.toFixed(2)}` : ''})</span>
                 {limiter && (
                   <span className={limiter === 'supervision' ? 'text-amber-400 ml-1' : 'text-teal-400 ml-1'}>
                     {limiter === 'supervision' ? '(supervision-limited)' : '(staffing-limited)'}
@@ -137,6 +143,7 @@ export default function CapacityChart({
       ownThroughput:      parseFloat(proposedBreakdown[h].ownThroughput.toFixed(2)),
       extender:           parseFloat(proposedBreakdown[h].extender.toFixed(2)),
       ownPlusExtender:    parseFloat((proposedBreakdown[h].ownThroughput + proposedBreakdown[h].extender).toFixed(2)),
+      solo:               parseFloat(proposedBreakdown[h].solo.toFixed(2)),
       teamBreakdown: proposedTeamBreakdowns[h],
     }
     if (ciSeries?.[h] && ciSeries[h].ci_low != null && ciSeries[h].ci_high != null) {

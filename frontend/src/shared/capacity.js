@@ -9,17 +9,25 @@
 // attending on Blue can't be covered by residents staffed on Green. So
 // capacity is computed per INDIVIDUAL team first:
 //   teamCapacity(team) = min(supervisionCeiling(team), ownThroughput(team) + extenderCapacity(team))
+//                        + soloExtenderCapacity(team)
 //     supervisionCeiling(team) = (# Attending shifts on that team) * pph[area]
 //                                 the max total patients/hr one attending can
 //                                 be responsible for, INCLUDING work done by
 //                                 residents/PAs they supervise
 //     ownThroughput(team)      = (# Attending shifts on that team) * pph[area + 'Own']
 //                                 patients/hr an attending sees working alone
-//     extenderCapacity(team)  = sum of each Resident/PA shift's own max-PPH,
-//                               restricted to shifts on that team
+//     extenderCapacity(team)  = sum of each SUPERVISED Resident/PA shift's own
+//                               max-PPH, restricted to shifts on that team —
+//                               this pool is capped by supervisionCeiling
+//     soloExtenderCapacity(team) = sum of each UNSUPERVISED extender shift's
+//                               own max-PPH (currently: FastTrack PAs seeing
+//                               patients solo). NOT capped by the ceiling,
+//                               since no attending is reviewing that work —
+//                               added on top once the team has >=1 attending.
 // A team with attendings and no residents/PAs is not zero capacity: the
 // attendings still see patients on their own (ownThroughput). A team with NO
-// attendings is zero capacity — residents/PAs are never staffed unsupervised
+// attendings is zero capacity — no extender capacity of any kind (solo
+// included) counts without at least one attending scheduled on the team
 // (deliberate, do not add unsupervised-PA capacity without asking).
 // Area-level totals (Main/FastTrack/ERU, used for the demand chart) are the
 // SUM of each team's own min() — never sum-then-min across teams, which
@@ -64,20 +72,27 @@ export function extenderPphKey(shift) {
   return null
 }
 
-// Numeric PPH for one extender shift. FastTrack PAs do two things a Main/ERU
-// PA doesn't: see patients solo (fasttrackPa) AND co-manage patients
-// alongside an attending (fasttrackPaWithAttending) in the same hour, so
-// their rate is the SUM of both, not a single number. Falls back to the
-// single area-agnostic `pa` key when no FastTrack override is set, so
-// existing scenarios are unaffected.
+// Numeric PPH for one SUPERVISED extender shift — the pool the supervision
+// ceiling caps. FastTrack PAs co-managing alongside an attending
+// (fasttrackPaWithAttending) belong here; their solo work does not (see
+// soloExtenderPphValue). Falls back to the single area-agnostic `pa` key
+// when no FastTrack override is set, so existing scenarios are unaffected.
 function extenderPphValue(shift, pph, area) {
   if (shift.role_type === 'PA') {
     if (area === 'fasttrack' && (pph.fasttrackPa != null || pph.fasttrackPaWithAttending != null)) {
-      return (pph.fasttrackPa ?? pph.pa ?? 0) + (pph.fasttrackPaWithAttending ?? 0)
+      return pph.fasttrackPaWithAttending ?? 0
     }
     return pph.pa ?? 0
   }
   return pph[extenderPphKey(shift)] ?? 0
+}
+
+// Numeric PPH for one UNSUPERVISED (solo) extender shift — added on top of
+// the ceiling-capped pool, not inside it. Currently only FastTrack PAs
+// working solo; everywhere else this is 0.
+function soloExtenderPphValue(shift, pph, area) {
+  if (shift.role_type === 'PA' && area === 'fasttrack') return pph.fasttrackPa ?? 0
+  return 0
 }
 
 // Distinct team names with any shift active in `area` at `hour` — the set
@@ -127,13 +142,25 @@ export function extenderCapacityForTeam(shifts, pph, area, teamName, hour) {
   return total
 }
 
+export function soloExtenderCapacityForTeam(shifts, pph, area, teamName, hour) {
+  let total = 0
+  for (const s of shifts) {
+    if (s.role_type !== 'PA') continue
+    if (s.team !== teamName) continue
+    if (!shiftCoversHour(s, hour)) continue
+    total += soloExtenderPphValue(s, pph, area)
+  }
+  return total
+}
+
 export function teamCapacityForTeam(shifts, pph, area, teamName, hour) {
   const nAtt = attendingCountForTeam(shifts, teamName, hour)
   if (nAtt === 0) return 0
   const supervisionCeiling = attendingCapacityForTeam(shifts, pph, area, teamName, hour)
   const ownThroughput = ownThroughputForTeam(shifts, pph, area, teamName, hour)
   const extenders = extenderCapacityForTeam(shifts, pph, area, teamName, hour)
-  return Math.min(supervisionCeiling, ownThroughput + extenders)
+  const solo = soloExtenderCapacityForTeam(shifts, pph, area, teamName, hour)
+  return Math.min(supervisionCeiling, ownThroughput + extenders) + solo
 }
 
 // Per-team breakdown for an area+hour — used by the chart tooltip so you can
@@ -142,10 +169,13 @@ export function teamBreakdown(shifts, pph, customTeams, area, hour) {
   return activeTeamsInArea(shifts, customTeams, area, hour)
     .sort()
     .map(team => {
+      const nAtt = attendingCountForTeam(shifts, team, hour)
       const supervisionCeiling = attendingCapacityForTeam(shifts, pph, area, team, hour)
       const ownThroughput = ownThroughputForTeam(shifts, pph, area, team, hour)
       const extender = extenderCapacityForTeam(shifts, pph, area, team, hour)
-      return { team, supervisionCeiling, ownThroughput, extender, cap: Math.min(supervisionCeiling, ownThroughput + extender) }
+      const solo = nAtt === 0 ? 0 : soloExtenderCapacityForTeam(shifts, pph, area, team, hour)
+      const cap = nAtt === 0 ? 0 : Math.min(supervisionCeiling, ownThroughput + extender) + solo
+      return { team, supervisionCeiling, ownThroughput, extender, solo, cap }
     })
 }
 
@@ -162,6 +192,14 @@ export function ownThroughput(shifts, pph, customTeams, area, hour) {
 export function extenderCapacity(shifts, pph, customTeams, area, hour) {
   return activeTeamsInArea(shifts, customTeams, area, hour)
     .reduce((sum, team) => sum + extenderCapacityForTeam(shifts, pph, area, team, hour), 0)
+}
+
+export function soloExtenderCapacity(shifts, pph, customTeams, area, hour) {
+  return activeTeamsInArea(shifts, customTeams, area, hour)
+    .reduce((sum, team) => {
+      const nAtt = attendingCountForTeam(shifts, team, hour)
+      return sum + (nAtt === 0 ? 0 : soloExtenderCapacityForTeam(shifts, pph, area, team, hour))
+    }, 0)
 }
 
 export function teamCapacity(shifts, pph, customTeams, area, hour) {

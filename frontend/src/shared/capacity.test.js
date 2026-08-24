@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { teamCapacityForTeam, teamCapacity, extenderCapacityForTeam, shiftCoversHour } from './capacity'
+import { teamCapacityForTeam, teamCapacity, extenderCapacityForTeam, soloExtenderCapacityForTeam, shiftCoversHour } from './capacity'
 
 const PPH = {
   main: 2.0, mainOwn: 1.0,
@@ -77,22 +77,48 @@ describe('teamCapacityForTeam', () => {
   })
 })
 
-describe('extenderCapacityForTeam PA area override', () => {
-  it('FastTrack PA rate is solo + with-attending, summed (a PA can do both in the same hour)', () => {
+describe('FastTrack PA solo vs with-attending', () => {
+  it('with-attending PA capacity is in the supervised (ceiling-capped) pool', () => {
     const shifts = [pa('FastTrack', 0, 24 * 60)]
     const pph = { ...PPH, pa: 1.2, fasttrackPa: 1.5, fasttrackPaWithAttending: 0.7 }
-    expect(extenderCapacityForTeam(shifts, pph, 'fasttrack', 'FastTrack', 10)).toBeCloseTo(2.2, 5)
+    expect(extenderCapacityForTeam(shifts, pph, 'fasttrack', 'FastTrack', 10)).toBeCloseTo(0.7, 5)
   })
 
-  it('falls back to the general pa rate when no FastTrack-specific override is set', () => {
+  it('solo PA capacity is NOT in the supervised pool', () => {
+    const shifts = [pa('FastTrack', 0, 24 * 60)]
+    const pph = { ...PPH, pa: 1.2, fasttrackPa: 1.5, fasttrackPaWithAttending: 0.7 }
+    expect(soloExtenderCapacityForTeam(shifts, pph, 'fasttrack', 'FastTrack', 10)).toBeCloseTo(1.5, 5)
+  })
+
+  it('falls back to the general pa rate (fully supervised, no solo) when no FastTrack override is set', () => {
     const shifts = [pa('FastTrack', 0, 24 * 60)]
     const pph = { ...PPH, pa: 1.2 }
     expect(extenderCapacityForTeam(shifts, pph, 'fasttrack', 'FastTrack', 10)).toBeCloseTo(1.2, 5)
+    expect(soloExtenderCapacityForTeam(shifts, pph, 'fasttrack', 'FastTrack', 10)).toBe(0)
   })
 
   it('Main PAs are unaffected by FastTrack-specific overrides', () => {
     const shifts = [pa('Green', 0, 24 * 60)]
     const pph = { ...PPH, pa: 1.2, fasttrackPa: 1.5, fasttrackPaWithAttending: 0.7 }
     expect(extenderCapacityForTeam(shifts, pph, 'main', 'Green', 10)).toBeCloseTo(1.2, 5)
+    expect(soloExtenderCapacityForTeam(shifts, pph, 'main', 'Green', 10)).toBe(0)
+  })
+
+  it('teamCapacityForTeam: solo PA capacity is added on top of the ceiling, not capped by it', () => {
+    // 1 attending: ceiling = 3.0, own = 0. With-attending PA = 0 -> capped pool = 0.
+    // Solo PA = 1.5, uncapped -> total capacity = min(3.0, 0) + 1.5 = 1.5, and moving
+    // the solo slider changes this even though the capped pool is unaffected.
+    const shifts = [attending('FastTrack', 0, 24 * 60), pa('FastTrack', 0, 24 * 60)]
+    const pph = { ...PPH, fasttrackPa: 1.5, fasttrackPaWithAttending: 0 }
+    expect(teamCapacityForTeam(shifts, pph, 'fasttrack', 'FastTrack', 10)).toBeCloseTo(1.5, 5)
+
+    const pphMoreSolo = { ...pph, fasttrackPa: 2.5 }
+    expect(teamCapacityForTeam(shifts, pphMoreSolo, 'fasttrack', 'FastTrack', 10)).toBeCloseTo(2.5, 5)
+  })
+
+  it('solo PA capacity still requires at least one attending scheduled on the team', () => {
+    const shifts = [pa('FastTrack', 0, 24 * 60)] // no attending
+    const pph = { ...PPH, fasttrackPa: 1.5, fasttrackPaWithAttending: 0 }
+    expect(teamCapacityForTeam(shifts, pph, 'fasttrack', 'FastTrack', 10)).toBe(0)
   })
 })
