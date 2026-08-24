@@ -113,10 +113,22 @@ function uncoveredSeries(shifts, demandSeries, c) {
   return Array.from({ length: 24 }, (_, h) => Math.max(0, (demandSeries[h] ?? 0) - capacityAt(shifts, h, c)))
 }
 
+// Capacity beyond demand -- e.g. two identical 09:00-17:00 blocks instead of
+// staggering one to 11:00-19:00 costs the same and covers the same peak, but
+// leaves more unnecessary surplus sitting at 9am. Weighted small enough
+// (a fraction of one hour's labor cost) that it only ever breaks ties
+// between options with equal cost and equal coverage -- it must never be
+// worth trading real hours or coverage to shave surplus.
+function surplusSeries(shifts, demandSeries, c) {
+  return Array.from({ length: 24 }, (_, h) => Math.max(0, capacityAt(shifts, h, c) - (demandSeries[h] ?? 0)))
+}
+
 function objectiveValue(shifts, demandSeries, c, costPerHour) {
   const laborCost = shifts.reduce((sum, s) => sum + (s.endMins - s.startMins) / 60 * costPerHour, 0)
   const uncovered = uncoveredSeries(shifts, demandSeries, c).reduce((a, b) => a + b, 0)
-  return laborCost + M_UNCOVERED_PENALTY * uncovered
+  const surplus = surplusSeries(shifts, demandSeries, c).reduce((a, b) => a + b, 0)
+  const surplusWeight = costPerHour * 0.01
+  return laborCost + M_UNCOVERED_PENALTY * uncovered + surplusWeight * surplus
 }
 
 // Greedy: repeatedly add whichever pattern closes the most weighted deficit
@@ -124,12 +136,28 @@ function objectiveValue(shifts, demandSeries, c, costPerHour) {
 // constraints, or (if hourBudget is set) the budget is exhausted -- stopping
 // early on budget naturally maximizes coverage under that budget, since
 // greedy always picks the best-value move first.
+//
+// Ties (equal deficit-closed-per-dollar) are broken toward whichever
+// candidate leaves less total surplus across the hours it covers -- without
+// this, two patterns that close the same peak equally well are
+// indistinguishable to the ratio alone, and greedy keeps re-picking the
+// same earliest-in-menu pattern (e.g. stacking two 09:00-17:00 blocks)
+// instead of staggering one later to hug a rising demand curve more
+// closely. This never overrides the ratio itself -- it only decides between
+// otherwise-equal options.
+//
+// Early in the build, several start hours can tie on BOTH ratio and
+// resulting surplus (nothing's overbooked yet either way) -- a remaining
+// tie is broken toward the LATER start hour, so the first commitments lean
+// toward covering the middle of the day rather than exhausting the
+// earliest pattern first and forcing a second one at the same hour later.
 function greedyCover(shifts, demandSeries, patterns, constraints, c, day, costPerHour, hourBudget) {
   let hoursUsed = shifts.reduce((sum, s) => sum + (s.endMins - s.startMins) / 60, 0)
   let guard = 0
   while (guard++ < GREEDY_ITERATION_CAP) {
     let best = null
     let bestRatio = 0
+    let bestSurplus = Infinity
     for (const pattern of patterns) {
       if (hourBudget != null && hoursUsed + pattern.length > hourBudget) continue
       if (!canAdd(shifts, pattern, constraints)) continue
@@ -141,7 +169,16 @@ function greedyCover(shifts, demandSeries, patterns, constraints, c, day, costPe
       if (closed <= 0) continue
       const cost = pattern.length * costPerHour
       const ratio = closed / cost
-      if (ratio > bestRatio) { bestRatio = ratio; best = pattern }
+      const surplusAfter = hrs.reduce((sum, h) => {
+        const newCap = capacityAt(shifts, h, c) + c
+        return sum + Math.max(0, newCap - (demandSeries[h] ?? 0))
+      }, 0)
+      const ratioTied = Math.abs(ratio - bestRatio) <= 1e-9
+      const surplusTied = Math.abs(surplusAfter - bestSurplus) <= 1e-9
+      const isBetter = ratio > bestRatio + 1e-9
+        || (ratioTied && surplusAfter < bestSurplus - 1e-9)
+        || (ratioTied && surplusTied && best != null && pattern.start > best.start)
+      if (isBetter) { bestRatio = ratio; best = pattern; bestSurplus = surplusAfter }
     }
     if (!best) break
     shifts.push(makeShift(best, day))

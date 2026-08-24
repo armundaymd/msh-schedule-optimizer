@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { generateSchedule, assignTeams } from './generator'
 import { DEFAULT_PATTERNS, anyStartPatterns } from './patterns'
+import { shiftCoversHour } from '../../shared/capacity'
 
 const PPH = { main: 2.0, mainOwn: 1.0 }
 
@@ -92,6 +93,22 @@ describe('generateSchedule', () => {
       patterns: DEFAULT_PATTERNS, constraints: BASE_CONSTRAINTS, pph: PPH,
     })
     for (const s of result.shifts) expect(s.id.startsWith('gen-')).toBe(true)
+  })
+
+  it('does not overbook an early hour just to reach a later peak, when a staggered start covers it exactly as well', () => {
+    // A ramp from 3/hr up to 11/hr peaking midday, capacity 2.1/hr. Hour 9
+    // needs exactly ceil(7/2.1) = 4 concurrent -- two identical 09:00-17:00
+    // blocks would leave 5 concurrent there (needless surplus) when a
+    // second shift starting at 10 or 11 covers the peak just as well.
+    const demandSeries = [6, 5, 4, 3, 3, 4, 4, 3, 5, 7, 9, 10, 11, 11, 11, 9, 10, 10, 9, 7, 8, 7, 6, 4]
+    const demand = { Main: { overall: demandSeries, by_dow: {}, pct: { overall: {}, by_dow: {} } } }
+    const pph = { main: 2.1 }
+    const constraints = { minConcurrent: 1, maxConcurrent: 6, overnightMin: 0, overnightHours: [23, 0, 1, 2, 3, 4, 5, 6], maxStartsPerHour: 6, costPerHour: 250 }
+
+    const result = generateSchedule({ demand, target: 'mean', day: 'Monday', area: 'main', patterns: DEFAULT_PATTERNS, constraints, pph })
+    const concurrencyAt = h => result.shifts.filter(s => shiftCoversHour(s, h)).length
+
+    expect(concurrencyAt(9)).toBeLessThanOrEqual(Math.ceil(demandSeries[9] / pph.main))
   })
 })
 
