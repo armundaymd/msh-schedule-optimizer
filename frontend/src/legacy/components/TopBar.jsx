@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 
-export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onSaveScenario, scenarioCount, onUndo, onRedo, canUndo, canRedo, onAutoOptimize, onAutoOptimizeWeek, optimizing, onExport }) {
+export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onSaveScenario, scenarioCount, onUndo, onRedo, canUndo, canRedo, onAutoOptimize, onAutoOptimizeWeek, optimizing, onExport, activeTeam }) {
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [name, setName] = useState('')
   const popoverRef = useRef(null)
@@ -115,9 +115,10 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
           <button
             onClick={onAutoOptimize}
             disabled={optimizing}
+            title={`Auto-optimize ${activeTeam ?? 'Main'} for this day (uses the area selected in the chart tab)`}
             className="text-xs px-3 py-1 rounded-l bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white transition-colors"
           >
-            {optimizing ? '⚡ Optimizing…' : '⚡ Auto-optimize'}
+            {optimizing ? '⚡ Optimizing…' : `⚡ Auto-optimize ${activeTeam ?? 'Main'}`}
           </button>
           <button
             onClick={() => setOptimizeMenuOpen(v => !v)}
@@ -132,6 +133,7 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
               <button
                 onClick={() => { setOptimizeMenuOpen(false); onAutoOptimizeWeek?.() }}
                 disabled={optimizing}
+                title={`Runs on ${activeTeam ?? 'Main'} for every day of the week`}
                 className="block w-full text-left px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-700 transition-colors disabled:opacity-40"
               >
                 Optimize full week

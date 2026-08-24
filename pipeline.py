@@ -95,12 +95,66 @@ def clean_encounters(df: pd.DataFrame) -> pd.DataFrame:
 
 # ── Aggregations ─────────────────────────────────────────────────────────────
 
+def build_count_matrix(df: pd.DataFrame, team: str):
+    """
+    (n_dates, 24) matrix of per-hour patient counts for one team, one row per
+    date in the FULL dataset's date range (so every team is compared against
+    the same universe of days, including days that team saw zero patients).
+
+    Returns (dates, mat, date_to_dow, dow_indices):
+      dates       — sorted list of all dates in df, dates[i] is mat row i
+      mat         — (n_dates, 24) float32 array of hourly counts
+      date_to_dow — {date: dow} for every date in df
+      dow_indices — {dow: np.array of row indices into mat for that DOW}
+
+    Shared by compute_demand (means + percentiles) and run_bootstrap_ci
+    (bootstrap CIs) so the pivot is only built once per team.
+    """
+    sub = df[df["sim_team"] == team].copy()
+    all_dates = sorted(df["date"].unique())
+    n_dates = len(all_dates)
+    date_idx = {d: i for i, d in enumerate(all_dates)}
+    sub["date_idx_col"] = sub["date"].map(date_idx).astype(int)
+    sub["team_hour"] = sub["team_hour"].astype(int)
+
+    pivot = (
+        sub.groupby(["date_idx_col", "team_hour"])
+        .size()
+        .unstack(fill_value=0)
+        .reindex(index=range(n_dates), columns=range(24), fill_value=0)
+    )
+    mat = pivot.values.astype(np.float32)
+
+    date_to_dow = df.drop_duplicates("date").set_index("date")["dow"].to_dict()
+    dow_indices = {
+        dow: np.array([i for i, d in enumerate(all_dates) if date_to_dow[d] == dow])
+        for dow in range(7)
+    }
+    return all_dates, mat, date_to_dow, dow_indices
+
+
+def _percentiles_by_hour(mat: np.ndarray) -> dict:
+    """Per-hour marginal percentile: for each hour independently, the Nth
+    percentile of that hour's count across all rows (days) in `mat`."""
+    return {
+        f"p{p}": [round(float(np.percentile(mat[:, h], p, method="linear")), 3) for h in range(24)]
+        for p in (50, 75, 90)
+    }
+
+
+# By-DOW percentiles need at least this many days to be statistically usable;
+# below this, omit the DOW and let the frontend fall back to the overall
+# percentile or the mean (see shared/demandSeries.js getDemandSeries).
+MIN_DOW_DAYS_FOR_PCT = 20
+
+
 def compute_demand(df: pd.DataFrame) -> dict:
     """
-    Patients assigned to each team per hour, averaged by DOW then overall.
+    Patients assigned to each team per hour, averaged by DOW then overall,
+    plus per-hour marginal percentiles (p50/p75/p90) overall and by DOW.
     Returns dict suitable for JSON serialisation.
     """
-    # Days per DOW (for averaging)
+    # Days per DOW (for averaging and for n_days_by_dow)
     days_per_dow = (
         df[["dow","date"]].drop_duplicates()
         .groupby("dow")["date"].count()
@@ -109,13 +163,13 @@ def compute_demand(df: pd.DataFrame) -> dict:
 
     teams = ["Main", "FastTrack", "ERU"]
     result = {}
+    total_days = len(df["date"].unique())
 
     for team in teams:
         sub = df[df["sim_team"] == team]
 
         # Overall hourly average
         hourly = sub.groupby("team_hour").size().reindex(range(24), fill_value=0)
-        total_days = len(df["date"].unique())
         overall = (hourly / total_days).round(3).tolist()
 
         # By DOW
@@ -126,7 +180,23 @@ def compute_demand(df: pd.DataFrame) -> dict:
             n = max(days_per_dow[dow], 1)
             by_dow[DOW_NAMES[dow]] = (h / n).round(3).tolist()
 
-        result[team] = {"overall": overall, "by_dow": by_dow}
+        # Percentiles, built off the same count matrix bootstrap CIs use
+        dates, mat, _, dow_indices = build_count_matrix(df, team)
+        pct_overall = _percentiles_by_hour(mat)
+        pct_by_dow = {}
+        for dow in range(7):
+            didx = dow_indices[dow]
+            if len(didx) < MIN_DOW_DAYS_FOR_PCT:
+                continue
+            pct_by_dow[DOW_NAMES[dow]] = _percentiles_by_hour(mat[didx])
+
+        result[team] = {
+            "overall": overall,
+            "by_dow": by_dow,
+            "pct": {"overall": pct_overall, "by_dow": pct_by_dow},
+            "n_days": len(dates),
+            "n_days_by_dow": {DOW_NAMES[d]: int(days_per_dow[d]) for d in range(7)},
+        }
 
     return result
 

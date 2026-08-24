@@ -206,13 +206,3 @@ export function teamCapacity(shifts, pph, customTeams, area, hour) {
   return activeTeamsInArea(shifts, customTeams, area, hour)
     .reduce((sum, team) => sum + teamCapacityForTeam(shifts, pph, area, team, hour), 0)
 }
-
-const AREAS = ['main', 'fasttrack', 'eru']
-
-// { main, fasttrack, eru } capacity totals for one hour — used by the
-// optimizer, which works off overall Main-team demand.
-export function capacityAllAreas(shifts, pph, customTeams, hour) {
-  const out = {}
-  for (const area of AREAS) out[area] = teamCapacity(shifts, pph, customTeams, area, hour)
-  return out
-}

@@ -3,18 +3,22 @@ import PphSliders from './PphSliders'
 import CapacityChart from './CapacityChart'
 import PillToggle from '../../../shared/components/PillToggle'
 import { fetchDemandCI, fetchValidation } from '../../../shared/api'
+import { hasPercentiles } from '../../../shared/demandSeries'
 
 const TEAM_VIEWS = ['Main', 'FastTrack', 'ERU']
+const TARGETS = ['mean', 'p50', 'p75', 'p90']
+const TARGET_LABEL = { mean: 'Mean', p50: 'p50', p75: 'p75', p90: 'p90' }
 
 export default function PphChart({
   day, demand, shifts, baselineShifts, pph, onPphChange,
   scenarios, comparisonScenarioId, onSelectComparison, onDeleteScenario, onResetToScenario,
   customTeams,
   costRates, costModeEnabled, onCostRateChange, onToggleCostMode,
+  activeTeam, onActiveTeamChange, target, onTargetChange,
 }) {
   const [demandCI, setDemandCI]         = useState(null)
   const [empiricalPph, setEmpiricalPph] = useState(null)
-  const [activeTeam, setActiveTeam]     = useState('Main')
+  const percentilesAvailable = hasPercentiles(demand)
 
   useEffect(() => {
     fetchDemandCI().then(d => d && setDemandCI(d)).catch(() => {})
@@ -50,20 +54,46 @@ export default function PphChart({
       </div>
 
       {/* Team-type tabs */}
-      <div className="flex border-b border-slate-700 shrink-0">
-        {TEAM_VIEWS.map(t => (
-          <button
-            key={t}
-            onClick={() => setActiveTeam(t)}
-            className={`px-4 py-1.5 text-xs font-medium transition-colors ${
-              activeTeam === t
-                ? 'text-blue-300 border-b-2 border-blue-500 bg-slate-800/40'
-                : 'text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            {t}
-          </button>
-        ))}
+      <div className="flex items-center justify-between border-b border-slate-700 shrink-0 pr-2">
+        <div className="flex">
+          {TEAM_VIEWS.map(t => (
+            <button
+              key={t}
+              onClick={() => onActiveTeamChange?.(t)}
+              className={`px-4 py-1.5 text-xs font-medium transition-colors ${
+                activeTeam === t
+                  ? 'text-blue-300 border-b-2 border-blue-500 bg-slate-800/40'
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+
+        {/* Demand target: mean, or a percentile once the pipeline has computed one */}
+        <div className="flex rounded overflow-hidden border border-slate-700">
+          {TARGETS.map(t => {
+            const disabled = t !== 'mean' && !percentilesAvailable
+            return (
+              <button
+                key={t}
+                onClick={() => !disabled && onTargetChange?.(t)}
+                disabled={disabled}
+                title={disabled ? 'Percentile demand needs a pipeline refresh with raw data' : undefined}
+                className={`px-2 py-1 text-[10px] font-medium transition-colors ${
+                  target === t
+                    ? 'bg-blue-700 text-white'
+                    : disabled
+                      ? 'bg-slate-900 text-slate-700 cursor-not-allowed'
+                      : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {TARGET_LABEL[t]}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <PphSliders pph={pph} onChange={onPphChange} empiricalPph={empiricalPph} activeTeam={activeTeam} />
@@ -125,6 +155,7 @@ export default function PphChart({
           demandCI={demandCI}
           empiricalPph={empiricalPph}
           activeTeam={activeTeam}
+          target={target}
         />
       </div>
 

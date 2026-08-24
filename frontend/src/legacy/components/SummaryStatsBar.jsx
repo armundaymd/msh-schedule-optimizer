@@ -1,12 +1,31 @@
 import { useMemo } from 'react'
-import { capacityAllAreas } from '../../shared/capacity'
+import { teamCapacity } from '../../shared/capacity'
+import { getDemandSeries } from '../../shared/demandSeries'
 import { computeShiftCost } from '../../shared/cost'
 
-function computeCapacity(shifts, pph, customTeams) {
-  return Array.from({ length: 24 }, (_, h) => {
-    const byArea = capacityAllAreas(shifts, pph, customTeams, h)
-    return byArea.main + byArea.fasttrack + byArea.eru
-  })
+const AREAS = ['main', 'fasttrack', 'eru']
+const AREA_LABEL = { main: 'Main', fasttrack: 'FastTrack', eru: 'ERU' }
+
+// Per-area deficit: each area's demand can only be met by that area's own
+// capacity (Main demand vs whole-ED capacity was the bug — see PHASE 2, 2.1).
+// Returns the count of distinct hours where ANY area is short, plus a
+// per-area breakdown for the tooltip.
+function computeOverflowByArea(shifts, demand, pph, day, customTeams, target) {
+  const hoursShort = new Set()
+  const byArea = {}
+  for (const area of AREAS) {
+    const series = getDemandSeries(demand, AREA_LABEL[area], day, target)
+    let count = 0
+    for (let h = 0; h < 24; h++) {
+      const cap = teamCapacity(shifts, pph, customTeams, area, h)
+      if ((series[h] ?? 0) > cap) {
+        count++
+        hoursShort.add(h)
+      }
+    }
+    byArea[AREA_LABEL[area]] = count
+  }
+  return { anyAreaHours: hoursShort.size, byArea }
 }
 
 function attendingHours(shifts) {
@@ -15,9 +34,9 @@ function attendingHours(shifts) {
     .reduce((sum, s) => sum + (s.endMins - s.startMins) / 60, 0)
 }
 
-function MetricCard({ label, value, valueColor }) {
+function MetricCard({ label, value, valueColor, title }) {
   return (
-    <div className="bg-slate-900/60 rounded px-3 py-1.5 min-w-[90px]">
+    <div className="bg-slate-900/60 rounded px-3 py-1.5 min-w-[90px]" title={title}>
       <div className="text-[10px] text-slate-500 uppercase tracking-wide leading-tight">{label}</div>
       <div className="text-sm font-semibold mt-0.5" style={{ color: valueColor ?? '#e2e8f0' }}>
         {value}
@@ -28,17 +47,13 @@ function MetricCard({ label, value, valueColor }) {
 
 const currency = n => `$${Math.round(n).toLocaleString()}`
 
-export default function SummaryStatsBar({ shifts, baselineShifts, demand, day, pph, customTeams, weekBreakdown, activeDow, costRates, costModeEnabled }) {
+export default function SummaryStatsBar({ shifts, baselineShifts, demand, day, pph, customTeams, weekBreakdown, activeDow, costRates, costModeEnabled, target = 'mean' }) {
   const stats = useMemo(() => {
     const proposed = attendingHours(shifts)
     const baseline = attendingHours(baselineShifts)
     const delta = proposed - baseline
 
-    const demandSeries = demand
-      ? (demand.Main?.by_dow?.[day] ?? demand.Main?.overall ?? [])
-      : Array(24).fill(0)
-    const proposedCap = computeCapacity(shifts, pph, customTeams)
-    const overflow = demandSeries.filter((d, h) => d > proposedCap[h]).length
+    const { anyAreaHours, byArea } = computeOverflowByArea(shifts, demand, pph, day, customTeams, target)
 
     const cost = costRates ? computeShiftCost(shifts, costRates) : 0
     const costBaseline = costRates ? computeShiftCost(baselineShifts, costRates) : 0
@@ -47,12 +62,13 @@ export default function SummaryStatsBar({ shifts, baselineShifts, demand, day, p
       totalHours: proposed,
       delta,
       extraPatients: delta !== 0 ? Math.round(delta * pph.main) : null,
-      overflow,
+      overflow: anyAreaHours,
+      overflowByArea: byArea,
       totalShifts: shifts.length,
       cost,
       costDelta: cost - costBaseline,
     }
-  }, [shifts, baselineShifts, demand, day, pph, customTeams, costRates])
+  }, [shifts, baselineShifts, demand, day, pph, customTeams, costRates, target])
 
   const sign = stats.delta >= 0 ? '+' : ''
 
@@ -86,6 +102,9 @@ export default function SummaryStatsBar({ shifts, baselineShifts, demand, day, p
         label="Overflow hrs"
         value={stats.overflow}
         valueColor={stats.overflow > 0 ? '#f59e0b' : '#94a3b8'}
+        title={`Hours where any area is short of capacity. By area: ${
+          Object.entries(stats.overflowByArea).map(([a, n]) => `${a} ${n}`).join(', ')
+        }`}
       />
       <MetricCard label="Total shifts" value={stats.totalShifts} />
       {costModeEnabled && (

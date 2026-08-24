@@ -3,6 +3,7 @@ import {
   Tooltip, ResponsiveContainer, Area,
 } from 'recharts'
 import { teamCapacity, attendingCapacity, ownThroughput, extenderCapacity, soloExtenderCapacity, teamBreakdown } from '../../../shared/capacity'
+import { getDemandSeries } from '../../../shared/demandSeries'
 
 // Maps team name → area key used in pph object
 const AREA_KEY = { Main: 'main', FastTrack: 'fasttrack', ERU: 'eru' }
@@ -43,7 +44,7 @@ function computeTeamBreakdowns(shifts, pph, customTeams, team) {
   return Array.from({ length: 24 }, (_, h) => teamBreakdown(shifts, pph, customTeams, areaKey, h))
 }
 
-function CustomTooltip({ active, payload, label }) {
+function CustomTooltip({ active, payload, label, target }) {
   if (!active || !payload?.length) return null
   // payload[].payload is the full source data row — includes fields (like
   // supervisionCeiling/ownPlusExtender) that aren't individually rendered as a Line/Bar.
@@ -52,10 +53,12 @@ function CustomTooltip({ active, payload, label }) {
   const ciHigh = ciLow != null && byKey.ciDiff != null
     ? (Number(byKey.ciLow) + Number(byKey.ciDiff)).toFixed(2)
     : null
+  const demandLabel = target && target !== 'mean' ? `Demand (${target})` : 'Demand'
   return (
     <div className="bg-slate-900 border border-slate-600 rounded p-2 text-xs text-slate-200 space-y-0.5">
       <div className="font-semibold mb-1">{String(label).padStart(2, '0')}:00</div>
-      {byKey.demand    != null && <div>Demand: <span className="text-sky-300">{Number(byKey.demand).toFixed(2)}</span>{ciLow && <span className="text-slate-500 ml-1">({ciLow}–{ciHigh} 95% CI)</span>}</div>}
+      {byKey.demand    != null && <div>{demandLabel}: <span className="text-sky-300">{Number(byKey.demand).toFixed(2)}</span>{ciLow && <span className="text-slate-500 ml-1">({ciLow}–{ciHigh} 95% CI)</span>}</div>}
+      {byKey.meanOverlay != null && <div>Mean (reference): <span className="text-slate-400">{Number(byKey.meanOverlay).toFixed(2)}</span></div>}
       {byKey.baseline  != null && <div>Baseline cap: <span className="text-slate-300">{Number(byKey.baseline).toFixed(2)}</span></div>}
       {byKey.proposed  != null && <div>Proposed cap: <span className="text-blue-300">{Number(byKey.proposed).toFixed(2)}</span></div>}
       {byKey.empirical != null && <div>Empirical cap: <span className="text-teal-300">{Number(byKey.empirical).toFixed(2)}</span></div>}
@@ -105,15 +108,17 @@ function CustomTooltip({ active, payload, label }) {
 export default function CapacityChart({
   day, demand, shifts, baselineShifts, pph,
   comparisonShifts, comparisonPph, customTeams,
-  demandCI, empiricalPph, activeTeam = 'Main',
+  demandCI, empiricalPph, activeTeam = 'Main', target = 'mean',
 }) {
-  // Demand series for the active team only
-  const demandSeries = demand
-    ? (demand[activeTeam]?.by_dow?.[day] ?? demand[activeTeam]?.overall ?? [])
-    : Array(24).fill(0)
+  // Demand series for the active team, at the selected target (mean or a percentile)
+  const demandSeries = getDemandSeries(demand, activeTeam, day, target)
+  // When a percentile is selected, show the mean as a faint reference line
+  // so the gap between "average day" and "target" is visible.
+  const meanSeries = target !== 'mean' ? getDemandSeries(demand, activeTeam, day, 'mean') : null
 
-  // CI series for the active team
-  const ciSeries = demandCI
+  // CI band is a bootstrap CI on the MEAN — only meaningful when comparing
+  // against the mean target, so it's hidden once a percentile is selected.
+  const ciSeries = target === 'mean' && demandCI
     ? (demandCI[activeTeam]?.by_dow_ci?.[day] ?? demandCI[activeTeam]?.overall_ci ?? null)
     : null
 
@@ -146,6 +151,7 @@ export default function CapacityChart({
       solo:               parseFloat(proposedBreakdown[h].solo.toFixed(2)),
       teamBreakdown: proposedTeamBreakdowns[h],
     }
+    if (meanSeries) row.meanOverlay = meanSeries[h] ?? 0
     if (ciSeries?.[h] && ciSeries[h].ci_low != null && ciSeries[h].ci_high != null) {
       row.ciLow  = parseFloat(ciSeries[h].ci_low.toFixed(3))
       row.ciDiff = parseFloat(Math.max(0, ciSeries[h].ci_high - ciSeries[h].ci_low).toFixed(3))
@@ -166,9 +172,9 @@ export default function CapacityChart({
           interval={3}
         />
         <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} width={36} />
-        <Tooltip content={<CustomTooltip />} />
+        <Tooltip content={<CustomTooltip target={target} />} />
 
-        {/* 95% bootstrap CI band behind the demand bars */}
+        {/* 95% bootstrap CI band behind the demand bars (mean target only) */}
         {ciSeries && (
           <>
             <Area dataKey="ciLow"  stackId="ci" fill="transparent"           stroke="none" legendType="none" isAnimationActive={false} />
@@ -176,7 +182,8 @@ export default function CapacityChart({
           </>
         )}
 
-        <Bar dataKey="demand" name="Demand" fill="#38bdf8" opacity={0.45} barSize={10} />
+        <Bar dataKey="demand" name={target !== 'mean' ? `Demand (${target})` : 'Demand'} fill="#38bdf8" opacity={0.45} barSize={10} />
+        {meanSeries && <Line dataKey="meanOverlay" name="Mean (reference)" stroke="#64748b" strokeWidth={1} strokeDasharray="2 3" dot={false} opacity={0.7} />}
 
         {/* green/red fill showing proposed vs baseline capacity delta */}
         <Area dataKey="gapGreen" legendType="none" fill="#22c55e" stroke="none" opacity={0.35} />

@@ -18,7 +18,7 @@ import pandas as pd
 from scipy import stats
 
 from db import get_engine, read_schedule_df
-from pipeline import load_raw_encounters, clean_encounters, save_output, DOW_NAMES
+from pipeline import load_raw_encounters, clean_encounters, save_output, build_count_matrix, DOW_NAMES
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
@@ -338,32 +338,12 @@ def run_empirical_pph(df: pd.DataFrame, engine) -> dict:
 
 def run_bootstrap_ci(df: pd.DataFrame, n_boot: int = 1000) -> dict:
     """Bootstrap 95% CI on mean hourly demand per (team, [dow])."""
-    all_dates = sorted(df["date"].unique())
-    n_dates   = len(all_dates)
-    date_idx  = {d: i for i, d in enumerate(all_dates)}
-
-    date_to_dow = df.drop_duplicates("date").set_index("date")["dow"].to_dict()
-    dow_indices = {
-        dow: np.array([i for i, d in enumerate(all_dates) if date_to_dow[d] == dow])
-        for dow in range(7)
-    }
-
     rng = np.random.default_rng(42)
     demand_ci = {}
 
     for team in TEAMS:
-        sub = df[df["sim_team"] == team].copy()
-        sub["date_idx_col"] = sub["date"].map(date_idx).astype(int)
-        sub["team_hour"]    = sub["team_hour"].astype(int)
-
-        # Build count matrix (n_dates × 24) via pivot
-        pivot = (
-            sub.groupby(["date_idx_col", "team_hour"])
-            .size()
-            .unstack(fill_value=0)
-            .reindex(index=range(n_dates), columns=range(24), fill_value=0)
-        )
-        mat = pivot.values.astype(np.float32)   # (n_dates, 24)
+        dates, mat, date_to_dow, dow_indices = build_count_matrix(df, team)
+        n_dates = len(dates)
 
         # Vectorised overall bootstrap
         idx_mat = rng.integers(0, n_dates, size=(n_boot, n_dates))

@@ -17,8 +17,15 @@ const DEFAULT_COST_RATES = { attending: 250, pa: 90 }
 
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
 
+// Chart tab label -> capacity.js area key. The auto-optimize buttons operate
+// on whichever area's chart tab is currently selected (see PHASE 2 brief,
+// 2.1: simpler option chosen over running all three areas and merging).
+const AREA_KEY = { Main: 'main', FastTrack: 'fasttrack', ERU: 'eru' }
+
 function App() {
   const [activeDow, setActiveDow] = useState('Monday')
+  const [activeTeam, setActiveTeam] = useState('Main')
+  const [target, setTarget] = useState('mean')
   const [demand, setDemand] = useState(null)
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -32,6 +39,8 @@ function App() {
   const [toast, setToast] = useState(null)
   const [costRates, setCostRates] = useState(DEFAULT_COST_RATES)
   const [costModeEnabled, setCostModeEnabled] = useState(false)
+
+  const activeArea = AREA_KEY[activeTeam] ?? 'main'
 
   function handlePphChange(key, val) {
     setPph(prev => ({ ...prev, [key]: val }))
@@ -50,7 +59,7 @@ function App() {
     DAYS.forEach(day => { fullProposed[day] = schedState.getShiftsForDay(day) })
     setScenarios(prev => [
       ...prev,
-      { id: `sc-${Date.now()}`, name, proposed: fullProposed, pph: { ...pph }, customTeams: [...customTeams] },
+      { id: `sc-${Date.now()}`, name, proposed: fullProposed, pph: { ...pph }, customTeams: [...customTeams], target },
     ])
   }
 
@@ -65,6 +74,7 @@ function App() {
     schedState.loadSnapshot(sc.proposed)
     setPph({ ...sc.pph })
     if (sc.customTeams) setCustomTeams([...sc.customTeams])
+    if (sc.target) setTarget(sc.target)
   }
 
   function showToast(msg) {
@@ -73,15 +83,15 @@ function App() {
   }
 
   async function handleAutoOptimize() {
-    const overflow = getOverflowHours(shifts, demand, pph, activeDow, customTeams)
+    const overflow = getOverflowHours(shifts, demand, pph, activeDow, customTeams, activeArea, target)
     if (overflow.length === 0) {
-      showToast('✓ No overflow — schedule already meets demand')
+      showToast(`✓ No overflow — ${activeTeam} already meets demand`)
       return
     }
     setOptimizing(true)
     // Brief loading flash so the state change is visible
     await new Promise(r => setTimeout(r, 280))
-    const result = runOptimizer(shifts, demand, pph, activeDow, customTeams)
+    const result = runOptimizer(shifts, demand, pph, activeDow, customTeams, activeArea, target)
     // Push single undo entry for the whole optimization before applying
     schedState.pushUndoForDay(activeDow, shifts)
     schedState.applyDayShifts(activeDow, result.newShifts)
@@ -92,10 +102,10 @@ function App() {
 
   async function handleAutoOptimizeWeek() {
     const anyOverflow = DAYS.some(day =>
-      getOverflowHours(schedState.getShiftsForDay(day), demand, pph, day, customTeams).length > 0
+      getOverflowHours(schedState.getShiftsForDay(day), demand, pph, day, customTeams, activeArea, target).length > 0
     )
     if (!anyOverflow) {
-      showToast('✓ No overflow — schedule already meets demand')
+      showToast(`✓ No overflow — ${activeTeam} already meets demand all week`)
       return
     }
     setOptimizing(true)
@@ -116,7 +126,7 @@ function App() {
 
     DAYS.forEach(day => {
       const dayShifts = schedState.getShiftsForDay(day)
-      const result = runOptimizer(dayShifts, demand, pph, day, accumulatedCustomTeams)
+      const result = runOptimizer(dayShifts, demand, pph, day, accumulatedCustomTeams, activeArea, target)
       schedState.applyDayShifts(day, result.newShifts)
       if (result.newTeams.length > 0) {
         accumulatedCustomTeams = [...accumulatedCustomTeams, ...result.newTeams]
@@ -267,6 +277,7 @@ function App() {
         onAutoOptimizeWeek={handleAutoOptimizeWeek}
         optimizing={optimizing}
         onExport={handleExport}
+        activeTeam={activeTeam}
       />
       <DowTabs days={DAYS} active={activeDow} onChange={setActiveDow} />
       <SummaryStatsBar
@@ -280,6 +291,7 @@ function App() {
         activeDow={activeDow}
         costRates={costRates}
         costModeEnabled={costModeEnabled}
+        target={target}
       />
       <div className="flex flex-1 overflow-hidden min-h-0">
         <div className="w-3/5 overflow-hidden border-r border-slate-700">
@@ -319,6 +331,10 @@ function App() {
             costModeEnabled={costModeEnabled}
             onCostRateChange={handleCostRateChange}
             onToggleCostMode={setCostModeEnabled}
+            activeTeam={activeTeam}
+            onActiveTeamChange={setActiveTeam}
+            target={target}
+            onTargetChange={setTarget}
           />
         </div>
       </div>
