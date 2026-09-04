@@ -1,11 +1,12 @@
 {
-  "total_encounters": 62658,
   "date_range": "2025-08-04 \u2192 2026-05-31",
-  "unique_days": 302,
-  "team_counts": {
-    "Main": 37258,
-    "FastTrack": 21361,
-    "ERU": 4039
+  "dispo_dist": {
+    "AMA": 972,
+    "Admit": 14634,
+    "Transfer": 870,
+    "Discharge": 43609,
+    "Left Without Being Seen": 624,
+    "Left Before Treatment Complete": 1301
   },
   "acuity_dist": {
     "1": 156,
@@ -14,12 +15,11 @@
     "4": 17766,
     "5": 1280
   },
-  "dispo_dist": {
-    "Discharge": 43609,
-    "Admit": 14634,
-    "Left Before Treatment Complete": 1301,
-    "AMA": 972,
-    "Transfer": 870,
-    "Left Without Being Seen": 624
-  }
+  "team_counts": {
+    "ERU": 4039,
+    "Main": 37258,
+    "FastTrack": 21361
+  },
+  "unique_days": 302,
+  "total_encounters": 62658
 }
