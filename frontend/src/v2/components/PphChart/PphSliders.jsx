@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { AREA_LABEL, SCOPE_LABEL, scopeAreas } from '../../../shared/areas'
 
 const ATTENDING_SLIDERS = [
   { key: 'main',      label: 'Attending supervision ceiling (PPH)', min: 1.0, max: 6.0, step: 0.1 },
@@ -14,8 +15,6 @@ const OWN_SLIDERS = [
   { key: 'eruOwn',       label: 'Attending solo throughput (PPH)', min: 0, max: 4.0, step: 0.1 },
 ]
 
-const TEAM_TO_AREA = { Main: 'main', FastTrack: 'fasttrack', ERU: 'eru' }
-
 const EXTENDER_SLIDERS = [
   { key: 'pa',         label: 'PA max PPH',         min: 0.2, max: 3.0, step: 0.1 },
   { key: 'pgy1',       label: 'PGY-1 max PPH',      min: 0.2, max: 3.0, step: 0.1 },
@@ -27,7 +26,8 @@ const EXTENDER_SLIDERS = [
 
 // FastTrack PAs do both, in the same hour: see patients solo, and co-manage
 // patients alongside an attending. Their combined rate replaces the general
-// 'pa' slider only when viewing FastTrack.
+// 'pa' slider when viewing FastTrack alone; a combined scope that includes
+// FastTrack shows both, since its other areas still use 'pa'.
 const FASTTRACK_PA_SLIDERS = [
   { key: 'fasttrackPa',              label: 'PA max PPH (solo)',           min: 0, max: 4.0, step: 0.1 },
   { key: 'fasttrackPaWithAttending', label: 'PA max PPH (w/ attending)',   min: 0, max: 4.0, step: 0.1 },
@@ -93,37 +93,51 @@ function SliderControl({ slider, pph, onChange, empiricalPph }) {
   )
 }
 
-export default function PphSliders({ pph, onChange, empiricalPph, activeTeam = 'Main' }) {
-  const areaKey = TEAM_TO_AREA[activeTeam] ?? 'main'
-  const attendingSlider = ATTENDING_SLIDERS.find(s => s.key === areaKey)
-  const ownKey = `${areaKey}Own`
-  const ownSlider = OWN_SLIDERS.find(s => s.key === ownKey)
-  const ceilingValue = pph[areaKey] ?? attendingSlider?.max ?? 4.0
+// Attending ceiling + solo-throughput sliders for one area. The solo slider
+// is clamped to that area's ceiling.
+function AreaAttendingSliders({ area, pph, onChange, empiricalPph, showAreaName }) {
+  const attendingSlider = ATTENDING_SLIDERS.find(s => s.key === area)
+  const ownSlider = OWN_SLIDERS.find(s => s.key === `${area}Own`)
+  const ceilingValue = pph[area] ?? attendingSlider?.max ?? 4.0
   const ownSliderClamped = ownSlider && { ...ownSlider, max: Math.min(ownSlider.max, ceilingValue) }
-  const extenderSliders = activeTeam === 'FastTrack'
-    ? [...FASTTRACK_PA_SLIDERS, ...EXTENDER_SLIDERS.filter(s => s.key !== 'pa')]
-    : EXTENDER_SLIDERS
+  const prefix = showAreaName ? `${AREA_LABEL[area]} ` : ''
+
+  return (
+    <div className="px-3 py-1 flex gap-4 flex-wrap">
+      <div className="max-w-[220px]">
+        {attendingSlider && (
+          <SliderControl slider={{ ...attendingSlider, label: prefix + attendingSlider.label }} pph={pph} onChange={onChange} empiricalPph={empiricalPph} />
+        )}
+      </div>
+      <div className="max-w-[220px]">
+        {ownSliderClamped && (
+          <SliderControl
+            slider={{ ...ownSliderClamped, label: prefix + ownSliderClamped.label }}
+            pph={pph}
+            onChange={(key, v) => onChange(key, Math.min(v, ceilingValue))}
+            empiricalPph={empiricalPph}
+          />
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default function PphSliders({ pph, onChange, empiricalPph, scope = 'main' }) {
+  const areas = scopeAreas(scope)
+  const combined = areas.length > 1
+  const extenderSliders = !areas.includes('fasttrack')
+    ? EXTENDER_SLIDERS
+    : combined
+      ? [...FASTTRACK_PA_SLIDERS.map(s => ({ ...s, label: `FastTrack ${s.label}` })), ...EXTENDER_SLIDERS]
+      : [...FASTTRACK_PA_SLIDERS, ...EXTENDER_SLIDERS.filter(s => s.key !== 'pa')]
 
   return (
     <div className="pt-2 pb-1">
-      <div className="px-3 text-[10px] text-[var(--c-text-muted)] uppercase tracking-wide">{activeTeam} attending PPH</div>
-      <div className="px-3 py-1 flex gap-4 flex-wrap">
-        <div className="max-w-[220px]">
-          {attendingSlider && (
-            <SliderControl slider={attendingSlider} pph={pph} onChange={onChange} empiricalPph={empiricalPph} />
-          )}
-        </div>
-        <div className="max-w-[220px]">
-          {ownSliderClamped && (
-            <SliderControl
-              slider={ownSliderClamped}
-              pph={pph}
-              onChange={(key, v) => onChange(key, Math.min(v, ceilingValue))}
-              empiricalPph={empiricalPph}
-            />
-          )}
-        </div>
-      </div>
+      <div className="px-3 text-[10px] text-[var(--c-text-muted)] uppercase tracking-wide">{SCOPE_LABEL[scope] ?? AREA_LABEL[areas[0]]} attending PPH</div>
+      {areas.map(area => (
+        <AreaAttendingSliders key={area} area={area} pph={pph} onChange={onChange} empiricalPph={empiricalPph} showAreaName={combined} />
+      ))}
       <div className="px-3 text-[10px] text-[var(--c-text-muted)] uppercase tracking-wide mt-1">Resident / PA max PPH (per provider)</div>
       <div
         className="grid gap-x-4 gap-y-2 px-3 py-1"

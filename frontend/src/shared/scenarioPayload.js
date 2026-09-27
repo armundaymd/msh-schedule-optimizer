@@ -2,11 +2,13 @@
 // Version-specific behaviour belongs in legacy/ or v2/, not here.
 
 import { normalizeShifts } from './hooks/useScheduleState'
+import { normalizeCoverageConfig, validateCoverageConfig } from './operationalCoverage'
 
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
 
 // Persisted scenario payload shape:
-//   { shifts: { Monday: [...], ... }, pph, costRates, customTeams, target, generatorSettings? }
+//   { shifts: { Monday: [...], ... }, pph, costRates, customTeams, target, generatorSettings?,
+//     operationalCoverage? }   (shared/operationalCoverage.js config, canonical JSON)
 // Shift rows use the export-row convention (day_type, team, role_type,
 // role_detail, resident_level, start_time, end_time) — never the internal
 // id/startMins/endMins fields, which are re-derived on load.
@@ -24,14 +26,24 @@ function toRow(shift) {
 }
 
 // Builds the payload to POST when saving a scenario, from live app state.
-export function buildScenarioPayload({ schedState, pph, costRates, customTeams, target, generatorSettings }) {
+export function buildScenarioPayload({ schedState, pph, costRates, customTeams, target, generatorSettings, operationalCoverage }) {
   const shifts = {}
   for (const day of DAYS) {
     shifts[day] = schedState.getShiftsForDay(day).map(toRow)
   }
   const payload = { shifts, pph, costRates, customTeams, target }
   if (generatorSettings) payload.generatorSettings = generatorSettings
+  if (operationalCoverage) payload.operationalCoverage = normalizeCoverageConfig(operationalCoverage)
   return payload
+}
+
+// The operational coverage config a scenario was saved with, or null when it
+// has none (scenarios saved before the feature) or it no longer validates.
+export function scenarioOperationalCoverage(payload) {
+  const c = payload?.operationalCoverage
+  if (!c) return null
+  const normalized = normalizeCoverageConfig(c)
+  return validateCoverageConfig(normalized).length ? null : normalized
 }
 
 // Converts a loaded payload's row-format shifts back into the internal

@@ -1,31 +1,19 @@
 import { useMemo } from 'react'
-import { teamCapacity } from '../../shared/capacity'
-import { getDemandSeries } from '../../shared/demandSeries'
 import { computeShiftCost } from '../../shared/cost'
-
-const AREAS = ['main', 'fasttrack', 'eru']
-const AREA_LABEL = { main: 'Main', fasttrack: 'FastTrack', eru: 'ERU' }
+import { AREA_LABEL } from '../../shared/areas'
+import { analyzeScope } from '../../shared/scopeAnalysis'
 
 // Per-area deficit: each area's demand can only be met by that area's own
 // capacity (Main demand vs whole-ED capacity was the bug — see PHASE 2, 2.1).
 // Returns the count of distinct hours where ANY area is short, plus a
 // per-area breakdown for the tooltip.
 function computeOverflowByArea(shifts, demand, pph, day, customTeams, target) {
-  const hoursShort = new Set()
-  const byArea = {}
-  for (const area of AREAS) {
-    const series = getDemandSeries(demand, AREA_LABEL[area], day, target)
-    let count = 0
-    for (let h = 0; h < 24; h++) {
-      const cap = teamCapacity(shifts, pph, customTeams, area, h)
-      if ((series[h] ?? 0) > cap) {
-        count++
-        hoursShort.add(h)
-      }
-    }
-    byArea[AREA_LABEL[area]] = count
-  }
-  return { anyAreaHours: hoursShort.size, byArea }
+  const { componentDeficitHours, deficitHoursByArea } =
+    analyzeScope({ shifts, demand, pph, customTeams, scope: 'wholeEd', day, target })
+  const byArea = Object.fromEntries(
+    Object.entries(deficitHoursByArea).map(([area, hours]) => [AREA_LABEL[area], hours.length])
+  )
+  return { anyAreaHours: componentDeficitHours.length, byArea }
 }
 
 function attendingHours(shifts) {

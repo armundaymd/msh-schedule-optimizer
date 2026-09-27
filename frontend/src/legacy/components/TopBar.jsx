@@ -15,14 +15,13 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
 
   useEffect(() => {
     if (!popoverOpen) return
-    setName(`Scenario ${scenarioCount + 1}`)
     setTimeout(() => inputRef.current?.select(), 0)
     function onDown(e) {
       if (popoverRef.current && !popoverRef.current.contains(e.target)) setPopoverOpen(false)
     }
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
-  }, [popoverOpen, scenarioCount])
+  }, [popoverOpen])
 
   useEffect(() => {
     if (!exportOpen) return
@@ -86,7 +85,12 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
         </button>
         <div className="relative" ref={popoverRef}>
           <button
-            onClick={() => setPopoverOpen(v => !v)}
+            onClick={() => {
+              // Default the name on open, in the handler rather than an
+              // effect, so a typed name is never overwritten mid-edit.
+              if (!popoverOpen) setName(`Scenario ${scenarioCount + 1}`)
+              setPopoverOpen(v => !v)
+            }}
             disabled={scenarioCount >= 5}
             className="text-xs px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-slate-200 transition-colors"
           >

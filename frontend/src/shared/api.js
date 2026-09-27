@@ -73,3 +73,20 @@ export async function deleteScenario(id) {
   const r = await fetch(`${API_BASE}/api/scenarios/${encodeURIComponent(id)}`, { method: 'DELETE' })
   if (!r.ok) throw new Error('scenario delete failed')
 }
+
+// Staffing resource allocation (server: staffing/, OR-Tools CP-SAT). The
+// instance comes from shared/staffingPlan.js buildPlanInstance. Resolves
+// with the solver's result, including infeasible/timeout results (those are
+// answers, not errors); rejects only on transport/validation failure.
+export async function postStaffingPlan(instance) {
+  const r = await fetch(`${API_BASE}/api/staffing-plan`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(instance),
+  })
+  if (!r.ok) {
+    const detail = await r.json().catch(() => null)
+    throw new Error(detail?.detail?.[0]?.msg ?? `staffing plan request failed (${r.status})`)
+  }
+  return r.json()
+}

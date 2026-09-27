@@ -7,3 +7,5 @@ scipy
 SQLAlchemy
 psycopg2-binary
 python-dotenv
+# Staffing allocation optimizer (staffing/cpsat.py) — CP-SAT solver.
+ortools>=9.10,<10

@@ -23,17 +23,22 @@
 //                               own max-PPH (currently: FastTrack PAs seeing
 //                               patients solo). NOT capped by the ceiling,
 //                               since no attending is reviewing that work —
-//                               added on top once the team has >=1 attending.
+//                               added on top, and counted even when the team
+//                               has NO attending on (FastTrack PAs see solo
+//                               patients while attendings cover other parts
+//                               of the ED).
 // A team with attendings and no residents/PAs is not zero capacity: the
 // attendings still see patients on their own (ownThroughput). A team with NO
-// attendings is zero capacity — no extender capacity of any kind (solo
-// included) counts without at least one attending scheduled on the team
-// (deliberate, do not add unsupervised-PA capacity without asking).
+// attendings has no supervised capacity (the min() term is 0); only solo
+// extender capacity counts, which is 0 everywhere except FastTrack PAs.
 // Area-level totals (Main/FastTrack/ERU, used for the demand chart) are the
 // SUM of each team's own min() — never sum-then-min across teams, which
 // would let one team's extenders paper over another team's empty roster.
 
-export const STATIC_MAIN = ['Green', 'Red', 'Blue']
+import { STATIC_MAIN, AREA_KEY, scopeAreas } from './areas'
+
+// Re-exported for existing importers; defined in areas.js.
+export { STATIC_MAIN }
 
 const RESIDENT_LEVEL_TO_PPH_KEY = {
   'PGY-1': 'pgy1',
@@ -59,8 +64,7 @@ export function teamArea(teamName, customTeams = []) {
   if (teamName === 'FastTrack') return 'fasttrack'
   if (teamName === 'ERU') return 'eru'
   const ct = customTeams.find(t => t.name === teamName)
-  if (!ct) return 'main'
-  return ct.area === 'FastTrack' ? 'fasttrack' : ct.area === 'ERU' ? 'eru' : 'main'
+  return AREA_KEY[ct?.area] ?? 'main'
 }
 
 // The pph object key a Resident extender shift's max-PPH lives under.
@@ -154,12 +158,12 @@ export function soloExtenderCapacityForTeam(shifts, pph, area, teamName, hour) {
 }
 
 export function teamCapacityForTeam(shifts, pph, area, teamName, hour) {
+  const solo = soloExtenderCapacityForTeam(shifts, pph, area, teamName, hour)
   const nAtt = attendingCountForTeam(shifts, teamName, hour)
-  if (nAtt === 0) return 0
+  if (nAtt === 0) return solo
   const supervisionCeiling = attendingCapacityForTeam(shifts, pph, area, teamName, hour)
   const ownThroughput = ownThroughputForTeam(shifts, pph, area, teamName, hour)
   const extenders = extenderCapacityForTeam(shifts, pph, area, teamName, hour)
-  const solo = soloExtenderCapacityForTeam(shifts, pph, area, teamName, hour)
   return Math.min(supervisionCeiling, ownThroughput + extenders) + solo
 }
 
@@ -173,8 +177,8 @@ export function teamBreakdown(shifts, pph, customTeams, area, hour) {
       const supervisionCeiling = attendingCapacityForTeam(shifts, pph, area, team, hour)
       const ownThroughput = ownThroughputForTeam(shifts, pph, area, team, hour)
       const extender = extenderCapacityForTeam(shifts, pph, area, team, hour)
-      const solo = nAtt === 0 ? 0 : soloExtenderCapacityForTeam(shifts, pph, area, team, hour)
-      const cap = nAtt === 0 ? 0 : Math.min(supervisionCeiling, ownThroughput + extender) + solo
+      const solo = soloExtenderCapacityForTeam(shifts, pph, area, team, hour)
+      const cap = nAtt === 0 ? solo : Math.min(supervisionCeiling, ownThroughput + extender) + solo
       return { team, supervisionCeiling, ownThroughput, extender, solo, cap }
     })
 }
@@ -196,13 +200,51 @@ export function extenderCapacity(shifts, pph, customTeams, area, hour) {
 
 export function soloExtenderCapacity(shifts, pph, customTeams, area, hour) {
   return activeTeamsInArea(shifts, customTeams, area, hour)
-    .reduce((sum, team) => {
-      const nAtt = attendingCountForTeam(shifts, team, hour)
-      return sum + (nAtt === 0 ? 0 : soloExtenderCapacityForTeam(shifts, pph, area, team, hour))
-    }, 0)
+    .reduce((sum, team) => sum + soloExtenderCapacityForTeam(shifts, pph, area, team, hour), 0)
 }
 
 export function teamCapacity(shifts, pph, customTeams, area, hour) {
   return activeTeamsInArea(shifts, customTeams, area, hour)
     .reduce((sum, team) => sum + teamCapacityForTeam(shifts, pph, area, team, hour), 0)
+}
+
+// ── Scope-level (one or more areas) ─────────────────────────────────────────
+// `scope` is a scope key, an area key, or an array of area keys (see
+// areas.js). A scope's capacity is the SUM of each component area's own
+// teamCapacity — the same never-min-across-teams rule as above, one level up.
+// Summing is only the aggregate view: capacity does not transfer between
+// areas, so per-area results must stay visible (see scopeAnalysis.js).
+
+export function scopeCapacity(shifts, pph, customTeams, scope, hour) {
+  return scopeAreas(scope)
+    .reduce((sum, area) => sum + teamCapacity(shifts, pph, customTeams, area, hour), 0)
+}
+
+// Summed capacity components across the scope, plus the same numbers per
+// component area under `byArea`.
+export function scopeCapacityBreakdown(shifts, pph, customTeams, scope, hour) {
+  const total = { supervisionCeiling: 0, ownThroughput: 0, extender: 0, solo: 0, cap: 0, byArea: {} }
+  for (const area of scopeAreas(scope)) {
+    const a = {
+      supervisionCeiling: attendingCapacity(shifts, pph, customTeams, area, hour),
+      ownThroughput:      ownThroughput(shifts, pph, customTeams, area, hour),
+      extender:           extenderCapacity(shifts, pph, customTeams, area, hour),
+      solo:               soloExtenderCapacity(shifts, pph, customTeams, area, hour),
+      cap:                teamCapacity(shifts, pph, customTeams, area, hour),
+    }
+    total.byArea[area] = a
+    total.supervisionCeiling += a.supervisionCeiling
+    total.ownThroughput      += a.ownThroughput
+    total.extender           += a.extender
+    total.solo               += a.solo
+    total.cap                += a.cap
+  }
+  return total
+}
+
+// Per-team breakdown across every area in the scope; each row carries `area`.
+export function scopeTeamBreakdown(shifts, pph, customTeams, scope, hour) {
+  return scopeAreas(scope).flatMap(area =>
+    teamBreakdown(shifts, pph, customTeams, area, hour).map(row => ({ ...row, area }))
+  )
 }

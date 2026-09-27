@@ -1,19 +1,21 @@
 import { useRef, useState, useEffect, useMemo } from 'react'
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core'
 import TeamRow from './TeamRow'
-import { ROW_HEADER_W } from './layout'
+import { ROW_HEADER_W, hourPxForWidth } from './layout'
 import CoverageRibbon from './CoverageRibbon'
 import CopyDayMenu from './CopyDayMenu'
 import PillToggle from '../../../shared/components/PillToggle'
-import { teamCapacity } from '../../../shared/capacity'
+import { analyzeScope } from '../../../shared/scopeAnalysis'
+import { coverageGrid } from '../../../shared/coverageInsights'
+import { AREAS as AREA_KEYS, AREA_LABEL, SCOPE_LABEL } from '../../../shared/areas'
 
 const TEAMS = ['Green', 'Red', 'Blue', 'FastTrack', 'ERU']
 const TEAM_COLORS = { Green: '#2d7a3a', Red: '#c0392b', Blue: '#185FA5', FastTrack: '#7b3fa0', ERU: '#b05a00' }
 const PRESET_COLORS = ['#0d9488','#ec4899','#f59e0b','#6366f1','#84cc16','#06b6d4','#f43f5e','#64748b']
-const AREAS = ['Main', 'FastTrack', 'ERU']
+// Custom teams belong to exactly one real area, never a combined scope.
+const AREAS = AREA_KEYS.map(a => AREA_LABEL[a])
 const HEADER_H = 28
 const SNAP = 30
-const MIN_HOUR_PX = 24
 
 function snap(m) { return Math.round(m / SNAP) * SNAP }
 function minsToTime(m) {
@@ -33,12 +35,13 @@ function isEditableTarget(el) {
 export default function Timeline({
   day, shifts, onAdd, onDelete, onUpdate,
   customTeams, onAddCustomTeam, onRemoveCustomTeam,
-  demandSeries, pph, area,
-  hoverHour, onHoverHour,
+  demand, target, pph, scope,
+  hoverHour, onHoverHour, focusRequest,
   onCopyDayTo,
   hiddenTeams, onToggleTeamHidden,
 }) {
   const containerRef = useRef(null)
+  const scrollXRef = useRef(null)
   const [containerW, setContainerW] = useState(0)
   const [showAllStaff, setShowAllStaff] = useState(true)
   const [addOpen, setAddOpen] = useState(false)
@@ -67,7 +70,18 @@ export default function Timeline({
     return () => document.removeEventListener('mousedown', onDown)
   }, [addOpen])
 
-  const hourPx = containerW > 0 ? Math.max(Math.floor((containerW - ROW_HEADER_W) / 24), MIN_HOUR_PX) : 36
+  const hourPx = hourPxForWidth(containerW)
+
+  // Bring a requested hour (e.g. a week-heatmap click) into view when the
+  // timeline is narrower than 24 hours and scrolls horizontally.
+  useEffect(() => {
+    const el = scrollXRef.current
+    if (!el || focusRequest == null) return
+    const target = ROW_HEADER_W + focusRequest.hour * hourPx - (el.clientWidth - hourPx) / 2
+    el.scrollTo({ left: Math.max(0, target), behavior: 'smooth' })
+    // Only on a new request, not on every resize.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusRequest])
   const totalW = hourPx * 24
 
   const allTeams = [
@@ -87,25 +101,29 @@ export default function Timeline({
       : s)
   }, [shifts, dragPreview])
 
-  const ribbonValues = useMemo(() => Array.from({ length: 24 }, (_, h) =>
-    teamCapacity(previewShifts, pph, customTeams, area, h) - (demandSeries?.[h] ?? 0)
-  ), [previewShifts, pph, customTeams, area, demandSeries])
+  // Combined scopes get the aggregate row plus one row per area, so an hour
+  // where one area is short can't read as covered because another has surplus.
+  const ribbonRows = useMemo(() => {
+    const analysis = analyzeScope({ shifts: previewShifts, demand, pph, customTeams, scope, day, target })
+    const grid = coverageGrid(analysis)
+    if (analysis.areas.length === 1) return [{ key: 'coverage', label: 'Coverage', ...grid.aggregate }]
+    return [
+      { key: 'aggregate', label: SCOPE_LABEL[scope], ...grid.aggregate },
+      ...analysis.areas.map(a => ({ key: a, label: AREA_LABEL[a], minor: true, ...grid.byArea[a] })),
+    ]
+  }, [previewShifts, demand, pph, customTeams, scope, day, target])
 
   const dragReadout = useMemo(() => {
     if (!dragPreview) return null
     function overflowSet(list) {
-      const set = new Set()
-      for (let h = 0; h < 24; h++) {
-        if ((demandSeries?.[h] ?? 0) > teamCapacity(list, pph, customTeams, area, h)) set.add(h)
-      }
-      return set
+      return new Set(analyzeScope({ shifts: list, demand, pph, customTeams, scope, day, target }).componentDeficitHours)
     }
     const before = overflowSet(shifts)
     const after = overflowSet(previewShifts)
     const resolved = [...before].filter(h => !after.has(h)).length
     const created = [...after].filter(h => !before.has(h)).length
     return { resolved, created }
-  }, [dragPreview, shifts, previewShifts, demandSeries, pph, customTeams, area])
+  }, [dragPreview, shifts, previewShifts, demand, pph, customTeams, scope, day, target])
 
   function handleAddConfirm() {
     const name = newName.trim()
@@ -215,7 +233,7 @@ export default function Timeline({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-x-auto flex flex-col">
+      <div ref={scrollXRef} className="flex-1 min-h-0 overflow-x-auto flex flex-col">
         <div style={{ width: ROW_HEADER_W + totalW }} className="flex-1 min-h-0 flex flex-col">
           {/* Team rows scroll independently within the column's available
               height, so the coverage ribbon and demand chart (in the
@@ -320,9 +338,9 @@ export default function Timeline({
 
           {/* Coverage ribbon, live during drag — always visible, outside the
               scrollable rows region above. */}
-          {demandSeries && (
+          {demand && (
             <div className="shrink-0">
-              <CoverageRibbon hourPx={hourPx} rowHeaderW={ROW_HEADER_W} values={ribbonValues} hoverHour={hoverHour} />
+              <CoverageRibbon hourPx={hourPx} rowHeaderW={ROW_HEADER_W} rows={ribbonRows} hoverHour={hoverHour} />
             </div>
           )}
           {dragPreview && dragReadout && (

@@ -12,7 +12,9 @@ from pathlib import Path
 from pydantic import BaseModel
 from sqlalchemy import select
 from pipeline import run_pipeline, load_processed
-from db import get_engine, init_schema, read_schedule_df, scenarios
+from db import get_engine, init_schema, read_schedule_df, schedule_rows, scenarios
+from staffing.model import Instance as StaffingInstance
+from staffing.service import solve as solve_staffing_plan
 
 app = FastAPI()
 
@@ -62,18 +64,7 @@ def api_validation():
 
 @app.get("/api/schedule")
 def api_schedule():
-    df = read_schedule_df(engine)
-    return [
-        {
-            "day":         row["day_type"],
-            "team":        row["team"],
-            "role_type":   row["role_type"],
-            "role_detail": row["role_detail"],
-            "start_time":  row["start_time"],
-            "end_time":    row["end_time"],
-        }
-        for _, row in df.iterrows()
-    ]
+    return schedule_rows(read_schedule_df(engine))
 
 
 @app.post("/api/refresh")
@@ -136,3 +127,12 @@ def api_delete_scenario(scenario_id: str):
     if result.rowcount == 0:
         raise HTTPException(status_code=404, detail="scenario not found")
     return {"status": "ok"}
+
+
+# Staffing resource allocation (staffing/). The frontend builds the instance
+# (demand, capacity tables from shared/capacity.js, locks, rules); this only
+# solves it. Plain `def` so FastAPI runs the CPU-bound solve in a worker
+# thread instead of blocking the event loop.
+@app.post("/api/staffing-plan")
+def api_staffing_plan(instance: StaffingInstance):
+    return solve_staffing_plan(instance)

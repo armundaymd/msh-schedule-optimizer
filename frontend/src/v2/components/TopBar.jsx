@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import ConfirmDialog from '../../shared/components/ConfirmDialog'
 import SettingsMenu from './SettingsMenu'
 
-export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onSaveScenario, scenarioCount, onUndo, onRedo, canUndo, canRedo, onAutoOptimize, onAutoOptimizeWeek, optimizing, onExport, activeTeam, onClearDay, onClearWeek, onOpenGenerator, onOpenScenarios, theme, onThemeChange, costModeEnabled, onToggleCostMode }) {
+export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onSaveScenario, scenarioCount, onUndo, onRedo, canUndo, canRedo, onAutoOptimize, onAutoOptimizeWeek, optimizing, onExport, activeScopeLabel, onClearDay, onClearWeek, onOpenGenerator, onOpenScenarios, theme, onThemeChange, costModeEnabled, onToggleCostMode }) {
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [name, setName] = useState('')
   const popoverRef = useRef(null)
@@ -19,14 +19,13 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
 
   useEffect(() => {
     if (!popoverOpen) return
-    setName(`Scenario ${scenarioCount + 1}`)
     setTimeout(() => inputRef.current?.select(), 0)
     function onDown(e) {
       if (popoverRef.current && !popoverRef.current.contains(e.target)) setPopoverOpen(false)
     }
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
-  }, [popoverOpen, scenarioCount])
+  }, [popoverOpen])
 
   useEffect(() => {
     if (!exportOpen) return
@@ -116,7 +115,12 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
         </button>
         <div className="relative" ref={popoverRef}>
           <button
-            onClick={() => setPopoverOpen(v => !v)}
+            onClick={() => {
+              // Default the name on open, in the handler rather than an
+              // effect, so a typed name is never overwritten mid-edit.
+              if (!popoverOpen) setName(`Scenario ${scenarioCount + 1}`)
+              setPopoverOpen(v => !v)
+            }}
             disabled={scenarioCount >= 5}
             className="text-xs px-3 py-1 rounded bg-[var(--c-btn-bg)] hover:bg-[var(--c-btn-bg-hover)] disabled:opacity-40 text-[var(--c-text-secondary)] transition-colors"
           >
@@ -145,10 +149,10 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
           <button
             onClick={onAutoOptimize}
             disabled={optimizing}
-            title={`Auto-optimize ${activeTeam ?? 'Main'} for this day (uses the area selected in the chart tab)`}
+            title={`Auto-optimize ${activeScopeLabel ?? 'Main'} for this day (uses the scope selected in the chart tab)`}
             className="text-xs px-3 py-1 rounded-l bg-amber-700 hover:bg-amber-600 disabled:opacity-50 text-white transition-colors"
           >
-            {optimizing ? '⚡ Optimizing…' : `⚡ Auto-optimize ${activeTeam ?? 'Main'}`}
+            {optimizing ? '⚡ Optimizing…' : `⚡ Auto-optimize ${activeScopeLabel ?? 'Main'}`}
           </button>
           <button
             onClick={() => setOptimizeMenuOpen(v => !v)}
@@ -163,7 +167,7 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
               <button
                 onClick={() => { setOptimizeMenuOpen(false); onAutoOptimizeWeek?.() }}
                 disabled={optimizing}
-                title={`Runs on ${activeTeam ?? 'Main'} for every day of the week`}
+                title={`Runs on ${activeScopeLabel ?? 'Main'} for every day of the week`}
                 className="block w-full text-left px-3 py-1.5 text-xs text-[var(--c-text-secondary)] hover:bg-[var(--c-btn-bg)] transition-colors disabled:opacity-40"
               >
                 Optimize full week

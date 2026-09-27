@@ -8,7 +8,13 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "validate": "vitest run --config vitest.validation.config.js",
+    "analyze:sensitivity": "vitest run --config vitest.analysis.config.js analysis/sensitivity",
+    "analyze:coverage": "vitest run --config vitest.analysis.config.js analysis/operationalCoverage",
+    "analyze:crosscover": "vitest run --config vitest.analysis.config.js analysis/crossCoverSensitivity",
+    "analyze:eru": "vitest run --config vitest.analysis.config.js analysis/eruCoverageScenarios",
+    "analyze:frontier": "vitest run --config vitest.analysis.config.js analysis/attendingResourceFrontier"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -16,3 +16,6 @@ frontend/.vite/
 data/raw/
 .DS_Store
 *.log
+
+# Local archive of a previous version (restored as frontend/src/v2) — never commit
+*.zip

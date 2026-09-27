@@ -38,7 +38,7 @@ export default function Landing() {
       return
     }
     const saved = window.localStorage.getItem(STORAGE_KEY)
-    if (saved === 'legacy' || saved === 'v2') {
+    if (saved === 'legacy' || saved === 'v2' || saved === 'v3') {
       navigate(`/${saved}`, { replace: true })
     }
   }, [forceChoose, navigate])
@@ -51,7 +51,7 @@ export default function Landing() {
 
   function handleChoose(to) {
     if (remember) {
-      window.localStorage.setItem(STORAGE_KEY, to === '/legacy' ? 'legacy' : 'v2')
+      window.localStorage.setItem(STORAGE_KEY, to.slice(1)) // 'legacy' | 'v2' | 'v3'
     }
     navigate(to)
   }
@@ -89,6 +89,12 @@ export default function Landing() {
             title="Optimizer v2"
             description="Schedule generator, percentile demand targets, redesigned timeline."
             to="/v2"
+            onChoose={handleChoose}
+          />
+          <VersionCard
+            title="Optimizer v3"
+            description="v2 plus the staffing-plan allocator: spread a budget of attending hours across areas, days and times."
+            to="/v3"
             preview
             onChoose={handleChoose}
           />

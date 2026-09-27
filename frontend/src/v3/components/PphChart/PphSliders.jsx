@@ -1,0 +1,156 @@
+import { useState } from 'react'
+import { AREA_LABEL, SCOPE_LABEL, scopeAreas } from '../../../shared/areas'
+import HelpButton from '../Help/HelpButton'
+
+const ATTENDING_SLIDERS = [
+  { key: 'main',      label: 'Attending supervision ceiling (PPH)', min: 1.0, max: 6.0, step: 0.1 },
+  { key: 'fasttrack', label: 'Attending supervision ceiling (PPH)', min: 1.0, max: 6.0, step: 0.1 },
+  { key: 'eru',       label: 'Attending supervision ceiling (PPH)', min: 0.5, max: 3.0, step: 0.1 },
+]
+
+// min 0: some areas (Main, ERU) never have attendings seeing patients solo,
+// so it must be possible to zero this out, not just turn it down.
+const OWN_SLIDERS = [
+  { key: 'mainOwn',      label: 'Attending solo throughput (PPH)', min: 0, max: 4.0, step: 0.1 },
+  { key: 'fasttrackOwn', label: 'Attending solo throughput (PPH)', min: 0, max: 4.0, step: 0.1 },
+  { key: 'eruOwn',       label: 'Attending solo throughput (PPH)', min: 0, max: 4.0, step: 0.1 },
+]
+
+const EXTENDER_SLIDERS = [
+  { key: 'pa',         label: 'PA max PPH',         min: 0.2, max: 3.0, step: 0.1 },
+  { key: 'pgy1',       label: 'PGY-1 max PPH',      min: 0.2, max: 3.0, step: 0.1 },
+  { key: 'pgy2',       label: 'PGY-2 max PPH',      min: 0.2, max: 3.0, step: 0.1 },
+  { key: 'pgy3',       label: 'PGY-3 max PPH',      min: 0.2, max: 3.0, step: 0.1 },
+  { key: 'pgy4',       label: 'PGY-4 max PPH',      min: 0.2, max: 3.0, step: 0.1 },
+  { key: 'offService', label: 'Off-Service max PPH',min: 0.2, max: 3.0, step: 0.1 },
+]
+
+// FastTrack PAs do both, in the same hour: see patients solo, and co-manage
+// patients alongside an attending. Their combined rate replaces the general
+// 'pa' slider when viewing FastTrack alone; a combined scope that includes
+// FastTrack shows both, since its other areas still use 'pa'.
+const FASTTRACK_PA_SLIDERS = [
+  { key: 'fasttrackPa',              label: 'PA max PPH (solo)',           min: 0, max: 4.0, step: 0.1 },
+  { key: 'fasttrackPaWithAttending', label: 'PA max PPH (w/ attending)',   min: 0, max: 4.0, step: 0.1 },
+]
+
+// Editable value box — keeps its own text while focused so partial input
+// (e.g. "1.") isn't clobbered by the controlled float on every keystroke.
+function PphValueInput({ value, min, max, onCommit }) {
+  const [text, setText] = useState(() => value.toFixed(1))
+  const [syncedValue, setSyncedValue] = useState(value)
+
+  // Adjust local text when the prop changes from outside (e.g. a scenario
+  // preset), without an effect — see https://react.dev/learn/you-might-not-need-an-effect
+  if (value !== syncedValue) {
+    setSyncedValue(value)
+    setText(value.toFixed(1))
+  }
+
+  function commit() {
+    let v = parseFloat(text)
+    if (Number.isNaN(v)) v = value
+    v = Math.min(max, Math.max(min, v))
+    setText(v.toFixed(1))
+    if (v !== value) onCommit(v)
+  }
+
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      value={text}
+      onChange={e => setText(e.target.value)}
+      onFocus={e => e.target.select()}
+      onBlur={commit}
+      onKeyDown={e => { if (e.key === 'Enter') e.target.blur() }}
+      className="w-10 shrink-0 bg-[var(--c-bg-surface)] border border-[var(--c-border)] rounded text-xs text-[var(--c-text-secondary)] text-right px-1 py-0.5 outline-none focus:border-blue-500"
+    />
+  )
+}
+
+function SliderControl({ slider, pph, onChange, empiricalPph }) {
+  const { key, label, min, max, step } = slider
+  const emp = empiricalPph?.[key]
+  return (
+    <label className="flex flex-col gap-0.5 min-w-0">
+      <span className="text-xs text-[var(--c-text-muted)] truncate">{label}</span>
+      <div className="flex items-center gap-1.5">
+        <input
+          type="range"
+          min={min} max={max} step={step}
+          value={pph[key]}
+          onChange={e => onChange(key, parseFloat(e.target.value))}
+          className="flex-1 min-w-0 accent-blue-500 h-1"
+        />
+        <PphValueInput value={pph[key]} min={min} max={max} onCommit={v => onChange(key, v)} />
+      </div>
+      {emp != null && (
+        <span className="text-[10px] text-teal-500 leading-none">
+          Empirical: {emp.toFixed(2)}
+        </span>
+      )}
+    </label>
+  )
+}
+
+// Attending ceiling + solo-throughput sliders for one area. The solo slider
+// is clamped to that area's ceiling.
+function AreaAttendingSliders({ area, pph, onChange, empiricalPph, showAreaName }) {
+  const attendingSlider = ATTENDING_SLIDERS.find(s => s.key === area)
+  const ownSlider = OWN_SLIDERS.find(s => s.key === `${area}Own`)
+  const ceilingValue = pph[area] ?? attendingSlider?.max ?? 4.0
+  const ownSliderClamped = ownSlider && { ...ownSlider, max: Math.min(ownSlider.max, ceilingValue) }
+  const prefix = showAreaName ? `${AREA_LABEL[area]} ` : ''
+
+  return (
+    <div className="px-3 py-1 flex gap-4 flex-wrap">
+      <div className="max-w-[220px]">
+        {attendingSlider && (
+          <SliderControl slider={{ ...attendingSlider, label: prefix + attendingSlider.label }} pph={pph} onChange={onChange} empiricalPph={empiricalPph} />
+        )}
+      </div>
+      <div className="max-w-[220px]">
+        {ownSliderClamped && (
+          <SliderControl
+            slider={{ ...ownSliderClamped, label: prefix + ownSliderClamped.label }}
+            pph={pph}
+            onChange={(key, v) => onChange(key, Math.min(v, ceilingValue))}
+            empiricalPph={empiricalPph}
+          />
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default function PphSliders({ pph, onChange, empiricalPph, scope = 'main' }) {
+  const areas = scopeAreas(scope)
+  const combined = areas.length > 1
+  const extenderSliders = !areas.includes('fasttrack')
+    ? EXTENDER_SLIDERS
+    : combined
+      ? [...FASTTRACK_PA_SLIDERS.map(s => ({ ...s, label: `FastTrack ${s.label}` })), ...EXTENDER_SLIDERS]
+      : [...FASTTRACK_PA_SLIDERS, ...EXTENDER_SLIDERS.filter(s => s.key !== 'pa')]
+
+  return (
+    <div className="pt-2 pb-1">
+      <div className="px-3 text-[10px] text-[var(--c-text-muted)] uppercase tracking-wide flex items-center gap-1.5">
+        {SCOPE_LABEL[scope] ?? AREA_LABEL[areas[0]]} attending PPH
+        <HelpButton section="sliders" label="What do these throughput numbers mean?" />
+      </div>
+      {areas.map(area => (
+        <AreaAttendingSliders key={area} area={area} pph={pph} onChange={onChange} empiricalPph={empiricalPph} showAreaName={combined} />
+      ))}
+      <div className="px-3 text-[10px] text-[var(--c-text-muted)] uppercase tracking-wide mt-1">Resident / PA max PPH (per provider)</div>
+      <div
+        className="grid gap-x-4 gap-y-2 px-3 py-1"
+        style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))' }}
+      >
+        {extenderSliders.map(slider => (
+          <SliderControl key={slider.key} slider={slider} pph={pph} onChange={onChange} empiricalPph={empiricalPph} />
+        ))}
+      </div>
+    </div>
+  )
+}

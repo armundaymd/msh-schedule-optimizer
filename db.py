@@ -82,3 +82,28 @@ def init_schema(engine) -> None:
 def read_schedule_df(engine):
     """Full schedule_shifts table, including role_detail, as a DataFrame."""
     return pd.read_sql_table("schedule_shifts", engine)
+
+
+def schedule_rows(df):
+    """schedule_shifts rows -> the /api/schedule JSON shape.
+
+    Includes resident_level: capacity.js prices each resident by it
+    (PGY-1..4 / Off-Service). It used to be omitted here, so every resident
+    silently fell back to the PGY-2 rate. Missing values (NaN) become None
+    so the response stays valid JSON.
+    """
+    def clean(v):
+        return None if pd.isna(v) else v
+
+    return [
+        {
+            "day":            row["day_type"],
+            "team":           row["team"],
+            "role_type":      row["role_type"],
+            "role_detail":    clean(row["role_detail"]),
+            "resident_level": clean(row["resident_level"]) if "resident_level" in df.columns else None,
+            "start_time":     row["start_time"],
+            "end_time":       row["end_time"],
+        }
+        for _, row in df.iterrows()
+    ]

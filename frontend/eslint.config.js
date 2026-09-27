@@ -18,4 +18,9 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  // The validation suite, analysis runs and their configs run in Node, not the browser.
+  {
+    files: ['validation/**/*.js', 'analysis/**/*.js', 'vitest.validation.config.js', 'vitest.analysis.config.js'],
+    languageOptions: { globals: { ...globals.browser, ...globals.node } },
+  },
 ])

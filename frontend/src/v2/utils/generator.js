@@ -1,4 +1,5 @@
-import { shiftCoversHour, STATIC_MAIN } from '../../shared/capacity'
+import { shiftCoversHour } from '../../shared/capacity'
+import { AREA_LABEL, AREA_BASE_TEAMS } from '../../shared/areas'
 import { getDemandSeries } from '../../shared/demandSeries'
 
 // Shift set covering formulation (Savage et al., CJEM 2014):
@@ -29,8 +30,6 @@ import { getDemandSeries } from '../../shared/demandSeries'
 const M_UNCOVERED_PENALTY = 10000
 const LOCAL_SEARCH_ITERATION_CAP = 500
 const GREEDY_ITERATION_CAP = 1000
-
-const AREA_LABEL = { main: 'Main', fasttrack: 'FastTrack', eru: 'ERU' }
 
 function minsToTime(m) {
   const norm = ((m % 1440) + 1440) % 1440
@@ -353,7 +352,6 @@ export function generateSchedule({ demand, target, day, area, patterns, constrai
   return { shifts, uncovered, objective, patternCounts }
 }
 
-const AREA_NAMED_TEAMS = { main: STATIC_MAIN, fasttrack: ['FastTrack'], eru: ['ERU'] }
 const GENERATOR_COLORS = ['#0d9488','#ec4899','#f59e0b','#6366f1','#84cc16','#06b6d4','#f43f5e','#64748b']
 
 function shiftsOverlap(a, b) {
@@ -382,8 +380,8 @@ function shiftsOverlap(a, b) {
 // "Generated Team N" -- e.g. a name left over from an earlier generate run
 // that was never accepted/discarded, or a team the user created by hand.
 export function assignTeams(shifts, area, reusableAreaTeams = [], allExistingNames = []) {
-  const namedTeams = [...(AREA_NAMED_TEAMS[area] ?? []), ...reusableAreaTeams.map(t => t.name)]
-  const baseCount = (AREA_NAMED_TEAMS[area] ?? []).length
+  const namedTeams = [...(AREA_BASE_TEAMS[area] ?? []), ...reusableAreaTeams.map(t => t.name)]
+  const baseCount = (AREA_BASE_TEAMS[area] ?? []).length
   const sorted = [...shifts].sort((a, b) => a.startMins - b.startMins)
   const lanes = [] // [{ name, shifts: [] }]
   const newTeams = []

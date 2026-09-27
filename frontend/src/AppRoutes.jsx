@@ -5,6 +5,7 @@ import ErrorBoundary from './shared/components/ErrorBoundary.jsx'
 
 const LegacyApp = lazy(() => import('./legacy/App.jsx'))
 const V2App = lazy(() => import('./v2/App.jsx'))
+const V3App = lazy(() => import('./v3/App.jsx'))
 
 function Loading() {
   return (
@@ -42,6 +43,16 @@ export default function AppRoutes() {
             <ErrorBoundary>
               <Suspense fallback={<Loading />}>
                 <V2App />
+              </Suspense>
+            </ErrorBoundary>
+          }
+        />
+        <Route
+          path="/v3"
+          element={
+            <ErrorBoundary>
+              <Suspense fallback={<Loading />}>
+                <V3App />
               </Suspense>
             </ErrorBoundary>
           }

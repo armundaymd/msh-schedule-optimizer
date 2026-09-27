@@ -116,9 +116,11 @@ describe('FastTrack PA solo vs with-attending', () => {
     expect(teamCapacityForTeam(shifts, pphMoreSolo, 'fasttrack', 'FastTrack', 10)).toBeCloseTo(2.5, 5)
   })
 
-  it('solo PA capacity still requires at least one attending scheduled on the team', () => {
+  it('solo PA capacity counts with no FastTrack attending on (attendings are elsewhere in the ED)', () => {
     const shifts = [pa('FastTrack', 0, 24 * 60)] // no attending
-    const pph = { ...PPH, fasttrackPa: 1.5, fasttrackPaWithAttending: 0 }
-    expect(teamCapacityForTeam(shifts, pph, 'fasttrack', 'FastTrack', 10)).toBe(0)
+    const pph = { ...PPH, fasttrackPa: 1.5, fasttrackPaWithAttending: 0.7 }
+    // Only the solo rate counts; the with-attending co-managed rate needs an attending.
+    expect(teamCapacityForTeam(shifts, pph, 'fasttrack', 'FastTrack', 10)).toBeCloseTo(1.5, 5)
+    expect(teamCapacity(shifts, pph, [], 'fasttrack', 10)).toBeCloseTo(1.5, 5)
   })
 })

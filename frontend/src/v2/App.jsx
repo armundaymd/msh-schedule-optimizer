@@ -3,13 +3,15 @@ import { fetchSchedule, fetchDemand, fetchSummary, postRefresh, fetchScenarios, 
 import { useScheduleState } from '../shared/hooks/useScheduleState'
 import { useCommandStack } from './hooks/useCommandStack'
 import { buildScenarioPayload, scenarioPayloadToSnapshot } from '../shared/scenarioPayload'
-import { STATIC_MAIN, shiftCoversHour, teamCapacity } from '../shared/capacity'
-import { getDemandSeries, hasPercentiles } from '../shared/demandSeries'
+import { shiftCoversHour, scopeCapacity } from '../shared/capacity'
+import { getDemandSeries, getScopeDemandSeries, hasPercentiles } from '../shared/demandSeries'
+import { AREA_LABEL, SCOPE_LABEL, scopeAreas, teamsInArea } from '../shared/areas'
 import TopBar from './components/TopBar'
 import DowTabs from '../shared/components/DowTabs'
 import Timeline from './components/Timeline'
 import PphChart from './components/PphChart'
 import SummaryStatsBar from './components/SummaryStatsBar'
+import WeekHeatmap from './components/WeekHeatmap'
 import OptimizeModal from './components/OptimizeModal'
 import ConstraintsPanel from './components/Generator/ConstraintsPanel'
 import GeneratorResult from './components/Generator/GeneratorResult'
@@ -23,16 +25,9 @@ import { DEFAULT_PPH } from '../shared/pph'
 
 const DEFAULT_COST_RATES = { attending: 250, pa: 90 }
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
-const AREA_KEY = { Main: 'main', FastTrack: 'fasttrack', ERU: 'eru' }
-const AREA_LABEL = { main: 'Main', fasttrack: 'FastTrack', eru: 'ERU' }
-const AREA_BASE_TEAMS = { main: STATIC_MAIN, fasttrack: ['FastTrack'], eru: ['ERU'] }
 
 // Scenarios saved here are listed only here — see PHASE 3, 3.1.
 const SCENARIO_VERSION = 'v2'
-
-function teamsInArea(area, customTeams) {
-  return [...AREA_BASE_TEAMS[area], ...customTeams.filter(t => t.area === AREA_LABEL[area]).map(t => t.name)]
-}
 
 // Scope groups: [{ label, anchorDay (used to compute the schedule),
 // days (which concrete days get that same generated schedule applied) }]
@@ -54,13 +49,14 @@ function attendingHrs(list) {
     .reduce((sum, s) => sum + (s.endMins - s.startMins) / 60, 0)
 }
 
-function capacitySeries(shifts, pph, customTeams, area) {
-  return Array.from({ length: 24 }, (_, h) => teamCapacity(shifts, pph, customTeams, area, h))
+function capacitySeries(shifts, pph, customTeams, scope) {
+  return Array.from({ length: 24 }, (_, h) => scopeCapacity(shifts, pph, customTeams, scope, h))
 }
 
 function App() {
   const [activeDow, setActiveDow] = useState('Monday')
-  const [activeTeam, setActiveTeam] = useState('Main')
+  // Analysis/optimization scope: an area key or a combined scope key (shared/areas.js).
+  const [activeScope, setActiveScope] = useState('main')
   const [target, setTarget] = useState('mean')
   const [demand, setDemand] = useState(null)
   const [summary, setSummary] = useState(null)
@@ -82,6 +78,7 @@ function App() {
   const [generatorPreCustomTeams, setGeneratorPreCustomTeams] = useState(null)
   const [generatorPreview, setGeneratorPreview] = useState('generated') // 'generated' | 'current'
   const [hoverHour, setHoverHour] = useState(null)
+  const [timelineFocus, setTimelineFocus] = useState(null) // { hour } — a new object per request
   const [hiddenTeams, setHiddenTeams] = useState(() => new Set())
   const [scenariosOpen, setScenariosOpen] = useState(false)
   const [theme, setTheme] = useState(() => {
@@ -100,7 +97,10 @@ function App() {
   }, [theme])
   const [removeTeamConfirm, setRemoveTeamConfirm] = useState(null) // team name | null
 
-  const activeArea = AREA_KEY[activeTeam] ?? 'main'
+  const scopeLabel = SCOPE_LABEL[activeScope]
+  // The generator builds one area's schedule at a time; a combined scope
+  // opens it on that scope's first area.
+  const generatorArea = scopeAreas(activeScope)[0]
 
   const schedState = useScheduleState()
   // One command stack for all of v2's shift edits (PHASE 5, 5.4) — day
@@ -160,42 +160,42 @@ function App() {
   }
 
   async function handleAutoOptimize() {
-    const overflow = getOverflowHours(shifts, demand, pph, activeDow, customTeams, activeArea, target)
+    const overflow = getOverflowHours(shifts, demand, pph, activeDow, customTeams, activeScope, target)
     if (overflow.length === 0) {
-      showToast(`✓ No overflow — ${activeTeam} already meets demand`)
+      showToast(`✓ No overflow — ${scopeLabel} already meets demand`)
       return
     }
     setOptimizing(true)
     await new Promise(r => setTimeout(r, 280))
-    const result = runOptimizer(shifts, demand, pph, activeDow, customTeams, activeArea, target)
-    commandStack.pushCommand('day', [activeDow], `Auto-optimize ${activeTeam}`)
+    const result = runOptimizer(shifts, demand, pph, activeDow, customTeams, activeScope, target)
+    commandStack.pushCommand('day', [activeDow], `Auto-optimize ${scopeLabel}`)
     schedState.applyDayShifts(activeDow, result.newShifts)
     setOptimizePreCustomTeams(customTeams)
     const afterCustomTeams = result.newTeams.length > 0 ? [...customTeams, ...result.newTeams] : customTeams
     if (result.newTeams.length > 0) setCustomTeams(prev => [...prev, ...result.newTeams])
 
-    const demandSeriesForDay = getDemandSeries(demand, activeTeam, activeDow, target)
+    const demandSeriesForDay = getScopeDemandSeries(demand, activeScope, activeDow, target)
     setOptimizeResult({
       ...result,
       demandSeries: demandSeriesForDay,
-      beforeCoverage: capacitySeries(shifts, pph, customTeams, activeArea),
-      afterCoverage: capacitySeries(result.newShifts, pph, afterCustomTeams, activeArea),
+      beforeCoverage: capacitySeries(shifts, pph, customTeams, activeScope),
+      afterCoverage: capacitySeries(result.newShifts, pph, afterCustomTeams, activeScope),
     })
     setOptimizing(false)
   }
 
   async function handleAutoOptimizeWeek() {
     const anyOverflow = DAYS.some(day =>
-      getOverflowHours(schedState.getShiftsForDay(day), demand, pph, day, customTeams, activeArea, target).length > 0
+      getOverflowHours(schedState.getShiftsForDay(day), demand, pph, day, customTeams, activeScope, target).length > 0
     )
     if (!anyOverflow) {
-      showToast(`✓ No overflow — ${activeTeam} already meets demand all week`)
+      showToast(`✓ No overflow — ${scopeLabel} already meets demand all week`)
       return
     }
     setOptimizing(true)
     await new Promise(r => setTimeout(r, 280))
 
-    commandStack.pushCommand('week', DAYS, `Auto-optimize ${activeTeam} (week)`)
+    commandStack.pushCommand('week', DAYS, `Auto-optimize ${scopeLabel} (week)`)
     setOptimizePreCustomTeams(customTeams)
 
     let accumulatedCustomTeams = [...customTeams]
@@ -206,8 +206,8 @@ function App() {
 
     DAYS.forEach(day => {
       const dayShifts = schedState.getShiftsForDay(day)
-      const beforeCoverage = capacitySeries(dayShifts, pph, customTeams, activeArea)
-      const result = runOptimizer(dayShifts, demand, pph, day, accumulatedCustomTeams, activeArea, target)
+      const beforeCoverage = capacitySeries(dayShifts, pph, customTeams, activeScope)
+      const result = runOptimizer(dayShifts, demand, pph, day, accumulatedCustomTeams, activeScope, target)
       schedState.applyDayShifts(day, result.newShifts)
       if (result.newTeams.length > 0) {
         accumulatedCustomTeams = [...accumulatedCustomTeams, ...result.newTeams]
@@ -215,9 +215,9 @@ function App() {
       }
       perDay[day] = {
         ...result,
-        demandSeries: getDemandSeries(demand, activeTeam, day, target),
+        demandSeries: getScopeDemandSeries(demand, activeScope, day, target),
         beforeCoverage,
-        afterCoverage: capacitySeries(result.newShifts, pph, accumulatedCustomTeams, activeArea),
+        afterCoverage: capacitySeries(result.newShifts, pph, accumulatedCustomTeams, activeScope),
       }
       totalResolved += result.resolvedCount
       totalOverflow += result.totalOverflow
@@ -386,6 +386,16 @@ function App() {
     showToast(`✓ Copied ${activeDow} to ${targetDays.length} day${targetDays.length === 1 ? '' : 's'}`)
   }
 
+  // Week heatmap click: select the day and focus the hour in the timeline
+  // (highlighted via the shared hover hour, scrolled into view if needed).
+  // A day-label click (hour null) just selects the day.
+  function handleHeatmapSelect(day, hour) {
+    setActiveDow(day)
+    if (hour == null) return
+    setHoverHour(hour)
+    setTimelineFocus({ hour })
+  }
+
   // A viewing preference, not schedule data -- doesn't touch schedState or
   // the undo stack, and persists across day-tab switches.
   function handleToggleTeamHidden(team) {
@@ -455,7 +465,6 @@ function App() {
 
   const shifts = schedState.getShiftsForDay(activeDow)
   const baselineShifts = schedState.baseline?.filter(s => s.day === activeDow) ?? []
-  const demandSeries = getDemandSeries(demand, activeTeam, activeDow, target)
 
   const weekBreakdown = DAYS.map(d => {
     const dayShifts = schedState.getShiftsForDay(d)
@@ -499,7 +508,7 @@ function App() {
         onAutoOptimizeWeek={handleAutoOptimizeWeek}
         optimizing={optimizing}
         onExport={handleExport}
-        activeTeam={activeTeam}
+        activeScopeLabel={scopeLabel}
         onOpenGenerator={() => setGeneratorOpen(true)}
         onOpenScenarios={() => setScenariosOpen(true)}
         theme={theme}
@@ -522,7 +531,8 @@ function App() {
         target={target}
       />
       <div className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0">
-        <div className="w-full lg:w-3/5 overflow-hidden border-b lg:border-b-0 lg:border-r border-[var(--c-border)] min-h-0">
+        <div className="w-full lg:w-3/5 overflow-hidden border-b lg:border-b-0 lg:border-r border-[var(--c-border)] min-h-0 flex flex-col">
+          <div className="flex-1 min-h-0">
           <Timeline
             day={activeDow}
             shifts={shifts}
@@ -541,14 +551,29 @@ function App() {
             customTeams={customTeams}
             onAddCustomTeam={handleAddCustomTeam}
             onRemoveCustomTeam={setRemoveTeamConfirm}
-            demandSeries={demandSeries}
+            demand={demand}
+            target={target}
             pph={pph}
-            area={activeArea}
+            scope={activeScope}
             hoverHour={hoverHour}
             onHoverHour={setHoverHour}
             hiddenTeams={hiddenTeams}
             onToggleTeamHidden={handleToggleTeamHidden}
             onCopyDayTo={handleCopyDayTo}
+            focusRequest={timelineFocus}
+          />
+          </div>
+          <WeekHeatmap
+            days={DAYS}
+            activeDow={activeDow}
+            shiftsForDay={schedState.getShiftsForDay}
+            demand={demand}
+            pph={pph}
+            customTeams={customTeams}
+            scope={activeScope}
+            target={target}
+            hoverHour={hoverHour}
+            onSelectCell={handleHeatmapSelect}
           />
         </div>
         <div className="w-full lg:w-2/5 overflow-y-auto min-h-0">
@@ -568,8 +593,8 @@ function App() {
             costRates={costRates}
             costModeEnabled={costModeEnabled}
             onCostRateChange={handleCostRateChange}
-            activeTeam={activeTeam}
-            onActiveTeamChange={setActiveTeam}
+            activeScope={activeScope}
+            onActiveScopeChange={setActiveScope}
             target={target}
             onTargetChange={setTarget}
             hoverHour={hoverHour}
@@ -602,7 +627,7 @@ function App() {
 
     {generatorOpen && (
       <ConstraintsPanel
-        initialArea={activeArea}
+        initialArea={generatorArea}
         target={target}
         percentilesAvailable={hasPercentiles(demand)}
         defaultCostPerHour={costRates.attending}

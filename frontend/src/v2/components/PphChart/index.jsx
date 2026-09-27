@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react'
 import PphSliders from './PphSliders'
 import CapacityChart from './CapacityChart'
+import ScopeBreakdown from './ScopeBreakdown'
+import CoverageIssues from './CoverageIssues'
 import { fetchDemandCI, fetchValidation } from '../../../shared/api'
 import { hasPercentiles } from '../../../shared/demandSeries'
 import { scenarioPayloadToSnapshot } from '../../../shared/scenarioPayload'
+import { AREA_LABEL, SCOPE_LABEL, SCOPE_ORDER, scopeAreas, isCombinedScope } from '../../../shared/areas'
+import { analyzeScope } from '../../../shared/scopeAnalysis'
+import { buildCoverageInsights } from '../../../shared/coverageInsights'
 
-const TEAM_VIEWS = ['Main', 'FastTrack', 'ERU']
 const TARGETS = ['mean', 'p50', 'p75', 'p90']
 const TARGET_LABEL = { mean: 'Mean', p50: 'p50', p75: 'p75', p90: 'p90' }
 
@@ -14,7 +18,7 @@ export default function PphChart({
   scenarios, comparisonScenarioId, onSelectComparison, onDeleteScenario, onResetToScenario,
   customTeams,
   costRates, costModeEnabled, onCostRateChange,
-  activeTeam, onActiveTeamChange, target, onTargetChange,
+  activeScope = 'main', onActiveScopeChange, target, onTargetChange,
   hoverHour, onHoverHour, theme,
 }) {
   const [demandCI, setDemandCI]         = useState(null)
@@ -38,10 +42,19 @@ export default function PphChart({
   const comparisonShifts = compScenario ? (scenarioPayloadToSnapshot(compScenario.payload)[day] ?? []) : null
   const comparisonPph    = compScenario?.payload?.pph ?? null
 
-  const nDays  = demandCI?.[activeTeam]?.n_days ?? null
+  const combined = isCombinedScope(activeScope)
+  const scopeLabel = SCOPE_LABEL[activeScope]
+  // Bootstrap CIs are per area and don't add across areas, so the CI note
+  // (and the band in CapacityChart) only applies to single-area scopes.
+  const nDays  = combined ? null : demandCI?.[AREA_LABEL[scopeAreas(activeScope)[0]]]?.n_days ?? null
   const ciTitle = nDays
-    ? `${activeTeam} demand shown as mean ± 95% bootstrap CI across ${nDays} days of data`
+    ? `${scopeLabel} demand shown as mean ± 95% bootstrap CI across ${nDays} days of data`
     : null
+
+  // Aggregate AND per-area coverage for the active scope — drives the
+  // combined-scope breakdown readout and the coverage-issues list.
+  const scopeAnalysis = analyzeScope({ shifts, demand, pph, customTeams, scope: activeScope, day, target })
+  const insights = buildCoverageInsights(scopeAnalysis)
 
   return (
     <div className="flex flex-col h-full bg-[var(--c-bg-app)]">
@@ -57,17 +70,20 @@ export default function PphChart({
       {/* Team-type tabs */}
       <div className="flex items-center justify-between border-b border-[var(--c-border)] shrink-0 pr-2">
         <div className="flex">
-          {TEAM_VIEWS.map(t => (
+          {SCOPE_ORDER.map(t => (
             <button
               key={t}
-              onClick={() => onActiveTeamChange?.(t)}
-              className={`px-4 py-1.5 text-xs font-medium transition-colors ${
-                activeTeam === t
+              onClick={() => onActiveScopeChange?.(t)}
+              title={isCombinedScope(t) ? `${SCOPE_LABEL[t]}: ${scopeAreas(t).map(a => AREA_LABEL[a]).join(' + ')} combined` : undefined}
+              className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
+                t === 'mainEru' ? 'border-l border-[var(--c-border)] ' : ''
+              }${
+                activeScope === t
                   ? 'text-blue-300 border-b-2 border-blue-500 bg-[var(--c-bg-surface-hover)]'
                   : 'text-[var(--c-text-muted)] hover:text-[var(--c-text-secondary)]'
               }`}
             >
-              {t}
+              {SCOPE_LABEL[t]}
             </button>
           ))}
         </div>
@@ -97,7 +113,9 @@ export default function PphChart({
         </div>
       </div>
 
-      <PphSliders pph={pph} onChange={onPphChange} empiricalPph={empiricalPph} activeTeam={activeTeam} />
+      <PphSliders pph={pph} onChange={onPphChange} empiricalPph={empiricalPph} scope={activeScope} />
+
+      {combined && <ScopeBreakdown analysis={scopeAnalysis} hoverHour={hoverHour} />}
 
       {/* Bottleneck dot legend */}
       <div className="flex items-center gap-3 px-3 pt-1 text-[10px] text-[var(--c-text-muted)]">
@@ -109,6 +127,12 @@ export default function PphChart({
           <span className="inline-block w-2 h-2 rounded-full" style={{ background: '#2dd4bf' }} />
           Staffing-limited
         </span>
+        {combined && (
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-full" style={{ background: '#ef4444' }} />
+            Component-area deficit
+          </span>
+        )}
       </div>
 
       {/* $/hr rate inputs — cost mode itself is toggled from the settings
@@ -152,13 +176,15 @@ export default function PphChart({
           customTeams={customTeams}
           demandCI={demandCI}
           empiricalPph={empiricalPph}
-          activeTeam={activeTeam}
+          scope={activeScope}
           target={target}
           hoverHour={hoverHour}
           onHoverHour={onHoverHour}
           theme={theme}
         />
       </div>
+
+      <CoverageIssues insights={insights} onHoverHour={onHoverHour} />
 
       {scenarios?.length > 0 && (
         <div className="shrink-0 border-t border-[var(--c-border-subtle)] px-3 py-2">
