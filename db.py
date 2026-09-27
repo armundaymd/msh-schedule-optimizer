@@ -21,9 +21,12 @@ load_dotenv()
 
 def _normalize_url(url: str) -> str:
     """Render (like Heroku) hands out `postgres://` URLs; SQLAlchemy's
-    psycopg2 dialect requires the `postgresql://` scheme."""
-    if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql://", 1)
+    psycopg2 dialect requires the `postgresql://` scheme. The driver is named
+    explicitly: SQLAlchemy 2.1 made a bare `postgresql://` mean psycopg 3,
+    which isn't installed (requirements.txt ships psycopg2-binary)."""
+    for scheme in ("postgres://", "postgresql://"):
+        if url.startswith(scheme):
+            return "postgresql+psycopg2://" + url[len(scheme):]
     return url
 
 
