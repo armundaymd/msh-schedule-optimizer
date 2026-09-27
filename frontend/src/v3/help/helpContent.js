@@ -160,7 +160,7 @@ export const HELP_SECTIONS = [
       { term: 'Reset day', body: 'Puts the selected day back to the loaded schedule.' },
       { term: 'Clear day / Clear week', body: 'Empties the day or week completely (asks first; undoable).' },
       { term: '✦ Generate schedule', body: 'Builds a new attending schedule for one area from demand (see Schedule generator).' },
-      { term: '▦ Staffing plan', body: 'Spreads a budget of attending hours across areas, days and times (see Staffing plan).' },
+      { term: '▦ Staffing plan', body: 'Answers how many attending hours the ED needs and where they should go: allocate a fixed budget, find the fewest hours for a coverage or unmet-demand target, estimate a minimum practical requirement, or compare a range of budgets (see Staffing plan).' },
       { term: '📊 Scenarios / Save scenario', body: 'Save up to 5 named versions (schedule, sliders, custom teams, target). Click a saved scenario under the chart to draw it as the orange Comparison line; ↩ restores it, × deletes it. The Scenarios panel compares weekly totals. V2 and V3 share one scenario list.' },
       { term: '⚡ Auto-optimize [scope]', body: 'Tries to fix the selected day\'s short hours in the selected scope by adjusting the existing schedule (see Auto-optimize). ▾ → Optimize full week runs it on every day.' },
       { term: '⬇ Export', body: 'Download the current week as CSV or JSON.' },

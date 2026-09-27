@@ -93,7 +93,7 @@ export default function Landing() {
           />
           <VersionCard
             title="Optimizer v3"
-            description="v2 plus the staffing-plan allocator: spread a budget of attending hours across areas, days and times."
+            description="v2 plus the staffing planner: how many attending hours the ED needs, and where they should go."
             to="/v3"
             preview
             onChoose={handleChoose}
