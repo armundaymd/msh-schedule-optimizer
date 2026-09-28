@@ -4,8 +4,7 @@
 // main/fasttrack/eru = attending supervision ceiling PPH (existing key, existing number).
 // *Own = attending solo throughput PPH. These are assumptions, not measurements:
 // across the whole current schedule there are only 10 team-hours with an attending
-// and no extender coverage (all Blue, hours 23 and 00, at the tail of a 17:00-01:00
-// shift), so solo throughput cannot be estimated from this dataset. Do not present
+// and no extender coverage (at the tail of Blue's old 17:00-01:00 shift, when this was written), so solo throughput cannot be estimated from this dataset. Do not present
 // these numbers in the UI as empirical.
 // pa/pgy1-4/offService = Resident & PA max PPH, single value app-wide.
 // FastTrack PAs do two things a Main/ERU PA doesn't, in the same hour:

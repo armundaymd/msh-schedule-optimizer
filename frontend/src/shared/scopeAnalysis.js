@@ -4,7 +4,7 @@
 import { AREAS, AREA_LABEL, scopeAreas } from './areas'
 import { teamCapacity } from './capacity'
 import { getDemandSeries } from './demandSeries'
-import { crossCoverHour, effectiveShifts, unsupervisedExtenderCapacity } from './operationalCoverage'
+import { crossCoverHour, effectiveShifts, operationalAreaCapacity, unsupervisedExtenderCapacity } from './operationalCoverage'
 
 // Demand vs capacity for a scope, hour by hour, keeping BOTH the aggregate
 // and every component area's own result.
@@ -34,6 +34,9 @@ import { crossCoverHour, effectiveShifts, unsupervisedExtenderCapacity } from '.
 // planner, its heatmap, allocator scoring and the analysis reports:
 //   - staff routing: each hour uses effectiveShifts() (residents/PAs counted
 //     where they operationally work, e.g. FastTrack overnight staff in Main);
+//   - intake cutoffs: a team closed to NEW patients (Blue from 20:00,
+//     FastTrack from midnight, tool-added teams in their last 3 h) adds no
+//     capacity against demand in those hours;
 //   - cross-coverage: responsibility + supervision, and the configured
 //     throughput credit added to the covered area's capacity;
 //   - every byArea entry carries `coverage` (rule, how the hour was covered).
@@ -60,7 +63,10 @@ export function analyzeScope({ shifts, demand, pph, customTeams = [], scope, day
     const cc = coverage ? crossCoverHour({ shifts: on, pph, customTeams, config: coverage, day, hour: h, areas: AREAS, demandFor }) : null
     for (const area of areas) {
       const d = demandByArea[area][h] ?? 0
-      const own = teamCapacity(on, pph, customTeams, area, h)
+      // Operational view: intake cutoffs apply (teams closed to new patients add nothing).
+      const own = coverage
+        ? operationalAreaCapacity({ on, pph, customTeams, area, day, hour: h, config: coverage })
+        : teamCapacity(on, pph, customTeams, area, h)
       const x = cc?.[area]
       const c = own + (x?.credit ?? 0)
       const net = c - d

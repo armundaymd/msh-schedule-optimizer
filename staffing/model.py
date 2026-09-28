@@ -105,6 +105,19 @@ class Slot(BaseModel):
     # [day][hour][n] — capacity (patients/hr) with n attendings on, for
     # n = 0..len-1. Must cover n up to maxAttendings.
     capacity: list[list[list[float]]]
+    # [day][hour] — HARD lower bound on attendings on this slot, INCLUDING
+    # locked: 1 where a resident operates on this team (resident supervision,
+    # built by shared/staffingPlan.js). None = no lower bound.
+    minAttendings: Optional[list[list[int]]] = None
+    # [day][hour] — 1 where residents work in a FLEXIBLE hour with a covering
+    # area: this slot needs an attending UNLESS the whole area has none (then
+    # cross-coverage applies and the covering area supervises). HARD.
+    supervisedUnlessUncovered: Optional[list[list[int]]] = None
+    # Intake cutoff: this slot takes no new patients in the last L hours of its
+    # continuous attending coverage, so its capacity at h uses the attendings
+    # still on through h+L (0 = no cutoff). Fixed clock-time cutoffs are
+    # encoded directly as zero rows in `capacity` by the frontend.
+    intakeLookahead: int = Field(default=0, ge=0, le=12)
 
 
 COVERAGE_MODES = ("REQUIRED_DEDICATED", "CROSS_COVERED", "CLOSED", "FLEXIBLE")
@@ -229,6 +242,10 @@ class Instance(BaseModel):
             for s in a.slots:
                 grid(f"{a.key}/{s.id}.locked", s.locked)
                 grid(f"{a.key}/{s.id}.maxAttendings", s.maxAttendings)
+                if s.minAttendings is not None:
+                    grid(f"{a.key}/{s.id}.minAttendings", s.minAttendings)
+                if s.supervisedUnlessUncovered is not None:
+                    grid(f"{a.key}/{s.id}.supervisedUnlessUncovered", s.supervisedUnlessUncovered)
                 if len(s.capacity) != nd or any(len(row) != HOURS for row in s.capacity):
                     raise ValueError(f"{a.key}/{s.id}.capacity must be [{nd}][24][n]")
                 for d in range(nd):

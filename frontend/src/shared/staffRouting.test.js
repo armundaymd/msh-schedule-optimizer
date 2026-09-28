@@ -61,7 +61,9 @@ describe('staff routing (team identity vs operating area)', () => {
   })
 
   it('3/4. routed staff add capacity to Main only, under Main supervision rules', () => {
-    const routed = at(C, 'Monday', 3), plain = at(noRouting, 'Monday', 3)
+    // Routing only (intake cutoffs off; FastTrack's midnight cutoff is tested separately).
+    const noCut = c => ({ ...c, intakeCutoffs: { teams: [], extraTeamsHoursBeforeEnd: 0 } })
+    const routed = at(noCut(C), 'Monday', 3), plain = at(noCut(noRouting), 'Monday', 3)
     // FastTrack loses the solo PA (1.2) and the resident: nothing left.
     expect(plain.byArea.fasttrack.capacity).toBeCloseTo(1.2, 10)
     expect(routed.byArea.fasttrack.capacity).toBe(0)
@@ -215,7 +217,7 @@ describe('ERU dedicated-coverage scenarios', () => {
       })
       expect(instance.areas.find(a => a.key === 'eru').demand[0]).toEqual(flat(0.5))
       expect(instance.areas.find(a => a.key === 'fasttrack').demand[0]).toEqual(flat(0.2))
-      expect(JSON.stringify(instance)).not.toMatch(/esi/i)
+      expect(JSON.stringify(instance)).not.toMatch(/\besi\b/i)
     }
   })
 

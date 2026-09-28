@@ -5,6 +5,7 @@ import {
 import { scopeCapacity, scopeCapacityBreakdown, scopeTeamBreakdown } from '../../../shared/capacity'
 import { getScopeDemandSeries } from '../../../shared/demandSeries'
 import { analyzeScope } from '../../../shared/scopeAnalysis'
+import { DISPLAY_DEFICIT_TOLERANCE_PPH, shortAreasAt } from '../../../shared/coverageInsights'
 import { AREA_LABEL, scopeAreas, isCombinedScope } from '../../../shared/areas'
 
 // Capacity for the active scope only — apples-to-apples with the scope's
@@ -93,7 +94,8 @@ function CustomTooltip({ active, payload, label, target }) {
             <div key={a.area}>
               {AREA_LABEL[a.area]}: {fmtNet(a.net)}
               <span className="text-[var(--c-text-muted)]"> (cap {a.capacity.toFixed(2)} / demand {a.demand.toFixed(2)})</span>
-              {a.net < 0 && <span className="text-red-400 ml-1">(deficit)</span>}
+              {a.net <= -DISPLAY_DEFICIT_TOLERANCE_PPH && <span className="text-red-400 ml-1">(deficit)</span>}
+              {a.net < 0 && a.net > -DISPLAY_DEFICIT_TOLERANCE_PPH && <span className="text-[var(--c-text-faint)] ml-1">(short by {(-a.net).toFixed(3)} — below display threshold)</span>}
             </div>
           ))}
         </div>
@@ -185,7 +187,8 @@ export default function CapacityChart({
     }
     if (scopeHours) {
       row.net = scopeHours[h].net
-      row.shortAreas = scopeHours[h].shortAreas
+      // Red dot: an area short by at least the display threshold (raw numbers stay in the tooltip).
+      row.shortAreas = shortAreasAt(scopeHours[h], Object.keys(scopeHours[h].byArea), DISPLAY_DEFICIT_TOLERANCE_PPH)
       row.areaBreakdown = Object.entries(scopeHours[h].byArea).map(([area, v]) => ({ area, ...v }))
     }
     if (meanSeries) row.meanOverlay = meanSeries[h] ?? 0

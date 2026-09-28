@@ -77,7 +77,25 @@ function startsAt(shifts, startMins) {
   return shifts.filter(s => s.startMins === startMins).length
 }
 
+// HARD structural rules (not user-overridable), passed by the caller from
+// the operational coverage config:
+//   constraints.hardMaxConcurrent — the area's structural maximum (ERU: 1);
+//                                   caps the user's Max concurrent
+//   constraints.closedHours       — hours the area is CLOSED: no attending
+//                                   shift may cover them, and no minimum applies
+// Demand the rules leave uncovered is reported (uncovered), never met by
+// breaking them.
+function maxConcurrentOf(constraints) {
+  return Math.min(constraints.maxConcurrent ?? Infinity, constraints.hardMaxConcurrent ?? Infinity)
+}
+
+function coversClosedHour(hrs, constraints) {
+  const closed = constraints.closedHours ?? []
+  return closed.length > 0 && hrs.some(h => closed.includes(h))
+}
+
 function minConcurrentForHour(h, constraints) {
+  if ((constraints.closedHours ?? []).includes(h)) return 0
   const overnightHours = constraints.overnightHours ?? []
   return overnightHours.includes(h)
     ? (constraints.overnightMin ?? constraints.minConcurrent ?? 0)
@@ -86,7 +104,8 @@ function minConcurrentForHour(h, constraints) {
 
 function canAdd(shifts, pattern, constraints) {
   const hrs = patternHours(pattern)
-  const maxConcurrent = constraints.maxConcurrent ?? Infinity
+  if (coversClosedHour(hrs, constraints)) return false
+  const maxConcurrent = maxConcurrentOf(constraints)
   for (const h of hrs) {
     if (concurrencyAt(shifts, h) >= maxConcurrent) return false
   }
@@ -96,10 +115,12 @@ function canAdd(shifts, pattern, constraints) {
 }
 
 function violatesConstraints(shifts, constraints) {
-  const maxConcurrent = constraints.maxConcurrent ?? Infinity
+  const maxConcurrent = maxConcurrentOf(constraints)
+  const closed = constraints.closedHours ?? []
   for (let h = 0; h < 24; h++) {
     const n = concurrencyAt(shifts, h)
     if (n > maxConcurrent) return true
+    if (n > 0 && closed.includes(h)) return true
     if (n < minConcurrentForHour(h, constraints)) return true
   }
   const maxStartsPerHour = constraints.maxStartsPerHour ?? maxConcurrent

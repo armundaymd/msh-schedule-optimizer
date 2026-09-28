@@ -43,16 +43,38 @@ def load_raw_encounters(raw_dir: Path) -> pd.DataFrame:
     for f in files:
         try:
             df = pd.read_csv(f, dtype={"CSN": str})
-            dfs.append(df)
-            print(f"  Loaded {f.name}: {len(df):,} rows")
         except Exception as e:
             print(f"  WARNING: Could not load {f.name}: {e}")
+            continue
+        check_csns(df, f.name)
+        dfs.append(df)
+        print(f"  Loaded {f.name}: {len(df):,} rows")
 
     combined = pd.concat(dfs, ignore_index=True)
     before   = len(combined)
     combined = combined.drop_duplicates(subset="CSN")
     print(f"  Deduplication: {before:,} → {len(combined):,} rows")
     return combined
+
+
+class RawDataError(ValueError):
+    """A raw file is unusable as-is; the message says how to fix it."""
+
+
+def check_csns(df: pd.DataFrame, name: str) -> None:
+    """Refuse files whose CSNs were mangled into scientific notation (what
+    Excel does on open-and-save). Dedup is on CSN, so mangled IDs silently
+    collapse thousands of encounters into a handful of rows."""
+    csn = df["CSN"].dropna().astype(str)
+    if csn.empty:
+        return
+    sci = csn.str.contains(r"^\d(?:\.\d+)?[eE][+-]?\d+$").mean()
+    if sci > 0.01:
+        raise RawDataError(
+            f"{name}: {sci:.0%} of CSNs are in scientific notation (e.g. {csn.iloc[0]}). "
+            "The file was likely opened and saved in Excel, which destroys the "
+            "encounter IDs. Re-export it from Epic and drop it in without opening it in Excel."
+        )
 
 
 def clean_encounters(df: pd.DataFrame) -> pd.DataFrame:
@@ -303,12 +325,36 @@ def load_processed(engine, key: str) -> dict:
 
 # ── Main pipeline ─────────────────────────────────────────────────────────────
 
-def run_pipeline(raw_dir: Path, engine) -> dict:
+# A refresh that would leave less than this fraction of the currently stored
+# encounters is refused unless forced — usually it means older raw files are
+# missing from data/raw/ (the pipeline rebuilds from scratch, it doesn't append).
+SHRINK_GUARD_FRACTION = 0.5
+
+
+class ShrinkError(RuntimeError):
+    """Refresh would drop most of the currently stored data."""
+
+
+def run_pipeline(raw_dir: Path, engine, force: bool = False) -> dict:
     print("\n=== ED Data Pipeline ===")
 
     # 1. Load and clean encounters
     raw = load_raw_encounters(raw_dir)
     df  = clean_encounters(raw)
+
+    if not force:
+        try:
+            prev = load_processed(engine, "summary")
+        except FileNotFoundError:
+            prev = None
+        if prev and len(df) < SHRINK_GUARD_FRACTION * prev.get("total_encounters", 0):
+            raise ShrinkError(
+                f"This refresh would replace {prev['total_encounters']:,} encounters "
+                f"({prev.get('date_range')}) with only {len(df):,} "
+                f"({df['arr_dt'].min().date()} → {df['arr_dt'].max().date()}). "
+                "Refresh rebuilds from every CSV in data/raw/ — it does not add to "
+                "existing data — so older files are probably missing from that folder."
+            )
 
     # 2. Compute outputs
     demand  = compute_demand(df)

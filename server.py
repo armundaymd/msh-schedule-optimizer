@@ -3,15 +3,16 @@ FastAPI backend for ED Staffing Dashboard.
 Run: uvicorn server:app --reload --port 8000
 """
 
+import hmac
 import os
 import uuid
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 from pydantic import BaseModel
 from sqlalchemy import select
-from pipeline import run_pipeline, load_processed
+from pipeline import run_pipeline, load_processed, RawDataError, ShrinkError
 from db import get_engine, init_schema, read_schedule_df, schedule_rows, scenarios
 from staffing.model import Instance as StaffingInstance
 from staffing.service import solve as solve_staffing_plan
@@ -67,11 +68,38 @@ def api_schedule():
     return schedule_rows(read_schedule_df(engine))
 
 
+# Refresh rebuilds every processed output from the raw CSVs in THIS server's
+# data/raw/, so on a server whose data/raw/ is empty or stale it would
+# overwrite good data. It is therefore OFF unless an ADMIN_TOKEN environment
+# variable is set, and then every request must send that token in the
+# X-Admin-Token header. Production normally leaves ADMIN_TOKEN unset (data is
+# updated by loading data/processed/ instead — see README).
+def configured_admin_token():
+    return os.environ.get("ADMIN_TOKEN") or None
+
+
+def authorize_refresh(given, configured):
+    if not configured:
+        raise HTTPException(status_code=403, detail="Refresh data is disabled on this server (no ADMIN_TOKEN configured).")
+    if not given or not hmac.compare_digest(given.encode(), configured.encode()):
+        raise HTTPException(status_code=401, detail="Wrong admin password — refresh not run.")
+
+
+@app.get("/api/refresh-status")
+def api_refresh_status():
+    return {"enabled": configured_admin_token() is not None}
+
+
 @app.post("/api/refresh")
-def api_refresh():
+def api_refresh(force: bool = False, x_admin_token: str | None = Header(default=None)):
+    authorize_refresh(x_admin_token, configured_admin_token())
     try:
-        summary = run_pipeline(raw_dir=DATA_DIR / "raw", engine=engine)
+        summary = run_pipeline(raw_dir=DATA_DIR / "raw", engine=engine, force=force)
         return {"status": "ok", "summary": summary}
+    except ShrinkError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    except RawDataError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -27,7 +27,7 @@
 import { AREA_LABEL } from './areas'
 import { activeTeamsInArea, attendingCountForTeam, teamCapacityForTeam } from './capacity'
 import { formatHour, formatRange } from './coverageInsights'
-import { COVERAGE_MODE, effectiveShifts } from './operationalCoverage'
+import { COVERAGE_MODE, effectiveShifts, fixedIntakeClosed } from './operationalCoverage'
 
 export const BOTTLENECK = {
   ATTENDING: 'ATTENDING',
@@ -185,6 +185,8 @@ function extraPaGain({ shifts, coverage, day, h, area, customTeams, pph, slots }
   for (const s of slots) if (!s.flex) teams.add(s.id)
   let best = { gain: 0 }
   for (const team of teams) {
+    // A team closed to new patients this hour gains nothing from another PA.
+    if (coverage && fixedIntakeClosed(coverage, team, day, h)) continue
     const before = teamCapacityForTeam(on, pph, area, team, h)
     const pa = { team, role_type: 'PA', role_detail: 'PA', resident_level: null, startMins: h * 60, endMins: h * 60 + 60 }
     const g = teamCapacityForTeam([...on, pa], pph, area, team, h) - before
@@ -264,6 +266,7 @@ export function summarizeBottlenecks(items) {
   }
   for (const r of runs) {
     const worst = r.items.reduce((b, x) => (x.unmet > b.unmet ? x : b), r.items[0])
+    r.peak = worst.unmet   // worst hour's unmet (patients/hr), for display filtering
     r.text = `${AREA_LABEL[r.area] ?? r.area} ${r.day} ${formatRange(r.hours)}: ${r.unmet.toFixed(1)} patient-h short. ${worst.text}`
     delete r.items
   }

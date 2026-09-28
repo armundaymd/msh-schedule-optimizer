@@ -14,6 +14,10 @@ Budget objective ('budget'):
   e >= C - D - tolerance, e >= 0
   sum x*len <= budget - locked           (half-hour units)
   sum_k n[k,d,h] >= minCoverage[a,d,h]
+  n[k,d,h] >= minAttendings[k,d,h]      (resident supervision, per team slot)
+  n[k,d,h] >= 1 OR sum_k n[k,d,h] == 0  where supervisedUnlessUncovered (flexible, cross-covered area)
+  intakeLookahead L: cap[k,d,h] = capacity[k][d][h][min(n[k,d,h..h+L])]  (no new patients in
+                     the last L hours of a team's continuous coverage)
   min  W1 u1 + W2 u2 + W3 u3 + We e + Wh * units_used
 Requirement objective ('requirement'):
   C >= D - allowedDeficit  (hard, per area-hour), min  Wreq*units + e
@@ -140,6 +144,7 @@ def solve(inst: Instance, objective: Objective, hint: dict | None = None,
     def build_area(area):
         cap_sum = [[[] for _ in range(HOURS)] for _ in range(nd)]   # per-slot cap terms
         n_sum = [[[] for _ in range(HOURS)] for _ in range(nd)]     # per-slot attending counts
+        unless_uncovered = []   # (d, h, slot attending count) — see supervisedUnlessUncovered
         n_lo = [[0] * HOURS for _ in range(nd)]
         n_hi = [[0] * HOURS for _ in range(nd)]
         cap_hi = [[0] * HOURS for _ in range(nd)]
@@ -158,36 +163,79 @@ def solve(inst: Instance, objective: Objective, hint: dict | None = None,
                     for h in covers[pi]:
                         xs_by_hour[h].append(x)
 
+                # Pass 1: attendings on this slot per hour (variable or constant).
+                n_at, lo_at, hi_at = [None] * HOURS, [0] * HOURS, [0] * HOURS
                 for h in range(HOURS):
                     lo, hi = slot.locked[d][h], slot.maxAttendings[d][h]
-                    table = [scale_pph(v) for v in slot.capacity[d][h][: hi + 1]]
+                    req = slot.minAttendings[d][h] if slot.minAttendings is not None else 0
+                    if req > lo and not xs_by_hour[h]:
+                        # Resident supervision needs an attending here and no
+                        # permitted shift can provide one: infeasible (service.py
+                        # reports it before solving; this keeps the model exact).
+                        m.Add(m.NewConstant(lo) >= req)
                     if not xs_by_hour[h]:
-                        # Nothing can change this slot-hour: constants.
-                        n_sum[d][h].append(lo)
-                        n_lo[d][h] += lo
+                        # Nothing can change this slot-hour: constant.
+                        n_at[h], lo_at[h], hi_at[h] = lo, lo, lo
                         n_hi[d][h] += lo
-                        cap_sum[d][h].append(table[lo])
-                        cap_hi[d][h] += table[lo]
-                        continue
-                    n = m.NewIntVar(lo, hi, f"n[{area.key},{slot.id},{d},{h}]")
-                    m.Add(n == lo + sum(xs_by_hour[h]))
+                    else:
+                        n = m.NewIntVar(lo, hi, f"n[{area.key},{slot.id},{d},{h}]")
+                        m.Add(n == lo + sum(xs_by_hour[h]))
+                        if req > lo:
+                            m.Add(n >= req)   # resident supervision (hard)
+                        n_at[h], lo_at[h], hi_at[h] = n, lo, hi
+                        n_hi[d][h] += hi
                     n_lo[d][h] += lo
-                    n_hi[d][h] += hi
+                    n_sum[d][h].append(n_at[h])
+                    if slot.supervisedUnlessUncovered is not None and slot.supervisedUnlessUncovered[d][h]:
+                        unless_uncovered.append((d, h, n_at[h]))
+
+                # Pass 2: capacity. With intakeLookahead L (no new patients in
+                # the last L hours of continuous coverage), the capacity at h
+                # counts only attendings still covered through h+L:
+                # k = min(n[h], ..., n[h+L]) (circular day template).
+                look = slot.intakeLookahead or 0
+                for h in range(HOURS):
+                    table = [scale_pph(v) for v in slot.capacity[d][h][: slot.maxAttendings[d][h] + 1]]
+                    if look:
+                        hs = [(h + k) % HOURS for k in range(look + 1)]
+                        terms = [n_at[x] for x in hs]
+                        k_lo, k_hi = min(lo_at[x] for x in hs), min(hi_at[x] for x in hs)
+                        if all(isinstance(v, int) for v in terms):
+                            index, lo, hi = min(terms), None, None
+                        else:
+                            index = m.NewIntVar(k_lo, k_hi, f"k[{area.key},{slot.id},{d},{h}]")
+                            m.AddMinEquality(index, [v if not isinstance(v, int) else m.NewConstant(v) for v in terms])
+                            lo, hi = k_lo, k_hi
+                    else:
+                        index, lo, hi = n_at[h], lo_at[h], hi_at[h]
+                    if isinstance(index, int):
+                        cap_sum[d][h].append(table[index])
+                        cap_hi[d][h] += table[index]
+                        continue
                     reachable = table[lo: hi + 1]
                     slope = reachable[1] - reachable[0] if len(reachable) > 1 else 0
                     if all(reachable[i] - reachable[i - 1] == slope for i in range(1, len(reachable))):
-                        # Affine over n's domain (always true for 0/1 attendings, and
+                        # Affine over the index's domain (always true for 0/1 attendings, and
                         # for extender-free teams): the exact linear form keeps the LP
                         # relaxation tight. AddElement is equivalent but relaxes weakly.
-                        cap = reachable[0] + slope * (n - lo)
+                        cap = reachable[0] + slope * (index - lo)
                     else:
                         # Genuinely non-linear (e.g. the supervision min() bends
                         # between 1 and 2 attendings): exact table lookup.
                         cap = m.NewIntVar(min(table), max(table), f"cap[{area.key},{slot.id},{d},{h}]")
-                        m.AddElement(n, table, cap)
-                    n_sum[d][h].append(n)
+                        m.AddElement(index, table, cap)
                     cap_sum[d][h].append(cap)
                     cap_hi[d][h] += max(reachable)
+
+        # Resident supervision in FLEXIBLE hours with a covering area: this
+        # team has an attending, OR the area has none at all (cross-coverage
+        # applies and the covering area supervises). HARD.
+        for d, h, n in unless_uncovered:
+            own = n if not isinstance(n, int) else m.NewConstant(n)
+            total = sum(v if not isinstance(v, int) else m.NewConstant(v) for v in n_sum[d][h])
+            b = m.NewBoolVar(f"sup[{area.key},{d},{h}]")
+            m.Add(own >= 1).OnlyEnforceIf(b)
+            m.Add(total == 0).OnlyEnforceIf(b.Not())
 
         native[area.key] = [[None] * HOURS for _ in range(nd)]
         n_total[area.key] = [[None] * HOURS for _ in range(nd)]

@@ -2,19 +2,22 @@ import { useMemo } from 'react'
 import { computeShiftCost } from '../../shared/cost'
 import { AREA_LABEL } from '../../shared/areas'
 import { analyzeScope } from '../../shared/scopeAnalysis'
+import { DISPLAY_DEFICIT_TOLERANCE_PPH, deficitHours } from '../../shared/coverageInsights'
 import HelpButton from './Help/HelpButton'
 
 // Per-area deficit: each area's demand can only be met by that area's own
 // capacity (Main demand vs whole-ED capacity was the bug — see PHASE 2, 2.1).
 // Returns the count of distinct hours where ANY area is short, plus a
 // per-area breakdown for the tooltip.
+// Counted with the DISPLAY tolerance: an hour short by less than 0.05 PPH
+// (shown as 0.0) is not counted as an overflow hour.
 function computeOverflowByArea(shifts, demand, pph, day, customTeams, target) {
-  const { componentDeficitHours, deficitHoursByArea } =
-    analyzeScope({ shifts, demand, pph, customTeams, scope: 'wholeEd', day, target })
+  const analysis = analyzeScope({ shifts, demand, pph, customTeams, scope: 'wholeEd', day, target })
+  const { anyArea, byArea: hoursByArea } = deficitHours(analysis, { deficitTolerance: DISPLAY_DEFICIT_TOLERANCE_PPH })
   const byArea = Object.fromEntries(
-    Object.entries(deficitHoursByArea).map(([area, hours]) => [AREA_LABEL[area], hours.length])
+    Object.entries(hoursByArea).map(([area, hours]) => [AREA_LABEL[area], hours.length])
   )
-  return { anyAreaHours: componentDeficitHours.length, byArea }
+  return { anyAreaHours: anyArea.length, byArea }
 }
 
 function attendingHours(shifts) {

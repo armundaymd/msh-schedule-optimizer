@@ -3,7 +3,7 @@
 
 import { AREAS, AREA_BASE_TEAMS, AREA_LABEL } from './areas'
 import {
-  attendingCapacity, attendingCountForTeam, extenderCapacity, shiftCoversHour, teamArea,
+  attendingCapacity, attendingCountForTeam, extenderCapacity, shiftCoversHour, teamArea, activeTeamsInArea, teamCapacityForTeam,
 } from './capacity'
 
 // Operational attending coverage — the rules that come BEFORE throughput
@@ -144,20 +144,40 @@ export const DEFAULT_OPERATIONAL_COVERAGE = Object.freeze({
       ],
     },
   },
-  // FastTrack-team residents/PAs working overnight carry a Main-team suffix
-  // in the schedule's role_detail ("EM3/4-Green", "PA-Red", "OS-Green", ...);
-  // FastTrack's own day staff ("PA-Prim", "Mid-Level") carry none. The
-  // suffix gives the destination Main team; the timing (FastTrack's closed
-  // hours) comes from the closure rule. Marked unconfirmed until the
-  // department confirms these staff work Main while FastTrack is closed.
+  // CONFIRMED operational rule: a resident/APP assigned to FastTrack whose
+  // role_detail carries a Main team designation ("EM3/4-Green", "PA-Red",
+  // "OS-Green", ...) moves to that Main team when FastTrack closes. FastTrack's
+  // own day staff ("PA-Prim", "Mid-Level") carry none. Staff move; patient
+  // demand never does. After routing the person counts only on the operating
+  // team, under that team's supervision rules (residents need its attending).
   staffRouting: [
     { fromHour: 1, toHour: 7, match: { team: 'FastTrack', roleDetailSuffix: '-Green' }, to: { area: 'main', team: 'Green' },
-      label: 'FastTrack "-Green" overnight staff work Main Green while FastTrack is closed', basis: 'role-detail-suffix', confirmed: false },
+      label: 'FastTrack "-Green" overnight staff work Main Green from 01:00, when FastTrack closes, until 07:00', basis: 'confirmed-operational-rule', confirmed: true },
     { fromHour: 1, toHour: 7, match: { team: 'FastTrack', roleDetailSuffix: '-Red' }, to: { area: 'main', team: 'Red' },
-      label: 'FastTrack "-Red" overnight staff work Main Red while FastTrack is closed', basis: 'role-detail-suffix', confirmed: false },
+      label: 'FastTrack "-Red" overnight staff work Main Red from 01:00, when FastTrack closes, until 07:00', basis: 'confirmed-operational-rule', confirmed: true },
   ],
+  // INTAKE CUTOFFS (confirmed operational rules; applied in the operational
+  // view — the Staffing plan, its metrics and analyses — not the as-scheduled
+  // main chart). A team that closes for the night stops taking NEW patients
+  // before it closes, so its patients are finished rather than signed out to
+  // Green/Red. While closed to intake the team adds no capacity against
+  // demand (patients then go to the teams still open); its staff still work,
+  // and residents still need its attending (resident supervision).
+  //   teams: fixed clock windows per team [fromHour, toHour)
+  //   extraTeamsHoursBeforeEnd: teams added by the tools (anything but
+  //     Green/Red/Blue/FastTrack/ERU) take no new patients in the last N hours
+  //     of their continuous attending coverage — unless another attending
+  //     continues that team's coverage.
+  intakeCutoffs: {
+    teams: [
+      { team: 'Blue', fromHour: 20, toHour: 7, label: 'Blue takes no new patients from 20:00 (finishes out; shift ends 23:00)', basis: 'confirmed-operational-rule' },
+      { team: 'FastTrack', fromHour: 0, toHour: 7, label: 'FastTrack takes no new patients from midnight (closes 01:00)', basis: 'confirmed-operational-rule' },
+    ],
+    extraTeamsHoursBeforeEnd: 3,
+  },
   notes: [
-    'Staff routing: FastTrack-team residents/PAs whose role_detail ends in -Green/-Red work that Main team while FastTrack is closed (01:00–07:00). Inferred from the schedule\'s role_detail suffix — to be confirmed.',
+    'Staff routing (confirmed operational rule): FastTrack-team residents/APPs whose role_detail ends in -Green/-Red work that Main team from 01:00 (when FastTrack closes) to 07:00. Staff move; patient demand does not.',
+    'Intake cutoffs (confirmed): Blue takes no new patients from 20:00; FastTrack none from midnight; teams added by the tools none in the last 3 h of their coverage unless another attending continues it.',
     'ERU dedicated windows = the CURRENT ERU dedicated coverage (Mon–Fri 09:00–01:00, Sat–Sun 11:00–19:00), kept as a hard rule so alternatives can be compared against it — not a clinically established minimum.',
     'ERU: at most one dedicated attending at a time (structural).',
     'Cross-cover throughput credit for ERU: conservative (none) unless a scenario sets another assumption.',
@@ -335,9 +355,19 @@ export function normalizeCoverageConfig(config) {
     ...(r.basis ? { basis: r.basis } : {}),
     confirmed: !!r.confirmed,
   }))
+  const ic = src.intakeCutoffs ?? DEFAULT_OPERATIONAL_COVERAGE.intakeCutoffs
+  const intakeCutoffs = {
+    teams: (ic.teams ?? []).map(t => ({
+      team: t.team, fromHour: t.fromHour ?? 0, toHour: t.toHour ?? 0,
+      ...(t.days && t.days.length && t.days.length < 7 ? { days: WEEK_DAYS.filter(d => t.days.includes(d)) } : {}),
+      ...(t.label ? { label: t.label } : {}), ...(t.basis ? { basis: t.basis } : {}),
+    })),
+    extraTeamsHoursBeforeEnd: Math.max(0, Math.round(Number(ic.extraTeamsHoursBeforeEnd ?? 0)) || 0),
+  }
   return {
     version: 1, areas,
     ...(staffRouting.length ? { staffRouting } : {}),
+    intakeCutoffs,
     ...(src.notes?.length ? { notes: [...src.notes] } : {}),
   }
 }
@@ -440,6 +470,77 @@ export function requirementLabels(config, area) {
     if (r.mode === COVERAGE_MODE.REQUIRED_DEDICATED) out.push(r.label ? `${r.label} — ${describeRule(area, r)}` : describeRule(area, r))
   }
   return out
+}
+
+// ── Intake cutoffs ───────────────────────────────────────────────────────────
+
+const BASE_TEAMS = new Set(Object.values(AREA_BASE_TEAMS).flat())
+
+// The config's intake cutoffs (a config saved before they existed gets the
+// confirmed defaults; no config at all = the as-scheduled view = none).
+export function intakeCutoffsOf(config) {
+  if (!config) return null
+  return config.intakeCutoffs ?? DEFAULT_OPERATIONAL_COVERAGE.intakeCutoffs
+}
+
+// Is `team` closed to NEW patients at (day, hour) by a fixed clock window?
+export function fixedIntakeClosed(config, team, day, hour) {
+  const ic = intakeCutoffsOf(config)
+  if (!ic) return false
+  return (ic.teams ?? []).some(t => t.team === team && (!t.days?.length || t.days.includes(day)) && inWindow(hour, t.fromHour ?? 0, t.toHour ?? 0))
+}
+
+// Hours before the end of continuous coverage in which a tool-added team
+// takes no new patients (0 for Green/Red/Blue/FastTrack/ERU or no config).
+export function intakeLookahead(config, team) {
+  const ic = intakeCutoffsOf(config)
+  if (!ic || BASE_TEAMS.has(team)) return 0
+  return ic.extraTeamsHoursBeforeEnd ?? 0
+}
+
+// Attendings on `team` counted for intake at hour h: those still on (or
+// replaced) through h+L — min of the team's attending count over h..h+L on
+// the circular day template. `teams` (optional) pools several teams (the
+// Staffing plan's new teams, which the solver plans as one pool).
+export function intakeAttendings(shifts, teams, hour, lookahead) {
+  const list = Array.isArray(teams) ? teams : [teams]
+  let k = Infinity
+  for (let j = 0; j <= lookahead; j++) {
+    const h = (hour + j) % 24
+    k = Math.min(k, list.reduce((t, team) => t + attendingCountForTeam(shifts, team, h), 0))
+  }
+  return k
+}
+
+// Area capacity at (day, hour) in the OPERATIONAL view: capacity.js per team,
+// with intake cutoffs applied. `on` = the day's shifts as they operate at this
+// hour (routing applied; attendings are never routed, so their other hours
+// are intact for the look-ahead). Teams flagged `plannerPool` (the Staffing
+// plan's new teams) share one look-ahead, as the solver plans them as a pool.
+export function operationalAreaCapacity({ on, pph, customTeams = [], area, day, hour, config }) {
+  let total = 0
+  for (const team of activeTeamsInArea(on, customTeams, area, hour)) {
+    if (fixedIntakeClosed(config, team, day, hour)) continue
+    const L = intakeLookahead(config, team)
+    if (L && customTeams.find(t => t.name === team)?.plannerPool) continue   // pooled below
+    if (!L) { total += teamCapacityForTeam(on, pph, area, team, hour); continue }
+    const n = attendingCountForTeam(on, team, hour)
+    const k = intakeAttendings(on, team, hour, L)
+    total += teamCapacityForTeam(k >= n ? on : withAttendings(on, team, hour, k), pph, area, team, hour)
+  }
+  const pool = customTeams.filter(t => t.plannerPool && teamArea(t.name, customTeams) === area && intakeLookahead(config, t.name) > 0).map(t => t.name)
+  if (pool.length) {
+    const k = intakeAttendings(on, pool, hour, intakeLookahead(config, pool[0]))
+    const synthetic = Array.from({ length: k }, () => ({ team: '__intake_pool__', role_type: 'Attending', startMins: hour * 60, endMins: hour * 60 + 60 }))
+    total += teamCapacityForTeam(synthetic, pph, area, '__intake_pool__', hour)
+  }
+  return total
+}
+
+// `shifts` with `team`'s attendings at `hour` replaced by k one-hour ones.
+function withAttendings(shifts, team, hour, k) {
+  const rest = shifts.filter(s => !(s.role_type === 'Attending' && s.team === team && shiftCoversHour(s, hour)))
+  return [...rest, ...Array.from({ length: k }, () => ({ team, role_type: 'Attending', startMins: hour * 60, endMins: hour * 60 + 60 }))]
 }
 
 // ── Staff routing ────────────────────────────────────────────────────────────

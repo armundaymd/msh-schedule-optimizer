@@ -195,7 +195,7 @@ export function renderCoverageReport(r) {
   L.push('- Covering responsibility is pooled across all Main attendings on duty, not assigned to a named team.')
   L.push('- Acuity, resuscitation readiness and time-to-attending are not modelled. The ERU dedicated window is today\'s schedule kept as a rule, not a model output or an established clinical minimum.')
   L.push('- FastTrack-team residents/PAs scheduled overnight (e.g. "EM3/4-Green" 23:00–07:00) are routed to the Main team in their role_detail')
-  L.push('  suffix while FastTrack is closed — inferred from the schedule, awaiting confirmation (see eru-coverage-scenarios.md).')
+  L.push('  suffix while FastTrack is closed — a confirmed operational routing rule.')
   L.push('- Day templates are circular: an overnight window wraps into the early hours of the same weekday.')
   L.push('- Operational capacity applies in the staffing planner and these reports; the main schedule chart and heatmap show capacity as scheduled (labelled).')
   L.push('- No patient redistribution: extending FastTrack hours, ESI routing and counterfactual flows are out of scope.', '')

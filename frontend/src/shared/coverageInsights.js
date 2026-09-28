@@ -25,47 +25,86 @@ import { AREA_LABEL, SCOPE_LABEL } from './areas'
 export const EXCESS_MIN_PPH = 1
 export const EXCESS_MIN_FRACTION = 0.25
 
-export function classifyNet(demand, capacity) {
-  if (demand > capacity) return 'deficit'
+// DISPLAY tolerance — presentation only. Screens show values to 0.1 PPH, so
+// a shortfall below 0.05 PPH reads as "0.0" and must not be coloured or
+// listed as a deficit. Screens pass this as `deficitTolerance`; every
+// default below is 0 (the raw rule: any demand > capacity is a deficit),
+// which is what capacity maths, Auto-optimize, the staffing planner's
+// metrics, the solver and the analysis reports keep using. Raw values stay
+// in the hover text.
+export const DISPLAY_DEFICIT_TOLERANCE_PPH = 0.05
+
+// deficitTolerance 0: deficit whenever demand > capacity (raw).
+// deficitTolerance > 0: deficit only when the shortfall is >= the tolerance;
+// a smaller shortfall is shown as 'adequate' (covered).
+export function classifyNet(demand, capacity, deficitTolerance = 0) {
+  const shortfall = demand - capacity
+  if (deficitTolerance > 0 ? shortfall >= deficitTolerance - 1e-12 : shortfall > 0) return 'deficit'
   const surplus = capacity - demand
   if (surplus >= EXCESS_MIN_PPH && surplus >= EXCESS_MIN_FRACTION * demand) return 'excess'
   return 'adequate'
 }
 
+// True when an hour is short in the raw maths but below the display tolerance.
+export function isBelowDisplayTolerance(demand, capacity, deficitTolerance = DISPLAY_DEFICIT_TOLERANCE_PPH) {
+  return demand > capacity && demand - capacity < deficitTolerance - 1e-12
+}
+
+// Areas short at an analyzeScope() hour row under `deficitTolerance`
+// (0 = the row's own raw shortAreas).
+export function shortAreasAt(row, areas, deficitTolerance = 0) {
+  if (!(deficitTolerance > 0)) return row.shortAreas
+  return areas.filter(a => classifyNet(row.byArea[a].demand, row.byArea[a].capacity, deficitTolerance) === 'deficit')
+}
+
 // Status of an analyzeScope() hour row's pooled total.
-function aggregateStatus(row) {
-  const status = classifyNet(row.demand, row.capacity)
-  return status !== 'deficit' && row.shortAreas.length > 0 ? 'masked' : status
+function aggregateStatus(row, areas, deficitTolerance = 0) {
+  const status = classifyNet(row.demand, row.capacity, deficitTolerance)
+  return status !== 'deficit' && shortAreasAt(row, areas, deficitTolerance).length > 0 ? 'masked' : status
 }
 
 // Per-hour status grid for rendering: one aggregate row plus one row per
 // component area, each { net: number[24], status: string[24] }.
-export function coverageGrid(analysis) {
+// Screens pass { deficitTolerance: DISPLAY_DEFICIT_TOLERANCE_PPH }.
+export function coverageGrid(analysis, { deficitTolerance = 0 } = {}) {
   const aggregate = { net: [], status: [] }
   const byArea = Object.fromEntries(analysis.areas.map(a => [a, { net: [], status: [] }]))
   for (const row of analysis.hours) {
     aggregate.net.push(row.net)
-    aggregate.status.push(aggregateStatus(row))
+    aggregate.status.push(aggregateStatus(row, analysis.areas, deficitTolerance))
     for (const area of analysis.areas) {
       const a = row.byArea[area]
       byArea[area].net.push(a.net)
-      byArea[area].status.push(classifyNet(a.demand, a.capacity))
+      byArea[area].status.push(classifyNet(a.demand, a.capacity, deficitTolerance))
     }
   }
   return { aggregate, byArea }
 }
 
+// Hours short under `deficitTolerance`: any area (the count screens show as
+// overflow / short hours) and per area.
+export function deficitHours(analysis, { deficitTolerance = 0 } = {}) {
+  const anyArea = []
+  const byArea = Object.fromEntries(analysis.areas.map(a => [a, []]))
+  for (const row of analysis.hours) {
+    const short = shortAreasAt(row, analysis.areas, deficitTolerance)
+    if (short.length) anyArea.push(row.hour)
+    for (const a of short) byArea[a].push(row.hour)
+  }
+  return { anyArea, byArea }
+}
+
 // Aggregate + per-area values and statuses at one hour — the "Whole ED -3.4
 // | Main -2.7 | ..." readout.
-export function hourSnapshot(analysis, hour) {
+export function hourSnapshot(analysis, hour, { deficitTolerance = 0 } = {}) {
   const row = analysis.hours[hour]
   return {
     hour,
-    aggregate: { net: row.net, status: aggregateStatus(row) },
+    aggregate: { net: row.net, status: aggregateStatus(row, analysis.areas, deficitTolerance) },
     areas: analysis.areas.map(area => ({
       area,
       net: row.byArea[area].net,
-      status: classifyNet(row.byArea[area].demand, row.byArea[area].capacity),
+      status: classifyNet(row.byArea[area].demand, row.byArea[area].capacity, deficitTolerance),
     })),
   }
 }
@@ -140,11 +179,12 @@ const KIND_ORDER = { 'masked-deficit': 0, deficit: 1, 'aggregate-deficit': 2, ex
 //   tone: 'deficit' | 'masked' | 'excess' — for colouring only
 // Sorted most-actionable first: masked deficits, area deficits, aggregate
 // deficits, then excess; ties by start hour, then area order.
-export function buildCoverageInsights(analysis) {
+export function buildCoverageInsights(analysis, { deficitTolerance = 0 } = {}) {
   const { areas, hours: rows } = analysis
   const combined = areas.length > 1
   const scopeName = SCOPE_LABEL[analysis.scope] ?? areas.map(a => AREA_LABEL[a]).join(' + ')
-  const grid = coverageGrid(analysis)
+  const grid = coverageGrid(analysis, { deficitTolerance })
+  const shortAt = h => areas.filter(a => grid.byArea[a].status[h] === 'deficit')
   const insights = []
 
   function push(kind, tone, run, extra) {
@@ -184,7 +224,7 @@ export function buildCoverageInsights(analysis) {
   if (combined) {
     // Keyed by WHICH areas are short, so "Main short" and "Main + ERU short"
     // under an adequate total are reported as separate ranges.
-    const maskedRuns = groupRuns(h => (grid.aggregate.status[h] === 'masked' ? rows[h].shortAreas.join('+') : null))
+    const maskedRuns = groupRuns(h => (grid.aggregate.status[h] === 'masked' ? shortAt(h).join('+') : null))
     for (const run of maskedRuns) {
       const shortAreas = run.key.split('+')
       const worstNetAt = h => Math.min(...shortAreas.map(a => rows[h].byArea[a].net))

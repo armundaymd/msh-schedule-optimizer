@@ -4,7 +4,7 @@ import ConfirmDialog from '../../shared/components/ConfirmDialog'
 import SettingsMenu from './SettingsMenu'
 import { useHelp } from '../help/HelpContext'
 
-export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onSaveScenario, scenarioCount, onUndo, onRedo, canUndo, canRedo, onAutoOptimize, onAutoOptimizeWeek, optimizing, onExport, activeScopeLabel, onClearDay, onClearWeek, onOpenGenerator, onOpenStaffingPlan, onOpenScenarios, theme, onThemeChange, costModeEnabled, onToggleCostMode }) {
+export default function TopBar({ summary, onRefresh, refreshing, refreshEnabled = false, onResetDay, onSaveScenario, scenarioCount, onUndo, onRedo, canUndo, canRedo, onAutoOptimize, onAutoOptimizeWeek, optimizing, onExport, activeScopeLabel, onClearDay, onClearWeek, onOpenGenerator, onOpenStaffingPlan, onOpenScenarios, theme, onThemeChange, costModeEnabled, onToggleCostMode }) {
   const openHelp = useHelp()
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [name, setName] = useState('')
@@ -18,6 +18,23 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
 
   const [optimizeMenuOpen, setOptimizeMenuOpen] = useState(false)
   const optimizeMenuRef = useRef(null)
+
+  // Refresh asks for the admin password (masked); the server checks it.
+  const [refreshOpen, setRefreshOpen] = useState(false)
+  const [password, setPassword] = useState('')
+  const refreshRef = useRef(null)
+  useEffect(() => {
+    if (!refreshOpen) return
+    function onDown(e) { if (refreshRef.current && !refreshRef.current.contains(e.target)) setRefreshOpen(false) }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [refreshOpen])
+  function runRefresh() {
+    if (!password) return
+    setRefreshOpen(false)
+    onRefresh(password)
+    setPassword('')
+  }
 
   useEffect(() => {
     if (!popoverOpen) return
@@ -208,13 +225,34 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
             </div>
           )}
         </div>
-        <button
-          onClick={onRefresh}
-          disabled={refreshing}
-          className="text-xs px-3 py-1 rounded bg-blue-700 hover:bg-blue-600 disabled:opacity-50 text-white transition-colors"
-        >
-          {refreshing ? 'Refreshing…' : '↻ Refresh data'}
-        </button>
+        {refreshEnabled && (
+          <div className="relative" ref={refreshRef}>
+            <button
+              onClick={() => setRefreshOpen(v => !v)}
+              disabled={refreshing}
+              title="Rebuild all data from the raw exports on this server (admin password required)"
+              className="text-xs px-3 py-1 rounded bg-blue-700 hover:bg-blue-600 disabled:opacity-50 text-white transition-colors"
+            >
+              {refreshing ? 'Refreshing…' : '↻ Refresh data'}
+            </button>
+            {refreshOpen && (
+              <div className="absolute right-0 top-8 z-50 bg-[var(--c-bg-surface)] border border-[var(--c-border-strong)] rounded shadow-xl p-3 w-60">
+                <div className="text-xs text-[var(--c-text-muted)] mb-1.5">Admin password</div>
+                <input
+                  type="password"
+                  autoFocus
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && runRefresh()}
+                  className="w-full bg-[var(--c-btn-bg)] border border-[var(--c-border-strong)] rounded px-2 py-1 text-xs text-[var(--c-text-strong)] outline-none focus:border-blue-500 mb-2"
+                />
+                <div className="text-[10px] text-[var(--c-text-faint)] mb-2">Rebuilds everything from this server's raw exports and clears unsaved edits.</div>
+                <button onClick={runRefresh} className="w-full text-xs py-1 rounded bg-blue-700 hover:bg-blue-600 text-white transition-colors">Refresh data</button>
+              </div>
+            )}
+          </div>
+        )}
         <button
           onClick={() => openHelp('start')}
           title="Help: what everything means (press ?)"

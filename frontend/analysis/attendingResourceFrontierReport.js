@@ -6,15 +6,84 @@ import { describeRule, describeWindow } from '../src/shared/operationalCoverage'
 import { diminishingReturns, marginalRows, planningUnits } from '../src/shared/attendingPlanner'
 import { BOTTLENECK_LABEL, BOTTLENECK_ORDER } from '../src/shared/bottlenecks'
 import { periodText } from '../validation/compare'
+import { solverStatus } from '../src/shared/solverStatus'
 
 const AREAS = ['main', 'fasttrack', 'eru']
+// Today's attending hours per week (the schedule as recorded) — may differ
+// from the reference budget config.currentBudget when the schedule changes.
+const todayHours = r => AREAS.reduce((t, a) => t + (r.observed?.attendingHours?.[a] ?? 0), 0)
 const f = (n, d = 1) => (n == null || Number.isNaN(n) ? '—' : Number(n).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }))
 const pct = (x, d = 1) => (x == null ? '—' : `${f(100 * x, d)}%`)
 const sgn = (n, d = 1) => (n == null ? '—' : Math.abs(n) < 0.5 * 10 ** -d ? '±0' : `${n > 0 ? '+' : '−'}${f(Math.abs(n), d)}`)
-const solverText = p => (!p?.ok ? '—' : p.status === 'optimal' ? 'proven optimal' : `best found · gap ${f(100 * (p.gap ?? 0), 1)}%`)
+const solverText = p => (!p?.ok ? '—' : solverStatus(p.status, p.gap).short)
 const hoursBy = (p, a) => p?.summary?.byArea?.[a]?.attendingHours
 const BANDS = [['00–06', 0, 6], ['06–10', 6, 10], ['10–14', 10, 14], ['14–18', 14, 18], ['18–22', 18, 22], ['22–24', 22, 24]]
 const POLICY_LABEL = { current: 'Current ERU coverage', coreDaytime: 'Core daytime (illustrative)', allDay: '24/7 dedicated ERU' }
+
+// Mandatory resident supervision: what the rule costs, the invariants it
+// was checked against, and every headline number next to the previous run.
+function supervisionSection(L, r, { rows, dr, targets, mp }) {
+  const sup = r.supervision
+  if (!sup) return
+  const B = r.config.currentBudget
+  const base = r.baseline.thorough, ctrl = r.baseline.withoutSupervision
+  L.push('## Mandatory resident supervision', '')
+  L.push('**CONFIGURED OPERATIONAL POLICY (confirmed, hard):** a resident on a clinical team works only while that team has a supervising attending. Evaluated on the resident\'s OPERATING team after staff routing; attendings on other teams (including planner-added new teams) never supervise them. In an hour the area is explicitly cross-covered (ERU outside its dedicated window) the covering area\'s attendings supervise, and the covering area must have one on. PAs/APPs are unchanged.', '')
+  L.push(`- Team-hours per week that need a supervising attending: ${AREAS.map(a => `${AREA_LABEL[a]} ${f(sup.supervisedTeamHours[a] ?? 0, 0)}`).join(', ')}.`)
+  L.push(`- Fewest attending-hours the hard rules alone need: **${f(sup.floor.with.requiredHours, 1)} h/week with resident supervision**, ${f(sup.floor.without.requiredHours, 1)} h/week without it.`)
+  if (ctrl?.ok && base?.ok) {
+    L.push(`- Control at ${f(B, 0)} h (same data, same settings, rule removed): modeled coverage ${pct(ctrl.summary.all.coverage)} / unmet ${f(ctrl.summary.all.unmet)} patient-h, with ${f(sup.invariants.controlUnsupervisedResidentHours, 0)} unsupervised resident team-hours; with the rule: ${pct(base.summary.all.coverage)} / ${f(base.summary.all.unmet)}. **Cost of the rule at ${f(B, 0)} h: ${sgn(base.summary.all.unmet - ctrl.summary.all.unmet)} patient-h/week of modeled unmet demand.**`)
+  }
+  const noCut = r.baseline.withoutIntakeCutoffs
+  if (noCut?.ok && base?.ok && r.intakeCutoffs) {
+    L.push(`- Intake cutoffs (Blue from 20:00, FastTrack from midnight, tool-added teams ${r.intakeCutoffs.extraTeamsHoursBeforeEnd} h before their coverage ends): control at ${f(B, 0)} h with them switched off — ${pct(noCut.summary.all.coverage)} / ${f(noCut.summary.all.unmet)} patient-h; with them: ${pct(base.summary.all.coverage)} / ${f(base.summary.all.unmet)}. **Cost of the cutoffs at ${f(B, 0)} h: ${sgn(base.summary.all.unmet - noCut.summary.all.unmet)} patient-h/week of modeled unmet demand.**`)
+  }
+  const inv = sup.invariants
+  L.push(`- Invariants checked on all ${inv.plans} reported plans: zero unsupervised resident team-hours (routing applied); resident/PA shifts identical to today's (none moved, removed, re-timed or re-levelled); each area keeps its own demand series; overall unmet = sum of area unmet (no pooling); ERU ≤ 1 attending; hard coverage rules met; budgets respected; app vs solver capacity within 0.02 PPH. ${inv.minimumHourPlans} target/unmet/minimum-practical plans use exactly their minimum-hours stage result (${inv.minimumHoursProven} proven minimum). Frontier objective never increases with budget (${inv.frontierObjectiveIncreases} violations); raw unmet rose between neighbouring budgets ${inv.frontierUnmetIncreases.length} time(s)${inv.frontierUnmetIncreases.length ? ` (largest ${f(Math.max(...inv.frontierUnmetIncreases.map(x => x.increase)), 2)} patient-h — the objective is tiered, so raw unmet can wobble within search tolerance)` : ''}.`, '')
+
+  const prev = r.previous
+  if (!prev) return
+  const dataChanged = (prev.observed?.nDays ?? null) !== (r.observed.nDays ?? null)
+    || (prev.observed?.snapshot?.encounters ?? null) !== (r.observed.snapshot?.encounters ?? null)
+  const snap = o => (o?.snapshot ? `${o.snapshot.encounters?.toLocaleString('en-US')} encounters, arrivals ${o.snapshot.dateRange}, ${o.nDays} roomed dates` : `${o?.nDays ?? '?'} roomed dates`)
+  L.push(`### Compared with the previous run (${prev.when?.slice(0, 16).replace('T', ' ')} UTC${prev.hadSupervision ? '' : ', before the rule'})`, '')
+  if (!prev.hadSupervision && !dataChanged) {
+    L.push('Same demand snapshot, schedule, rates, operational rules, shift menu and search settings; the only model change is mandatory resident supervision, so differences beyond search noise are caused by it.', '')
+  } else if (prev.hadSupervision && !prev.hadIntakeCutoffs && r.intakeCutoffs && !dataChanged) {
+    L.push(`Same demand data (${snap(r.observed)}), rates, operational rules, resident supervision, shift menu and search settings. **Two inputs changed together:** Blue's shifts (now ${(r.blueShifts ?? []).join(', ')}; previously attendings 09:00–17:00 / 17:00–01:00 and residents/PAs 09:00–21:00 / 11:00–23:00) and the new **intake cutoffs** (Blue no new patients from 20:00, FastTrack from midnight, tool-added teams in the last ${r.intakeCutoffs.extraTeamsHoursBeforeEnd} h of their coverage). The control above separates the cutoffs' share.`, '')
+  } else if (prev.hadSupervision && dataChanged) {
+    L.push(`Same model, rules (resident supervision on in both), schedule, rates, shift menu and search settings; **the demand data changed**: previous ${snap(prev.observed)} → now ${snap(r.observed)}. Differences beyond search noise are caused by the newer data.`, '')
+  } else {
+    L.push(`Previous run: ${prev.hadSupervision ? 'with' : 'without'} resident supervision, ${snap(prev.observed)}. Now: with resident supervision, ${snap(r.observed)}. More than one input changed, so differences cannot be attributed to a single cause.`, '')
+  }
+  const prevKnee = diminishingReturns((prev.frontier ?? []).filter(x => x.feasible !== false && (Math.abs(x.budget - B) >= 5 || x.budget === B))).knee
+  const pt = (list, t) => list.find(x => x.targetPct === t)
+  L.push('| Measure | Previous | New | Change |', '|---|---|---|---|')
+  const row = (label, a, b, fmt = x => f(x, 0), d = (x, y) => sgn(y - x, 1)) => L.push(`| ${label} | ${a == null ? '—' : fmt(a)} | ${b == null ? '—' : fmt(b)} | ${a == null || b == null ? '—' : d(a, b)} |`)
+  const nb = base?.ok ? base.summary : null
+  row(`${f(B, 0)} h → Main h`, prev.baseline?.hoursByArea.main, nb?.byArea.main.attendingHours)
+  row(`${f(B, 0)} h → FastTrack h`, prev.baseline?.hoursByArea.fasttrack, nb?.byArea.fasttrack.attendingHours)
+  row(`${f(B, 0)} h → ERU h`, prev.baseline?.hoursByArea.eru, nb?.byArea.eru.attendingHours)
+  row(`${f(B, 0)} h → modeled coverage`, prev.baseline?.coverage, nb?.all.coverage, x => pct(x), (x, y) => `${sgn(100 * (y - x), 1)} pts`)
+  row(`${f(B, 0)} h → unmet (patient-h/wk)`, prev.baseline?.unmet, nb?.all.unmet, x => f(x, 1))
+  for (const a of AREAS) row(`${f(B, 0)} h → unmet ${AREA_LABEL[a]}`, prev.baseline?.unmetByArea[a], nb?.byArea[a].unmet, x => f(x, 1))
+  for (const t of [90, 92.5, 95, 97.5, 99]) {
+    const a = pt(prev.targets, t), b = targets.find(x => x.targetPct === t)
+    row(`${t}% target → hours`, a?.ok ? a.hours : null, b?.ok ? b.hours.total : null)
+  }
+  const pp = prev.practical?.[0]
+  row('Minimum practical → hours', pp?.ok ? pp.hours : null, mp?.ok ? mp.hours.total : null)
+  row('Best achievable modeled coverage', pp?.best, mp?.planning?.bestAchievable?.coverage, x => pct(x, 2), (x, y) => `${sgn(100 * (y - x), 2)} pts`)
+  row('Geometric knee (h/week)', prevKnee?.budget, dr.knee?.budget)
+  L.push('')
+  L.push('| Budget | Previous unmet | New unmet | Change | Previous coverage | New coverage |', '|---|---|---|---|---|---|')
+  for (const x of rows) {
+    const a = prev.frontier.find(y => y.budget === x.budget)
+    if (!a) continue
+    L.push(`| ${f(x.budget, 0)} | ${a.feasible ? f(a.unmet) : '—'} | ${x.feasible ? f(x.unmet) : '—'} | ${a.feasible && x.feasible ? sgn(x.unmet - a.unmet) : '—'} | ${a.feasible ? pct(a.coverage) : '—'} | ${x.feasible ? pct(x.coverage) : '—'} |`)
+  }
+  L.push('')
+}
 
 function hoursProof(p) {
   const pl = p.planning
@@ -105,7 +174,7 @@ export function renderFrontierReport(r) {
     if (!x.feasible) { L.push(`| ${f(x.budget, 0)} | — | — | *no plan: ${x.message ?? x.status}* | | | | | |`); continue }
     const u = planningUnits(x.hours, { clinicalHoursPerFte: fteH })
     const m = byTo[x.budget]
-    L.push(`| ${f(x.budget, 0)}${x.budget === B ? ' (today)' : ''}${x.hours < x.budget - 0.5 ? ` (uses ${f(x.hours, 0)})` : ''}${x.carriedForward ? ' ↺' : ''} | ${f(u.annual, 0)} | ${f(u.fte, 1)} | ${pct(x.coverage)} | ${f(x.unmet)} | ${f(x.unmetByArea.main)} | ${f(x.unmetByArea.fasttrack)} | ${f(x.unmetByArea.eru)} | ${m ? `${f(m.perHour, 2)}${m.withinNoise ? ' ~' : ''}` : '—'} |`)
+    L.push(`| ${f(x.budget, 0)}${x.budget === B ? (Math.abs(B - todayHours(r)) < 0.5 ? ' (today)' : ' (reference)') : ''}${x.hours < x.budget - 0.5 ? ` (uses ${f(x.hours, 0)})` : ''}${x.carriedForward ? ' ↺' : ''} | ${f(u.annual, 0)} | ${f(u.fte, 1)} | ${pct(x.coverage)} | ${f(x.unmet)} | ${f(x.unmetByArea.main)} | ${f(x.unmetByArea.fasttrack)} | ${f(x.unmetByArea.eru)} | ${m ? `${f(m.perHour, 2)}${m.withinNoise ? ' ~' : ''}` : '—'} |`)
   }
   L.push('', `↺ = the search at this budget did not beat the previous (smaller) budget's plan, so that plan is shown (it is feasible here). ~ = step smaller than the observed search uncertainty (±${f(noise)} patient-h).`, '')
 
@@ -125,6 +194,8 @@ export function renderFrontierReport(r) {
     L.push(`Achieved coverage is app-scored. ${under.map(t => `${t.targetPct}% scores ${pct(t.summary.all.coverage, 3)}`).join('; ')}: the solver meets the target on capacities rounded to 0.01 patients/hr (its coverage: ${under.map(t => pct(t.solverView?.coverage, 3)).join(', ')}); the difference is rounding, well inside the model's precision.`, '')
   }
 
+  supervisionSection(L, r, { rows, dr, targets, mp })
+
   // ── 1 ──────────────────────────────────────────────────────────────────────
   L.push('## 1. Question', '')
   L.push('*How much ATTENDING coverage does this ED need, and where?* Answered from several directions with one OR-Tools CP-SAT model:')
@@ -135,12 +206,15 @@ export function renderFrontierReport(r) {
 
   // ── 2 ──────────────────────────────────────────────────────────────────────
   L.push('## 2. Observed inputs', '')
-  L.push(`**OBSERVED** — \`${observed.sources.join('`, `')}\`, ${observed.nDays ?? '?'} days of arrivals.`, '')
+  L.push(`**OBSERVED** — \`${observed.sources.join('`, `')}\`: the committed processed-data snapshot${observed.snapshot ? ` (${observed.snapshot.encounters?.toLocaleString('en-US')} encounters, arrivals ${observed.snapshot.dateRange})` : ''}. Demand = patients roomed on each area's team per hour, averaged over ${observed.nDays ?? '?'} distinct roomed dates. (The app's live local database is a later, larger extract — see the 394-vs-302 note in the guide.)`, '')
   L.push('| Area | Historical patient-hours / week | Current attending h / week |', '|---|---|---|')
   for (const a of AREAS) L.push(`| ${AREA_LABEL[a]} | ${f(observed.demand[a])} | ${f(observed.attendingHours[a], 0)} |`)
   L.push(`| **Total** | **${f(AREAS.reduce((t, a) => t + observed.demand[a], 0))}** | **${f(AREAS.reduce((t, a) => t + observed.attendingHours[a], 0), 0)}** |`, '')
+  if (Math.abs(todayHours(r) - r.config.currentBudget) >= 0.5) {
+    L.push(`- **Today's schedule has ${f(todayHours(r), 0)} attending h/week.** The reference budget used throughout (${f(r.config.currentBudget, 0)} h, marked "reference") is today's total before Blue's shifts changed, kept so results stay comparable with earlier runs.`)
+  }
   L.push(`- Current schedule: ${Object.entries(observed.byRole).map(([k, v]) => `${v} ${k}`).join(', ')} shifts per week. Resident/PA shifts are identical in every plan (checked on every solve).`)
-  L.push('- Demand stays in its own area (FastTrack = historical FastTrack routing, ERU = historical ERU arrivals). No ESI is used.', '')
+  L.push('- Demand stays in its own area (FastTrack = historical FastTrack routing, ERU = historical ERU patients, counted by the hour they were roomed). No ESI is used.', '')
 
   // ── 3 ──────────────────────────────────────────────────────────────────────
   L.push('## 3. Operational rules', '')
@@ -151,7 +225,7 @@ export function renderFrontierReport(r) {
   L.push(`- ERU (primary scenario, Current ERU coverage): dedicated attending Mon–Fri ${describeWindow(p.weekday)}, Sat–Sun ${describeWindow(p.weekend)}; outside it Main cross-covers.`)
   L.push('- ERU: at most **one** dedicated attending at a time (structural, every scenario).')
   L.push('- Staff operating-area routing:')
-  for (const x of r.staffRouting ?? []) L.push(`  - ${x.label} (${x.fromHour}:00–${x.toHour}:00)${x.confirmed ? '' : ' — inferred from the role_detail suffix; needs confirmation'}`)
+  for (const x of r.staffRouting ?? []) L.push(`  - ${x.label} (${x.fromHour}:00–${x.toHour}:00)${x.confirmed ? ' — confirmed operational routing rule' : ' — not confirmed (scenario only)'}`)
   L.push(`- Team limits: one attending at a time per existing team; up to 3 additional simultaneous attendings per area on new teams (ERU capped at one overall). This lets the model add **more simultaneous attending coverage** at peaks, not just re-time today's shifts.`)
   L.push(`- Shift structure: **current** = starts ${r.structures.current.starts.map(h => `${String(h).padStart(2, '0')}:00`).join(', ')} × ${r.structures.current.lengths.join('/')} h (${r.structures.current.patterns} patterns); **expanded** = every hour × ${r.structures.expanded.lengths.join('/')} h (${r.structures.expanded.patterns} patterns).`, '')
 
@@ -194,7 +268,7 @@ export function renderFrontierReport(r) {
   L.push('| Budget | Used | Main h | FT h | ERU h | Coverage | Main | FT | ERU | Unmet | Main | FT | ERU | Excess | Max Main on | Max FT on | Solver |', '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|')
   for (const x of rows) {
     if (!x.feasible) { L.push(`| ${f(x.budget, 0)} | *no plan (${x.status})* |||||||||||||||| |`); continue }
-    L.push(`| ${f(x.budget, 0)}${x.carriedForward ? ' ↺' : ''} | ${f(x.hours, 0)} | ${AREAS.map(a => f(x.hoursByArea[a], 0)).join(' | ')} | ${pct(x.coverage)} | ${AREAS.map(a => pct(x.coverageByArea[a])).join(' | ')} | ${f(x.unmet)} | ${AREAS.map(a => f(x.unmetByArea[a])).join(' | ')} | ${f(x.excess)} | ${x.maxOnDuty.main} | ${x.maxOnDuty.fasttrack} | ${x.status === 'optimal' ? 'optimal' : `gap ${f(100 * x.gap)}%`} |`)
+    L.push(`| ${f(x.budget, 0)}${x.carriedForward ? ' ↺' : ''} | ${f(x.hours, 0)} | ${AREAS.map(a => f(x.hoursByArea[a], 0)).join(' | ')} | ${pct(x.coverage)} | ${AREAS.map(a => pct(x.coverageByArea[a])).join(' | ')} | ${f(x.unmet)} | ${AREAS.map(a => f(x.unmetByArea[a])).join(' | ')} | ${f(x.excess)} | ${x.maxOnDuty.main} | ${x.maxOnDuty.fasttrack} | ${solverStatus(x.status, x.gap).short} |`)
   }
   L.push('')
   L.push('Worst deficit periods at selected budgets:', '')
@@ -265,7 +339,7 @@ export function renderFrontierReport(r) {
     L.push(`- Least achievable modeled unmet with **unlimited** attending hours: ${f(best.unmetPph)} patient-h/week (${pct(best.coverage, 2)} coverage; ${best.proven ? 'proven' : 'best found'}). **100% is not achievable** under these rules and this shift structure.`)
     L.push(`- Tolerance: ${f(mp.planning.tolerancePct, 2)} coverage points (${f(mp.planning.tolerancePph)} patient-h) → cap ${f(mp.planning.capsPph['*'])} unmet patient-h/week.`)
     L.push(`- Achieved (app scoring): ${pct(mp.summary.all.coverage, 2)} coverage, ${f(mp.summary.all.unmet)} unmet patient-h/week (Main ${f(mp.summary.byArea.main.unmet)}, FT ${f(mp.summary.byArea.fasttrack.unmet)}, ERU ${f(mp.summary.byArea.eru.unmet)}); excess ${f(mp.summary.all.excess)}.`)
-    L.push(`- vs today (${f(B, 0)} h): ${sgn(mp.hours.total - B, 0)} h/week; vs the ${f(B, 0)} h re-allocation: coverage ${sgn(100 * (mp.summary.all.coverage - base.summary.all.coverage), 2)} pts, unmet ${sgn(mp.summary.all.unmet - base.summary.all.unmet)} patient-h.`, '')
+    L.push(`- vs today's schedule (${f(todayHours(r), 0)} h): ${sgn(mp.hours.total - todayHours(r), 0)} h/week; vs the ${f(B, 0)} h re-allocation: coverage ${sgn(100 * (mp.summary.all.coverage - base.summary.all.coverage), 2)} pts, unmet ${sgn(mp.summary.all.unmet - base.summary.all.unmet)} patient-h.`, '')
     L.push('Tolerance sensitivity:', '')
     L.push('| Tolerance (coverage pts) | Attending h/wk | Main | FT | ERU | Coverage | Unmet | Proof |', '|---|---|---|---|---|---|---|---|')
     for (const t of practical) {
@@ -350,7 +424,7 @@ export function renderFrontierReport(r) {
   L.push('## 13. FTE / cost translation', '')
   L.push(`**CONFIGURED FOR THIS REPORT ONLY.** No clinical FTE definition or institutional rate is built into the tool; both are inputs. FTE = annual hours ÷ clinical hours per FTE per year (options ${config.units.clinicalHoursPerFteOptions.join(' / ')}). Cost uses **$${rate}/h — the app's illustrative placeholder rate, not institutional cost**. All cost figures are illustrative planning estimates.`, '')
   L.push(`| Plan | Attending h/wk | Annual h | ${config.units.clinicalHoursPerFteOptions.map(h => `FTE @ ${f(h, 0)}`).join(' | ')} | Illustrative cost @ $${rate}/h |`, `|---|---|---|${config.units.clinicalHoursPerFteOptions.map(() => '---').join('|')}|---|`)
-  const unitRows = [[`Today / ${B} h`, B], ...targets.filter(t => t.ok).map(t => [`${t.targetPct}% target`, t.hours.total]), ...(mp.ok ? [['Minimum practical', mp.hours.total]] : [])]
+  const unitRows = [...(Math.abs(todayHours(r) - B) >= 0.5 ? [[`Today's schedule`, todayHours(r)], [`Reference ${B} h`, B]] : [[`Today / ${B} h`, B]]), ...targets.filter(t => t.ok).map(t => [`${t.targetPct}% target`, t.hours.total]), ...(mp.ok ? [['Minimum practical', mp.hours.total]] : [])]
   for (const [label, h] of unitRows) {
     const u = planningUnits(h, { hourlyRate: rate })
     L.push(`| ${label} | ${f(h, 0)} | ${f(u.annual, 0)} | ${config.units.clinicalHoursPerFteOptions.map(x => f(planningUnits(h, { clinicalHoursPerFte: x }).fte, 1)).join(' | ')} | $${f(u.cost / 1e6, 2)}M |`)
@@ -359,12 +433,12 @@ export function renderFrontierReport(r) {
 
   // ── 14 ─────────────────────────────────────────────────────────────────────
   L.push('## 14. Search robustness', '')
-  L.push(`CP-SAT, deterministic parallel search (same inputs → same plan). "Optimal" = proven within ${f(100 * r.solverInfo.optimalityGap, 1)}%; otherwise the gap bounds how far the objective may be from the best possible. Effort: ${Object.entries(r.solverInfo.effortDeterministicSeconds).map(([k, v]) => `${k} ${v}`).join(', ')} deterministic seconds per stage.`, '')
+  L.push(`CP-SAT, deterministic parallel search (same inputs → same plan). The search stops once within ${f(100 * r.solverInfo.optimalityGap, 1)}% of the best possible objective: "optimal (proven)" = zero gap; "near-optimal" = within that tolerance; "best found" = the search budget ran out first, and the gap bounds how far the objective may be from the best possible. Effort: ${Object.entries(r.solverInfo.effortDeterministicSeconds).map(([k, v]) => `${k} ${v}`).join(', ')} deterministic seconds per stage.`, '')
   L.push('| Budget | Standard: unmet · gap | Thorough: unmet · gap | Difference |', '|---|---|---|---|')
   for (const x of rows) {
     const s = frontier.standard.find(y => y.budget === x.budget)
     if (!x.feasible || !s?.feasible) continue
-    L.push(`| ${f(x.budget, 0)} | ${f(s.unmet)} · ${s.status === 'optimal' ? 'opt' : `${f(100 * s.gap)}%`}${s.carriedForward ? ' ↺' : ''} | ${f(x.unmet)} · ${x.status === 'optimal' ? 'opt' : `${f(100 * x.gap)}%`}${x.carriedForward ? ' ↺' : ''} | ${sgn(s.unmet - x.unmet)} |`)
+    L.push(`| ${f(x.budget, 0)} | ${f(s.unmet)} · ${solverStatus(s.status, s.gap).short}${s.carriedForward ? ' ↺' : ''} | ${f(x.unmet)} · ${solverStatus(x.status, x.gap).short}${x.carriedForward ? ' ↺' : ''} | ${sgn(s.unmet - x.unmet)} |`)
   }
   L.push('')
   const coldRows = Object.entries(frontier.cold ?? {})
@@ -420,7 +494,7 @@ function verdict(r, mp, ep) {
   if (t95c?.ok && t95e?.ok) parts.push(`Reaching 95% needs ${f(t95c.hours.total, 0)} h with current starts vs ${f(t95e.hours.total, 0)} h with hourly starts (${sgn(t95e.hours.total - t95c.hours.total, 0)} h).`)
   if (mp?.ok && ep?.ok) parts.push(`The minimum practical requirement is ${f(mp.hours.total, 0)} h (current) vs ${f(ep.hours.total, 0)} h (expanded), and the best achievable coverage ${pct(mp.planning.bestAchievable.coverage, 2)} vs ${pct(ep.planning?.bestAchievable?.coverage, 2)}.`)
   const base = r.baseline.thorough
-  if (t95c?.ok) parts.push(`Against today's ${b} h, the 95% target alone asks for ${sgn(t95c.hours.total - b, 0)} attending h/week under the current structure.`)
+  if (t95c?.ok) parts.push(`Against today's ${f(todayHours(r), 0)} h, the 95% target alone asks for ${sgn(t95c.hours.total - todayHours(r), 0)} attending h/week under the current structure.`)
   const timing = c0 && e0 ? c0.unmet - e0.unmet : 0
   const hours = t95c?.ok ? t95c.hours.total - b : null
   let answer = '**Under this model:** '

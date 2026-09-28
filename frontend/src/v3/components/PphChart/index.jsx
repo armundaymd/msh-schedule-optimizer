@@ -8,7 +8,7 @@ import { hasPercentiles } from '../../../shared/demandSeries'
 import { scenarioPayloadToSnapshot } from '../../../shared/scenarioPayload'
 import { AREA_LABEL, SCOPE_LABEL, SCOPE_ORDER, scopeAreas, isCombinedScope } from '../../../shared/areas'
 import { analyzeScope } from '../../../shared/scopeAnalysis'
-import { buildCoverageInsights } from '../../../shared/coverageInsights'
+import { DISPLAY_DEFICIT_TOLERANCE_PPH, buildCoverageInsights } from '../../../shared/coverageInsights'
 import HelpButton from '../Help/HelpButton'
 
 const TARGETS = ['mean', 'p50', 'p75', 'p90']
@@ -55,7 +55,7 @@ export default function PphChart({
   // Aggregate AND per-area coverage for the active scope — drives the
   // combined-scope breakdown readout and the coverage-issues list.
   const scopeAnalysis = analyzeScope({ shifts, demand, pph, customTeams, scope: activeScope, day, target })
-  const insights = buildCoverageInsights(scopeAnalysis)
+  const insights = buildCoverageInsights(scopeAnalysis, { deficitTolerance: DISPLAY_DEFICIT_TOLERANCE_PPH })
 
   return (
     <div className="flex flex-col h-full bg-[var(--c-bg-app)]">

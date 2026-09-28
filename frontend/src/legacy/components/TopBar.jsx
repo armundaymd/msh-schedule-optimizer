@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 
-export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onSaveScenario, scenarioCount, onUndo, onRedo, canUndo, canRedo, onAutoOptimize, onAutoOptimizeWeek, optimizing, onExport, activeTeam }) {
+export default function TopBar({ summary, onRefresh, refreshing, refreshEnabled = false, onResetDay, onSaveScenario, scenarioCount, onUndo, onRedo, canUndo, canRedo, onAutoOptimize, onAutoOptimizeWeek, optimizing, onExport, activeTeam }) {
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [name, setName] = useState('')
   const popoverRef = useRef(null)
@@ -169,6 +169,7 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
             </div>
           )}
         </div>
+        {refreshEnabled && (
         <button
           onClick={onRefresh}
           disabled={refreshing}
@@ -176,6 +177,7 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
         >
           {refreshing ? 'Refreshing…' : '↻ Refresh data'}
         </button>
+        )}
       </div>
     </div>
   )

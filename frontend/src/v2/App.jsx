@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fetchSchedule, fetchDemand, fetchSummary, postRefresh, fetchScenarios, createScenario, deleteScenario } from '../shared/api'
+import { fetchSchedule, fetchDemand, fetchSummary, postRefresh, fetchRefreshStatus, fetchScenarios, createScenario, deleteScenario } from '../shared/api'
 import { useScheduleState } from '../shared/hooks/useScheduleState'
 import { useCommandStack } from './hooks/useCommandStack'
 import { buildScenarioPayload, scenarioPayloadToSnapshot } from '../shared/scenarioPayload'
@@ -423,10 +423,14 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function handleRefresh() {
+  // "Refresh data" is shown only where the server allows it (ADMIN_TOKEN set).
+  const [refreshEnabled, setRefreshEnabled] = useState(false)
+  useEffect(() => { fetchRefreshStatus().then(st => setRefreshEnabled(!!st.enabled)) }, [])
+
+  async function handleRefresh(token = null) {
     setRefreshing(true)
     try {
-      await postRefresh()
+      await postRefresh(typeof token === 'string' ? token : null)
       const [sched, dem, summ] = await Promise.all([fetchSchedule(), fetchDemand(), fetchSummary()])
       schedState.loadBaseline(sched)
       setDemand(dem)
@@ -434,6 +438,7 @@ function App() {
       commandStack.clear()
     } catch (e) {
       console.error(e)
+      window.alert(e.message)
     }
     setRefreshing(false)
   }
@@ -485,6 +490,7 @@ function App() {
       <TopBar
         summary={summary}
         onRefresh={handleRefresh}
+        refreshEnabled={refreshEnabled}
         refreshing={refreshing}
         onResetDay={() => {
           commandStack.pushCommand('day', [activeDow], 'Reset day')

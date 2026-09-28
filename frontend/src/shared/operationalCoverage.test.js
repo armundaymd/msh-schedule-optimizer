@@ -183,7 +183,7 @@ describe('buildPlanInstance with operational coverage', () => {
       expect(areaOf(instance, key).demand[0]).toEqual(getDemandSeries(DEMAND, label, 'Monday', 'mean'))
     }
     // No ESI anywhere in the instance.
-    expect(JSON.stringify(instance)).not.toMatch(/esi/i)
+    expect(JSON.stringify(instance)).not.toMatch(/\besi\b/i)
   })
 
   it('4. cross-covered ERU stays a separate area with its own cross-cover entry', () => {

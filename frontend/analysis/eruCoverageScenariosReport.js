@@ -4,6 +4,7 @@
 import { AREA_LABEL } from '../src/shared/areas'
 import { describeCrossCoverCredit, describeRule, describeWindow } from '../src/shared/operationalCoverage'
 import { periodText } from '../validation/compare'
+import { solverStatus } from '../src/shared/solverStatus'
 
 const f = (n, d = 1) => Number(n).toFixed(d)
 const sgn = (n, d = 1) => (Math.abs(n) < 0.05 * 10 ** -(d - 1) ? '±0' : `${n > 0 ? '+' : '−'}${f(Math.abs(n), d)}`)
@@ -16,7 +17,7 @@ const LARGE_GAP = 0.10
 const hardHours = r => AREAS.reduce((t, a) => t + r.op[a].requiredAttendingHours, 0)
 const flexHours = r => AREAS.reduce((t, a) => t + r.op[a].voluntaryAttendingHours, 0)
 const band = (r, area, test) => Object.values(r.structure.onDuty[area]).reduce((t, row) => t + row.reduce((u, v, h) => u + (test(h) ? v : 0), 0), 0)
-const gapFlag = r => (r.solver.status === 'optimal' ? 'proven optimal' : `best found · gap ${f(r.solver.gap * 100, 1)}%${r.solver.gap > LARGE_GAP ? ' ⚠' : ''}`)
+const gapFlag = r => `${solverStatus(r.solver.status, r.solver.gap).short}${r.solver.gap > LARGE_GAP ? ' ⚠' : ''}`
 const winText = p => (p.weekday || p.weekend ? `Mon–Fri ${describeWindow(p.weekday)} · Sat–Sun ${describeWindow(p.weekend)}` : 'no dedicated ERU window')
 
 export function renderEruScenarioReport(r) {
@@ -42,12 +43,12 @@ export function renderEruScenarioReport(r) {
 
   // ── 2 ────────────────────────────────────────────────────────────────────
   L.push('## 2. Observed inputs', '')
-  L.push(`**OBSERVED** — \`${observed.sources.join('`, `')}\`, ${observed.nDays ?? '?'} days of arrivals.`, '')
+  L.push(`**OBSERVED** — \`${observed.sources.join('`, `')}\`: the committed processed-data snapshot (arrivals 2025-08-04 → 2026-05-31). Demand = patients roomed on each area's team per hour, averaged over ${observed.nDays ?? '?'} distinct roomed dates. (The app's live local database is a later, larger extract.)`, '')
   L.push('| Area | Historical patient-hours / week | Current attending h / week |', '|---|---|---|')
   for (const a of AREAS) L.push(`| ${AREA_LABEL[a]} | ${f(observed.demand[a])} | ${f(observed.attendingHours[a], 0)} |`)
   L.push('')
   L.push(`- Current schedule: ${Object.entries(observed.byRole).map(([k, v]) => `${v} ${k}`).join(', ')} shifts per week. Residents/PAs are fixed in every scenario.`)
-  L.push('- FastTrack demand is historical FastTrack routing; ERU demand is historical ERU arrivals. Neither is re-routed; no ESI is used.')
+  L.push('- FastTrack demand is historical FastTrack routing; ERU demand is historical ERU patients (by roomed hour). Neither is re-routed; no ESI is used.')
   L.push(`- Overnight FastTrack-team residents/PAs on duty while FastTrack is closed (01:00–07:00): ${routing.routed.length} shifts/week, each with a Main-team suffix in the schedule's role_detail:`)
   for (const x of routing.routed) L.push(`  - ${x.day.slice(0, 3)} ${x.shift.role_type} "${x.shift.role_detail}" ${x.shift.start_time}–${x.shift.end_time} → operates on ${x.rule.to.team} ${x.hours[0] < 10 ? '0' : ''}${x.hours[0]}:00–07:00`)
   L.push('')
@@ -60,14 +61,14 @@ export function renderEruScenarioReport(r) {
   L.push('- ERU: at most **one** dedicated attending at a time (structural). Outside its dedicated window ERU is cross-covered by Main: Main is')
   L.push('  responsible and supervises ERU residents/PAs.')
   L.push('- Staff operating-area routing:')
-  for (const x of routing.rules) L.push(`  - ${x.label} (${x.fromHour}:00–${x.toHour}:00)${x.confirmed ? '' : ' — **inferred from the role_detail suffix; needs confirmation**'}`)
+  for (const x of routing.rules) L.push(`  - ${x.label} (${x.fromHour}:00–${x.toHour}:00)${x.confirmed ? ' — confirmed operational routing rule' : ' — **not confirmed (scenario only)**'}`)
   L.push(`- Shift menu: starts ${[...new Set(r.patterns.map(p => p.start))].map(h => `${String(h).padStart(2, '0')}:00`).join(', ')} × ${[...new Set(r.patterns.map(p => p.length))].join('/')} h.`, '')
   L.push('**MODEL ASSUMPTIONS:**', '')
   L.push(`- Supervision ceilings / solo throughput (patients/hr): Main ${pph.main}/${pph.mainOwn}, FastTrack ${pph.fasttrack}/${pph.fasttrackOwn}, ERU ${pph.eru}/${pph.eruOwn}.`)
   L.push(`- Resident/PA productivity (assumed): PGY-1…4 ${pph.pgy1}/${pph.pgy2}/${pph.pgy3}/${pph.pgy4}, off-service ${pph.offService}, PA ${pph.pa}, FastTrack solo PA ${pph.fasttrackPa}.`)
   L.push('- Team capacity = min(attendings × ceiling, attendings × solo + supervised residents/PAs) + FastTrack solo PAs; areas never lend capacity.')
   L.push(`- ERU cross-cover throughput credit: **${describeCrossCoverCredit(base.areas.eru.crossCoverCredit, pph)}** (conservative).`)
-  L.push(`- Demand target: ${r.target} historical arrivals per hour, by day of week.`)
+  L.push(`- Demand target: ${r.target} historical patients roomed per hour, by day of week.`)
   L.push(`- Objective: minimise tiered unmet demand per area-hour, then excess, then hours (${r.solverInfo.deficitTierWeights.join('/')} / ${r.solverInfo.excessWeight} / ${r.solverInfo.hourWeight}). OR-Tools CP-SAT, deterministic.`, '')
 
   // ── 4 ────────────────────────────────────────────────────────────────────
@@ -182,8 +183,8 @@ export function renderEruScenarioReport(r) {
   L.push('')
   L.push(`Search-noise band used above: ±${f(noise)} patient-h/week. Gaps above ${LARGE_GAP * 100}% are flagged ⚠. No plan here is proven optimal unless it says so.`, '')
   const pw = routing.planWithout
-  L.push('**Staff-routing robustness.** Current ERU coverage re-solved WITHOUT the (unconfirmed) FastTrack→Main routing: ')
-  L.push(pw.infeasible ? 'infeasible.' : `unmet ${f(pw.metrics.all.deficit)} vs ${f(c0.metrics.all.deficit)} with routing; Main/FastTrack/ERU hours ${AREAS.map(a => f(pw.structure.hoursByArea[a], 0)).join('/')} vs ${AREAS.map(a => f(c0.structure.hoursByArea[a], 0)).join('/')}.`)
+  L.push('**Staff-routing robustness.** Current ERU coverage re-solved WITHOUT the (confirmed) FastTrack→Main routing, to show how much it matters: ')
+  L.push(pw.infeasible ? `infeasible — without routing, FastTrack's overnight residents would stay on FastTrack while it is closed, where no attending may supervise them (${String(pw.message ?? '').slice(0, 160)}…).` : `unmet ${f(pw.metrics.all.deficit)} vs ${f(c0.metrics.all.deficit)} with routing; Main/FastTrack/ERU hours ${AREAS.map(a => f(pw.structure.hoursByArea[a], 0)).join('/')} vs ${AREAS.map(a => f(c0.structure.hoursByArea[a], 0)).join('/')}.`)
   const uw = routing.currentWith, uo = routing.currentWithout
   const unsup = s => AREAS.reduce((t, a) => t + s.op[a].unsupervisedExtenderHours, 0)
   L.push(`On today's schedule the routing reclassifies unsupervised resident/PA area-hours from ${unsup(uo)} to ${unsup(uw)}`)
@@ -195,10 +196,10 @@ export function renderEruScenarioReport(r) {
   L.push('- Acuity, resuscitation readiness and immediate attending availability in ERU are not quantified. ERU scenario comparisons do')
   L.push('  not determine the clinically correct coverage window.')
   L.push('- Resident/PA productivity and attending ceilings are assumptions, not measurements.')
-  L.push(`- Demand target is ${r.target} historical arrivals; peaks above the mean are not represented.`)
+  L.push(`- Demand target is ${r.target} historical roomed patients per hour; peaks above the mean are not represented.`)
   L.push('- Cross-cover throughput credit is conservative (none): outside its window ERU demand is counted unmet unless an ERU attending is on.')
   L.push('  cross-cover-sensitivity.md shows allocations with ERU windows held fixed are robust to this assumption.')
-  L.push('- Staff routing of FastTrack overnight residents/PAs to Main is inferred from role_detail suffixes and awaits confirmation.')
+  L.push('- Staff routing of FastTrack overnight residents/APPs to Main is a confirmed operational rule (staff move; patient demand does not).')
   L.push('- Day templates are circular (an overnight window wraps into the same weekday); no handoffs, fatigue or unit geography.', '')
   return L.join('\n')
 }

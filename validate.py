@@ -463,5 +463,18 @@ def run_validation(raw_dir: Path = RAW_DIR, engine=None) -> dict:
     return validation
 
 
+def main(argv=None) -> None:
+    # Parse arguments BEFORE touching data, so `--help` (or a typo) never runs
+    # the validation or writes to the database.
+    import argparse
+    parser = argparse.ArgumentParser(
+        description="Statistical validation of ED demand and service-time models. Reads raw encounter "
+                    "CSVs from data/raw and OVERWRITES the 'validation' and 'demand_ci' rows in the "
+                    "pipeline_outputs table of the database named by DATABASE_URL.")
+    parser.add_argument("--raw-dir", type=Path, default=RAW_DIR, help=f"raw encounter CSV folder (default: {RAW_DIR})")
+    args = parser.parse_args(argv)
+    run_validation(raw_dir=args.raw_dir)
+
+
 if __name__ == "__main__":
-    run_validation()
+    main()

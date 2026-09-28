@@ -3,7 +3,7 @@ import { PLANNING_MODES } from '../../../shared/attendingPlanner'
 import { PLAN_START_MODES } from '../../utils/patterns'
 
 // What every planner result rests on, tagged by where each value comes from:
-//   OBSERVED   from data (historical arrivals, today's schedule)
+//   OBSERVED   from data (historical roomed patients, today's schedule)
 //   CONFIGURED chosen in the planner (rules, targets, shift menu)
 //   ASSUMED    model assumptions (productivity, cross-cover credit)
 //   CALCULATED solver / model output
@@ -32,10 +32,11 @@ export default function AssumptionStrip({ settings, pph, resultText }) {
   const rows = [
     ['CONFIGURED', 'Planning question', PLANNING_MODES[settings.planningMode]?.label ?? '—'],
     ['CONFIGURED', 'Operational scenario', eruText(settings)],
-    ['OBSERVED', 'Demand', `historical arrivals by area, day and hour — ${settings.target === 'mean' ? 'mean' : settings.target} (configured statistic)`],
+    ['OBSERVED', 'Demand', `historical patients roomed per area, day and hour — ${settings.target === 'mean' ? 'mean' : settings.target} (configured statistic)`],
     ['ASSUMED', 'Cross-cover throughput', credit],
     ['CONFIGURED', 'Shift structure', `${PLAN_START_MODES[settings.startMode]?.label ?? settings.startMode} × ${settings.lengths.join('/')} h`],
     ['OBSERVED', 'Residents/APPs', 'today\'s schedule, fixed — never added, removed or moved; productivity per level is ASSUMED'],
+    ['CONFIGURED', 'Resident supervision', 'hard rule — every resident\'s operating team (after the confirmed FastTrack → Main routing) has its own attending while the resident works; cross-covered hours: the covering area'],
     ...(resultText ? [['CALCULATED', 'Attending-hours result', resultText]] : []),
   ]
   return (

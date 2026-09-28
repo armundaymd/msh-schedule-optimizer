@@ -6,7 +6,7 @@ import CoverageRibbon from './CoverageRibbon'
 import CopyDayMenu from './CopyDayMenu'
 import PillToggle from '../../../shared/components/PillToggle'
 import { analyzeScope } from '../../../shared/scopeAnalysis'
-import { coverageGrid } from '../../../shared/coverageInsights'
+import { DISPLAY_DEFICIT_TOLERANCE_PPH, coverageGrid, deficitHours } from '../../../shared/coverageInsights'
 import { AREAS as AREA_KEYS, AREA_LABEL, SCOPE_LABEL } from '../../../shared/areas'
 import HelpButton from '../Help/HelpButton'
 
@@ -106,7 +106,7 @@ export default function Timeline({
   // where one area is short can't read as covered because another has surplus.
   const ribbonRows = useMemo(() => {
     const analysis = analyzeScope({ shifts: previewShifts, demand, pph, customTeams, scope, day, target })
-    const grid = coverageGrid(analysis)
+    const grid = coverageGrid(analysis, { deficitTolerance: DISPLAY_DEFICIT_TOLERANCE_PPH })
     if (analysis.areas.length === 1) return [{ key: 'coverage', label: 'Coverage', ...grid.aggregate }]
     return [
       { key: 'aggregate', label: SCOPE_LABEL[scope], ...grid.aggregate },
@@ -117,7 +117,8 @@ export default function Timeline({
   const dragReadout = useMemo(() => {
     if (!dragPreview) return null
     function overflowSet(list) {
-      return new Set(analyzeScope({ shifts: list, demand, pph, customTeams, scope, day, target }).componentDeficitHours)
+      const analysis = analyzeScope({ shifts: list, demand, pph, customTeams, scope, day, target })
+      return new Set(deficitHours(analysis, { deficitTolerance: DISPLAY_DEFICIT_TOLERANCE_PPH }).anyArea)
     }
     const before = overflowSet(shifts)
     const after = overflowSet(previewShifts)

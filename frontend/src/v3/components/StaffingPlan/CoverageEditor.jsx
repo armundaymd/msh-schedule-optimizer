@@ -5,6 +5,7 @@ import {
   STRUCTURAL_MAX_ATTENDINGS, WEEK_DAYS, describeRule, effectiveMaxAttendings, validateCoverageConfig,
 } from '../../../shared/operationalCoverage'
 import StaffRoutingEditor from './StaffRoutingEditor'
+import IntakeCutoffEditor from './IntakeCutoffEditor'
 
 const inputCls = 'bg-[var(--c-bg-surface)] border border-[var(--c-border-strong)] rounded px-1.5 py-0.5 text-xs text-[var(--c-text-strong)] outline-none focus:border-indigo-500'
 const SHORT = d => d.slice(0, 2)
@@ -182,6 +183,7 @@ export default function CoverageEditor({ coverage, enabled, onToggle, onChange, 
       {enabled && shiftsForDay && (
         <StaffRoutingEditor coverage={coverage} onChange={onChange} days={days} shiftsForDay={shiftsForDay} customTeams={customTeams} />
       )}
+      {enabled && <IntakeCutoffEditor coverage={coverage} onChange={onChange} customTeams={customTeams} />}
       {enabled && errors.length > 0 && (
         <div className="text-[11px] text-red-300">{errors.join(' ')}</div>
       )}

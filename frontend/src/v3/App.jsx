@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { fetchSchedule, fetchDemand, fetchSummary, postRefresh, fetchScenarios, createScenario, deleteScenario } from '../shared/api'
+import { fetchSchedule, fetchDemand, fetchSummary, postRefresh, fetchRefreshStatus, fetchScenarios, createScenario, deleteScenario } from '../shared/api'
 import { useScheduleState } from '../shared/hooks/useScheduleState'
 import { useCommandStack } from './hooks/useCommandStack'
 import { buildScenarioPayload, scenarioOperationalCoverage, scenarioPayloadToSnapshot } from '../shared/scenarioPayload'
 import { serializePlannerSettings } from '../shared/attendingPlanner'
-import { DEFAULT_OPERATIONAL_COVERAGE, cloneCoverageConfig } from '../shared/operationalCoverage'
+import { COVERAGE_MODE, DEFAULT_OPERATIONAL_COVERAGE, cloneCoverageConfig, effectiveMaxAttendings, resolveCoverage } from '../shared/operationalCoverage'
 import { shiftCoversHour, scopeCapacity } from '../shared/capacity'
 import { getDemandSeries, getScopeDemandSeries, hasPercentiles } from '../shared/demandSeries'
 import { AREA_LABEL, SCOPE_LABEL, scopeAreas, teamsInArea } from '../shared/areas'
@@ -189,7 +189,7 @@ function App() {
     }
     setOptimizing(true)
     await new Promise(r => setTimeout(r, 280))
-    const result = runOptimizer(shifts, demand, pph, activeDow, customTeams, activeScope, target)
+    const result = runOptimizer(shifts, demand, pph, activeDow, customTeams, activeScope, target, { coverage: operationalCoverage })
     commandStack.pushCommand('day', [activeDow], `Auto-optimize ${scopeLabel}`)
     schedState.applyDayShifts(activeDow, result.newShifts)
     setOptimizePreCustomTeams(customTeams)
@@ -229,7 +229,7 @@ function App() {
     DAYS.forEach(day => {
       const dayShifts = schedState.getShiftsForDay(day)
       const beforeCoverage = capacitySeries(dayShifts, pph, customTeams, activeScope)
-      const result = runOptimizer(dayShifts, demand, pph, day, accumulatedCustomTeams, activeScope, target)
+      const result = runOptimizer(dayShifts, demand, pph, day, accumulatedCustomTeams, activeScope, target, { coverage: operationalCoverage })
       schedState.applyDayShifts(day, result.newShifts)
       if (result.newTeams.length > 0) {
         accumulatedCustomTeams = [...accumulatedCustomTeams, ...result.newTeams]
@@ -247,7 +247,7 @@ function App() {
 
     if (allNewTeams.length > 0) setCustomTeams(accumulatedCustomTeams)
 
-    setOptimizeResult({ isWeek: true, perDay, resolvedCount: totalResolved, totalOverflow, changes: [] })
+    setOptimizeResult({ isWeek: true, perDay, resolvedCount: totalResolved, totalOverflow, changes: [], blocked: [] })
     setOptimizing(false)
   }
 
@@ -308,8 +308,20 @@ function App() {
     const postShiftsByDay = {}
     let totalHours = 0, totalShiftCount = 0, totalCost = 0, totalUncovered = 0, baselineHours = 0, baselineCost = 0
 
+    // Hard structural rules the Generator may not break (operational config):
+    // the area's maximum simultaneous attendings (ERU: one, whatever the
+    // panel says) and the hours the area is closed on any day of the group.
+    const hardMaxConcurrent = effectiveMaxAttendings(operationalCoverage, area) ?? undefined
+    const closedHoursFor = days => (operationalCoverage
+      ? Array.from({ length: 24 }, (_, h) => h).filter(h => days.some(d => resolveCoverage(operationalCoverage, area, d, h).mode === COVERAGE_MODE.CLOSED))
+      : [])
+    const rulesApplied = []
+    if (hardMaxConcurrent != null) rulesApplied.push(`${AREA_LABEL[area]}: at most ${hardMaxConcurrent} attending${hardMaxConcurrent === 1 ? '' : 's'} at once (hard rule)`)
+
     for (const group of groups) {
-      const runConstraints = { ...constraints, hourBudget: remainingBudget }
+      const closedHours = closedHoursFor(group.days)
+      if (closedHours.length) rulesApplied.push(`${group.label}: no attending during closed hours ${closedHours.map(h => `${String(h).padStart(2, '0')}:00`).join(', ')}`)
+      const runConstraints = { ...constraints, hourBudget: remainingBudget, hardMaxConcurrent, closedHours }
       const genResult = generateSchedule({ demand, target: genTarget, day: group.anchorDay, area, patterns, constraints: runConstraints, pph })
       const { shifts: assigned, newTeams } = assignTeams(genResult.shifts, area, reusableAreaTeams, accumulatedCustomTeams.map(t => t.name))
       if (newTeams.length > 0) {
@@ -359,6 +371,7 @@ function App() {
       area: AREA_LABEL[area],
       groups: resultGroups,
       totals: { hours: totalHours, shiftCount: totalShiftCount, cost: totalCost, baselineHours, baselineCost, uncoveredHours: totalUncovered, patternCounts },
+      rulesApplied,
       preShiftsByDay,
       postShiftsByDay,
     })
@@ -412,7 +425,10 @@ function App() {
     // Undo/redo also remove/restore the plan's new teams (only those, so
     // teams added afterwards survive an undo).
     const names = new Set(plan.newTeams.map(t => t.name))
-    const addTeams = () => setCustomTeams(prev => [...prev, ...plan.newTeams.filter(t => !prev.some(p => p.name === t.name))])
+    // Once applied, each new team is an ordinary team (the planner's pooled
+    // intake-cutoff scoring applies only while it is the plan being scored).
+    const applied = plan.newTeams.map(t => { const c = { ...t }; delete c.plannerPool; return c })
+    const addTeams = () => setCustomTeams(prev => [...prev, ...applied.filter(t => !prev.some(p => p.name === t.name))])
     commandStack.pushCommand('week', DAYS, `Apply staffing plan (${SCOPE_LABEL[plan.settings.scope]})`, names.size ? {
       undo: () => setCustomTeams(prev => prev.filter(t => !names.has(t.name))),
       redo: addTeams,
@@ -489,10 +505,14 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function handleRefresh() {
+  // "Refresh data" is shown only where the server allows it (ADMIN_TOKEN set).
+  const [refreshEnabled, setRefreshEnabled] = useState(false)
+  useEffect(() => { fetchRefreshStatus().then(st => setRefreshEnabled(!!st.enabled)) }, [])
+
+  async function handleRefresh(token = null) {
     setRefreshing(true)
     try {
-      await postRefresh()
+      await postRefresh(typeof token === 'string' ? token : null)
       const [sched, dem, summ] = await Promise.all([fetchSchedule(), fetchDemand(), fetchSummary()])
       schedState.loadBaseline(sched)
       setDemand(dem)
@@ -500,6 +520,7 @@ function App() {
       commandStack.clear()
     } catch (e) {
       console.error(e)
+      window.alert(e.message)
     }
     setRefreshing(false)
   }
@@ -565,6 +586,7 @@ function App() {
       <TopBar
         summary={summary}
         onRefresh={handleRefresh}
+        refreshEnabled={refreshEnabled}
         refreshing={refreshing}
         onResetDay={() => {
           commandStack.pushCommand('day', [activeDow], 'Reset day')

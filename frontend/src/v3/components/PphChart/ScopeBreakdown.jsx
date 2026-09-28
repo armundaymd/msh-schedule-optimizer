@@ -1,5 +1,5 @@
 import { AREA_LABEL, SCOPE_LABEL } from '../../../shared/areas'
-import { hourSnapshot, worstHour, formatHour, formatPph } from '../../../shared/coverageInsights'
+import { DISPLAY_DEFICIT_TOLERANCE_PPH, hourSnapshot, worstHour, formatHour, formatPph } from '../../../shared/coverageInsights'
 import { STATUS_TEXT, STATUS_TEXT_CLASS } from '../coverageStyles'
 
 // One-line readout for a combined scope: aggregate capacity − demand and each
@@ -8,7 +8,7 @@ import { STATUS_TEXT, STATUS_TEXT_CLASS } from '../coverageStyles'
 //   18:00 (worst) · Whole ED −3.4 | Main −2.7 | FastTrack −1.2 | ERU +0.5
 export default function ScopeBreakdown({ analysis, hoverHour }) {
   const hour = hoverHour ?? worstHour(analysis)
-  const snap = hourSnapshot(analysis, hour)
+  const snap = hourSnapshot(analysis, hour, { deficitTolerance: DISPLAY_DEFICIT_TOLERANCE_PPH })
   const masked = snap.aggregate.status === 'masked'
 
   return (

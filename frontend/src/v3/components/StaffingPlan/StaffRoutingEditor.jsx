@@ -48,13 +48,13 @@ export default function StaffRoutingEditor({ coverage, onChange, days, shiftsFor
             onChange={e => { const [area, team] = e.target.value.split('|'); update(i, { to: { area, team } }) }} className={inputCls}>
             {AREAS.flatMap(a => teamsInArea(a, customTeams).map(t => <option key={`${a}|${t}`} value={`${a}|${t}`}>{AREA_LABEL[a]} · {t}</option>))}
           </select>
-          <label className="flex items-center gap-1 text-[11px]" title="Confirmed by the department (otherwise inferred from the schedule)">
+          <label className="flex items-center gap-1 text-[11px]" title="Confirmed operational rule (untick for a rule you are only testing)">
             <input type="checkbox" checked={!!r.confirmed} onChange={e => update(i, { confirmed: e.target.checked })} /> confirmed
           </label>
           <button onClick={() => set(rules.filter((_, j) => j !== i))} aria-label="Remove routing rule" className="ml-auto text-[var(--c-text-muted)] hover:text-red-400 px-1">×</button>
           <div className="w-full text-[10px] text-[var(--c-text-faint)] pl-1">
             {r.label ?? ''}{r.days?.length && r.days.length < 7 ? ` · ${r.days.map(d => d.slice(0, 3)).join(', ')}` : ''}
-            {!r.confirmed && r.basis === 'role-detail-suffix' && ' · inferred from the role_detail suffix in the schedule — needs confirmation'}
+            {r.confirmed && r.basis === 'confirmed-operational-rule' && ' · confirmed operational routing rule'}{!r.confirmed && ' · not confirmed (scenario only)'}
           </div>
         </div>
       ))}
@@ -65,7 +65,7 @@ export default function StaffRoutingEditor({ coverage, onChange, days, shiftsFor
       <details className="text-[10px] text-[var(--c-text-faint)] pl-2">
         <summary className="cursor-pointer">{routed.length} shift{routed.length === 1 ? '' : 's'} routed this week{unrouted.length ? ` · ${unrouted.length} on duty in a closed area with no routing (credited nothing)` : ''}</summary>
         <ul className="mt-1 space-y-0.5">
-          {routed.map((x, i) => <li key={`r${i}`}>{shiftText(x)} → {x.rule.to.team} ({AREA_LABEL[x.rule.to.area]}){x.rule.confirmed ? '' : ' · unconfirmed'}</li>)}
+          {routed.map((x, i) => <li key={`r${i}`}>{shiftText(x)} → {x.rule.to.team} ({AREA_LABEL[x.rule.to.area]}){x.rule.confirmed ? '' : ' · not confirmed'}</li>)}
           {unrouted.map((x, i) => <li key={`u${i}`} className="text-amber-300">{shiftText(x)} — area closed, no routing rule: where does this shift work?</li>)}
         </ul>
       </details>

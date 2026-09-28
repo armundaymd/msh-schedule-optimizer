@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import ConfirmDialog from '../../shared/components/ConfirmDialog'
 import SettingsMenu from './SettingsMenu'
 
-export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onSaveScenario, scenarioCount, onUndo, onRedo, canUndo, canRedo, onAutoOptimize, onAutoOptimizeWeek, optimizing, onExport, activeScopeLabel, onClearDay, onClearWeek, onOpenGenerator, onOpenScenarios, theme, onThemeChange, costModeEnabled, onToggleCostMode }) {
+export default function TopBar({ summary, onRefresh, refreshing, refreshEnabled = false, onResetDay, onSaveScenario, scenarioCount, onUndo, onRedo, canUndo, canRedo, onAutoOptimize, onAutoOptimizeWeek, optimizing, onExport, activeScopeLabel, onClearDay, onClearWeek, onOpenGenerator, onOpenScenarios, theme, onThemeChange, costModeEnabled, onToggleCostMode }) {
   const [popoverOpen, setPopoverOpen] = useState(false)
   const [name, setName] = useState('')
   const popoverRef = useRef(null)
@@ -199,6 +199,7 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
             </div>
           )}
         </div>
+        {refreshEnabled && (
         <button
           onClick={onRefresh}
           disabled={refreshing}
@@ -206,6 +207,7 @@ export default function TopBar({ summary, onRefresh, refreshing, onResetDay, onS
         >
           {refreshing ? 'Refreshing…' : '↻ Refresh data'}
         </button>
+        )}
         <SettingsMenu
           theme={theme}
           onThemeChange={onThemeChange}

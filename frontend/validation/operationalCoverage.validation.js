@@ -116,8 +116,10 @@ describe.skipIf(!solver.ok)('operational coverage — real data, end to end', ()
     expect(r.result.status).toBe('infeasible')
     expect(r.result.diagnosis.requiredHours).toBeGreaterThan(200)
     expect(r.result.diagnosis.availableHours).toBe(200)
-    expect(Object.keys(r.result.diagnosis.byArea).sort()).toEqual(['eru', 'main'])
+    // FastTrack appears too: its residents need a FastTrack attending (resident supervision).
+    expect(Object.keys(r.result.diagnosis.byArea).sort()).toEqual(['eru', 'fasttrack', 'main'])
     expect(r.result.message).toMatch(/Current ERU dedicated coverage/)
+    expect(r.result.message).toMatch(/Resident supervision/)
   }, 120_000)
 
   it('11. locked shifts are kept and still count, with coverage rules on', () => {

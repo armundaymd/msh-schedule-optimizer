@@ -4,10 +4,11 @@
 import { AREAS, AREA_LABEL, scopeAreas, teamsInArea } from './areas'
 import { attendingCapacity, extenderCapacity, shiftCoversHour, teamArea, teamCapacityForTeam } from './capacity'
 import { getDemandSeries } from './demandSeries'
-import { EXCESS_MIN_FRACTION, EXCESS_MIN_PPH } from './coverageInsights'
+import { DISPLAY_DEFICIT_TOLERANCE_PPH, EXCESS_MIN_FRACTION, EXCESS_MIN_PPH } from './coverageInsights'
 import {
   COVERAGE_MODE, areaMaxAttendings, attendingsInArea, blocksDedicatedPlacement, coverageGrid, crossCoverApplies,
-  crossCoverCreditParams, effectiveShifts, operationalCoverageSummary, requirementLabels, validateCoverageConfig,
+  crossCoverCreditParams, effectiveShifts, fixedIntakeClosed, intakeCutoffsOf, intakeLookahead, operationalCoverageSummary, requirementLabels,
+  validateCoverageConfig,
 } from './operationalCoverage'
 import { analyzeWeek } from './weekCoverage'
 
@@ -37,6 +38,22 @@ import { analyzeWeek } from './weekCoverage'
 // Area attending MAXIMUMS (maxAttendingsByArea; ERU = 1, structural) apply
 // whether or not the coverage rules are on: slot limits are capped and the
 // solver gets a per-hour area maximum.
+// RESIDENT SUPERVISION (confirmed operational rule, hard): a resident on a
+// clinical team may only work while that team has a supervising attending.
+// For every existing team slot, `minAttendings[d][h]` = 1 whenever a
+// resident operates on that team at that hour — after staff routing, so a
+// routed resident is supervised on the team it works on, never on its
+// recorded team. Residents stay fixed inputs; attendings on OTHER teams
+// (including planner-added new teams) never supervise them. The one
+// exemption is explicit cross-coverage: in a CROSS_COVERED hour the covering
+// area's attendings are responsible and supervise the area's residents, so
+// the covering area must then have at least one attending (minCoverage). In a
+// FLEXIBLE hour with a covering area, cross-coverage applies only while the
+// area has NO attending of its own, so the slot gets
+// `supervisedUnlessUncovered[d][h]` = 1: this team has an attending, OR the
+// area has none at all (and the covering area, which must have one, supervises).
+// An attending on another team of the area never counts.
+// PAs/APPs are not covered by this rule (their capacity rules are unchanged).
 // Demand is never moved: every area keeps its own historical series.
 
 export const WEEKS_PER_YEAR = 52 // matches the app's "Yearly hrs (x52)"
@@ -130,6 +147,30 @@ export function buildPlanInstance({
     }
   }
 
+  // Resident supervision. residentsOn(team, day, h): residents operating on
+  // `team` at h (staff routing applied when a coverage config is given).
+  const operating = (day, h) => (coverage ? effectiveShifts(keptByDay[day], coverage, day, h) : keptByDay[day])
+  const residentsOn = (team, day, h) => operating(day, h).filter(s => s.role_type === 'Resident' && s.team === team && shiftCoversHour(s, h)).length
+  const crossCoveredAt = (area, di, h) => !!grids && grids[area][di][h].mode === COVERAGE_MODE.CROSS_COVERED
+  const flexCoveredAt = (area, di, h) => !!grids && grids[area][di][h].mode === COVERAGE_MODE.FLEXIBLE && !!grids[area][di][h].coveredBy
+  // Covering areas that must have an attending on because a cross-covered
+  // area's residents are working: { [coveringArea]: [d][h] 0/1 }.
+  const coverSupervision = {}
+  for (const area of AREAS) {
+    if (!grids) break
+    days.forEach((day, di) => {
+      for (let h = 0; h < 24; h++) {
+        if (!crossCoveredAt(area, di, h) && !flexCoveredAt(area, di, h)) continue
+        const by = grids[area][di][h].coveredBy
+        if (!by) continue
+        const res = operating(day, h).filter(s => s.role_type === 'Resident' && teamArea(s.team, customTeams) === area && shiftCoversHour(s, h)).length
+        if (!res) continue
+        coverSupervision[by] ??= days.map(() => Array(24).fill(0))
+        coverSupervision[by][di][h] = 1
+      }
+    })
+  }
+
   const slotMeta = {} // `${area}/${slotId}` -> { area, team, flex }
   const instanceAreas = areas.map(area => {
     const teamNames = new Set(teamsInArea(area, customTeams))
@@ -141,10 +182,10 @@ export function buildPlanInstance({
 
     const slots = [...teamNames].map(team => {
       slotMeta[`${area}/${team}`] = { area, team, flex: false }
-      const locked = [], maxAttendings = [], capacity = []
+      const locked = [], maxAttendings = [], capacity = [], minAttendings = [], unlessUncovered = []
       days.forEach((day, di) => {
         const lockedAtt = lockedByDay[day].filter(s => s.team === team)
-        const lockedRow = [], maxRow = [], capRow = []
+        const lockedRow = [], maxRow = [], capRow = [], minRow = [], unlessRow = []
         for (let h = 0; h < 24; h++) {
           // Residents/PAs operating on this team at this hour (staff routing
           // applied when a coverage config is given; attendings never routed).
@@ -155,12 +196,23 @@ export function buildPlanInstance({
           const top = Math.max(Math.min(maxPerTeam, cap), nLocked)
           lockedRow.push(nLocked)
           maxRow.push(blocked(area, di, h) ? nLocked : top)
+          const res = residentsOn(team, day, h) > 0
+          minRow.push(res && !crossCoveredAt(area, di, h) && !flexCoveredAt(area, di, h) ? 1 : 0)
+          unlessRow.push(res && flexCoveredAt(area, di, h) ? 1 : 0)
+          // Intake cutoff (fixed clock window): the team takes no new patients
+          // this hour, so it adds no capacity against demand whatever n is.
+          const closed = !!coverage && fixedIntakeClosed(coverage, team, day, h)
           capRow.push(Array.from({ length: top + 1 }, (_, n) =>
-            teamCapacityForTeam([...base, ...syntheticAttendings(team, h, n)], pph, area, team, h)))
+            (closed ? 0 : teamCapacityForTeam([...base, ...syntheticAttendings(team, h, n)], pph, area, team, h))))
         }
-        locked.push(lockedRow); maxAttendings.push(maxRow); capacity.push(capRow)
+        locked.push(lockedRow); maxAttendings.push(maxRow); capacity.push(capRow); minAttendings.push(minRow); unlessUncovered.push(unlessRow)
       })
-      return { id: team, flex: false, locked, maxAttendings, capacity }
+      const look = coverage ? intakeLookahead(coverage, team) : 0
+      return {
+        id: team, flex: false, locked, maxAttendings, capacity, minAttendings,
+        ...(look ? { intakeLookahead: look } : {}),
+        ...(unlessUncovered.some(row => row.some(v => v)) ? { supervisedUnlessUncovered: unlessUncovered } : {}),
+      }
     })
 
     // New teams: no residents/PAs. One pooled slot is exact because a team
@@ -175,6 +227,10 @@ export function buildPlanInstance({
       locked: days.map(() => Array(24).fill(0)),
       maxAttendings: days.map((_, di) => Array.from({ length: 24 }, (_, h) => (blocked(area, di, h) ? 0 : flexMax))),
       capacity: days.map(() => Array.from({ length: 24 }, (_, h) => flexRow(h))),
+      // New teams take no new patients in their last N hours of coverage,
+      // unless another new-team attending continues it (planned as one pool;
+      // the app scores the resulting teams as the same pool — plannerPool).
+      ...(coverage && intakeCutoffsOf(coverage)?.extraTeamsHoursBeforeEnd ? { intakeLookahead: intakeCutoffsOf(coverage).extraTeamsHoursBeforeEnd } : {}),
     })
 
     const demandRows = days.map(day => getDemandSeries(demand, AREA_LABEL[area], day, target).map(v => v ?? 0))
@@ -183,11 +239,14 @@ export function buildPlanInstance({
       demand: demandRows,
       excessTolerance: demandRows.map(row => row.map(d => Math.max(EXCESS_MIN_PPH, EXCESS_MIN_FRACTION * d))),
       minCoverage: days.map((_, di) => Array.from({ length: 24 }, (_, h) =>
-        Math.max(0, grids ? grids[area][di][h].minAttendings : 0,
+        Math.max(0, grids ? grids[area][di][h].minAttendings : 0, coverSupervision[area]?.[di][h] ?? 0,
           ...minCoverageRules.filter(r => r.area === area && inWindow(h, r.fromHour, r.toHour)).map(r => r.min)))),
       slots,
       supervisionCeilingPph: pph[area] ?? 0,
-      requirementLabels: coverage ? requirementLabels(coverage, area) : [],
+      requirementLabels: [
+        ...(coverage ? requirementLabels(coverage, area) : []),
+        ...supervisionLabels(area, slots, coverSupervision[area]),
+      ],
       ...(maxAttendingsByArea[area] != null ? { maxCoverage: days.map(() => Array(24).fill(maxAttendingsByArea[area])) } : {}),
       ...(grids ? { coverageMode: grids[area].map(row => row.map(r => r.mode)) } : {}),
     }
@@ -201,6 +260,20 @@ export function buildPlanInstance({
     ...(grids ? buildCrossCover({ days, areas, grids, keptByDay, pph, demand, target, customTeams, coverage }) : {}),
   }
   return { instance, context: { days, areas, keptByDay, lockedByDay, lockedHours, slotMeta, coverage } }
+}
+
+// Human-readable hard rules the resident-supervision requirement adds to an area.
+function supervisionLabels(area, slots, covering) {
+  const out = []
+  for (const s of slots) {
+    const n = (s.minAttendings ?? []).reduce((t, row) => t + row.reduce((a, v) => a + v, 0), 0)
+    if (n) out.push(`Resident supervision: ${s.id} needs its own attending whenever its residents work (${n} team-hours/week)`)
+    const u = (s.supervisedUnlessUncovered ?? []).reduce((t, row) => t + row.reduce((a, v) => a + v, 0), 0)
+    if (u) out.push(`Resident supervision: ${s.id} needs its own attending, or ${AREA_LABEL[area]} no attending at all (cross-covered), whenever its residents work in flexible hours (${u} team-hours/week)`)
+  }
+  const c = (covering ?? []).reduce((t, row) => t + row.reduce((a, v) => a + v, 0), 0)
+  if (c) out.push(`Resident supervision: ${AREA_LABEL[area]} must have an attending while cross-covering an area whose residents are working (${c} h/week)`)
+  return out
 }
 
 // Cross-coverage inputs for the solver, in AREAS order (the order covered
@@ -304,7 +377,9 @@ export function applyPlanResult(result, context, customTeams = []) {
       while (taken.has(name)) name = `Plan ${AREA_LABEL[area]} ${++i}`
       taken.add(name)
       const color = PLAN_COLORS[(newTeams.length) % PLAN_COLORS.length]
-      newTeams.push({ name, color, area: AREA_LABEL[area] })
+      // plannerPool: scored as one pool for the intake cutoff (see operationalAreaCapacity);
+      // App strips it when a plan is applied, after which each team stands alone.
+      newTeams.push({ name, color, area: AREA_LABEL[area], plannerPool: true })
       laneTeams[area].push(name)
     }
     return laneTeams[area][lane]
@@ -340,7 +415,9 @@ function attendingHours(shifts) {
 // instead.
 export function schedulePlanMetrics({ days, shiftsForDay, customTeams, demand, pph, scope, target, coverage = null }) {
   const week = analyzeWeek({ days, shiftsForDay, demand, pph, customTeams, scope, target, coverage })
-  const blank = () => ({ uncoveredPphHours: 0, deficitHours: 0, severeDeficitHours: 0, excessHours: 0, attendingHours: 0, unattendedDemandHours: 0 })
+  // deficitHours: raw (any demand > capacity) — used by analyses and reports.
+  // displayDeficitHours: short by at least the DISPLAY tolerance — what screens show.
+  const blank = () => ({ uncoveredPphHours: 0, deficitHours: 0, displayDeficitHours: 0, severeDeficitHours: 0, excessHours: 0, attendingHours: 0, unattendedDemandHours: 0 })
   const byArea = Object.fromEntries(week.areas.map(a => [a, blank()]))
   const aggregate = blank()
   const byDay = {}
@@ -369,12 +446,14 @@ export function schedulePlanMetrics({ days, shiftsForDay, customTeams, demand, p
         if (net < 0) {
           m.uncoveredPphHours += -net
           m.deficitHours++
+          if (-net >= DISPLAY_DEFICIT_TOLERANCE_PPH - 1e-12) m.displayDeficitHours++
           if (-net > SEVERE_DEFICIT_PPH) m.severeDeficitHours++
         }
         if (grid.byArea[a].status[row.hour] === 'excess') m.excessHours++
       }
       if (row.net < 0) aggregate.uncoveredPphHours += -row.net
       if (row.demand > row.capacity) aggregate.deficitHours++
+      if (row.demand - row.capacity >= DISPLAY_DEFICIT_TOLERANCE_PPH - 1e-12) aggregate.displayDeficitHours++
       if (grid.aggregate.status[row.hour] === 'excess') aggregate.excessHours++
     }
   })

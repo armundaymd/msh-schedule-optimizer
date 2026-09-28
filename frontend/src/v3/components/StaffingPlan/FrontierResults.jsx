@@ -3,6 +3,7 @@ import { CartesianGrid, Line, LineChart, ReferenceDot, ReferenceLine, Responsive
 import { AREA_LABEL } from '../../../shared/areas'
 import { diminishingReturns, marginalRows, planningUnits } from '../../../shared/attendingPlanner'
 import { Tag } from './AssumptionStrip'
+import { solverStatus } from '../../../shared/solverStatus'
 
 const fmt = (n, d = 1) => (n == null ? '—' : Number(n).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d }))
 const AXIS = '#94a3b8'
@@ -116,7 +117,7 @@ export default function FrontierResults({ rows, markers = {}, units = {}, onView
                 {['main', 'fasttrack', 'eru'].map(a => <td key={a} className="py-1 px-1.5 tabular-nums text-[var(--c-text-muted)]">{fmt(r.unmetByArea[a])}</td>)}
                 <td className="py-1 px-1.5 tabular-nums text-[var(--c-text-muted)]">{fmt(r.excess)}</td>
                 <td className="py-1 px-1.5 tabular-nums">{perHour[r.budget] ? <>{fmt(perHour[r.budget].perHour, 2)}{perHour[r.budget].withinNoise && <span className="text-[var(--c-text-faint)]" title="Within search uncertainty"> ~</span>}</> : '—'}</td>
-                <td className="py-1 px-1.5 text-[var(--c-text-faint)] whitespace-nowrap">{r.status === 'optimal' ? 'optimal' : `gap ${fmt(100 * (r.gap ?? 0))}%`}</td>
+                <td className="py-1 px-1.5 text-[var(--c-text-faint)] whitespace-nowrap">{solverStatus(r.status, r.gap).short}</td>
               </tr>
             ) : (
               <tr key={r.budget} className="border-t border-[var(--c-border-subtle)] text-amber-300">

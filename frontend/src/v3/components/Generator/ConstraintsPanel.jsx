@@ -165,9 +165,10 @@ export default function ConstraintsPanel({
           {/* Concurrency constraints */}
           <div className="grid grid-cols-3 gap-3">
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-[var(--c-text-muted)]">Max concurrent</span>
-              <input type="number" min={1} value={maxConcurrent} onChange={e => setMaxConcurrent(parseInt(e.target.value) || 1)}
-                className="bg-[var(--c-bg-surface)] border border-[var(--c-border-strong)] rounded px-2 py-1 text-xs text-[var(--c-text-strong)]" />
+              <span className="text-xs text-[var(--c-text-muted)]" title={area === 'eru' ? 'ERU: at most one attending at a time (hard rule, not adjustable)' : undefined}>Max concurrent{area === 'eru' ? ' (hard max 1)' : ''}</span>
+              <input type="number" min={1} max={area === 'eru' ? 1 : undefined} value={area === 'eru' ? Math.min(maxConcurrent, 1) : maxConcurrent}
+                disabled={area === 'eru'} onChange={e => setMaxConcurrent(parseInt(e.target.value) || 1)}
+                className="bg-[var(--c-bg-surface)] border border-[var(--c-border-strong)] rounded px-2 py-1 text-xs text-[var(--c-text-strong)] disabled:opacity-60" />
             </label>
             <label className="flex flex-col gap-1">
               <span className="text-xs text-[var(--c-text-muted)]">Min concurrent</span>

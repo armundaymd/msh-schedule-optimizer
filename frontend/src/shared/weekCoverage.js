@@ -3,7 +3,7 @@
 
 import { AREA_LABEL, SCOPE_LABEL } from './areas'
 import { analyzeScope } from './scopeAnalysis'
-import { coverageGrid, classifyNet, groupRuns, formatRange } from './coverageInsights'
+import { coverageGrid, classifyNet, groupRuns, formatRange, shortAreasAt } from './coverageInsights'
 
 // Week-level coverage: analyzeScope() run once per day, plus the per-cell,
 // per-hour, and per-day summaries a weekly heatmap needs. No capacity or
@@ -23,12 +23,22 @@ export function isShortStatus(status) {
 }
 
 // days: ordered day names; shiftsForDay(day) -> that day's shifts.
-export function analyzeWeek({ days, shiftsForDay, demand, pph, customTeams = [], scope, target = 'mean', coverage = null }) {
+// deficitTolerance: 0 (raw, default) for metrics; screens pass the DISPLAY
+// tolerance (coverageInsights.js DISPLAY_DEFICIT_TOLERANCE_PPH) so a
+// shortfall that rounds to 0.0 PPH is not shown as short.
+export function analyzeWeek({ days, shiftsForDay, demand, pph, customTeams = [], scope, target = 'mean', coverage = null, deficitTolerance = 0 }) {
   const perDay = days.map(day => {
     const analysis = analyzeScope({ shifts: shiftsForDay(day), demand, pph, customTeams, scope, day, target, coverage })
-    return { day, analysis, grid: coverageGrid(analysis) }
+    return { day, analysis, grid: coverageGrid(analysis, { deficitTolerance }) }
   })
-  return { scope, areas: perDay[0]?.analysis.areas ?? [], days: perDay, coverage }
+  return { scope, areas: perDay[0]?.analysis.areas ?? [], days: perDay, coverage, deficitTolerance }
+}
+
+// The same week re-classified under another deficit tolerance (e.g. the
+// DISPLAY tolerance for a week built raw by schedulePlanMetrics). Nets and
+// demand/capacity are untouched; only statuses change.
+export function withDeficitTolerance(week, deficitTolerance) {
+  return { ...week, deficitTolerance, days: week.days.map(d => ({ ...d, grid: coverageGrid(d.analysis, { deficitTolerance }) })) }
 }
 
 // Everything about one day/hour cell, for colour, tooltip, and aria-label.
@@ -47,15 +57,15 @@ export function weekCell(week, dayIndex, hour, layer = 'all') {
       day, hour, layer,
       demand: row.demand, capacity: row.capacity, net: row.net,
       status: grid.aggregate.status[hour],
-      shortAreas: row.shortAreas, areas,
+      shortAreas: shortAreasAt(row, analysis.areas, week.deficitTolerance ?? 0), areas,
     }
   }
   const a = row.byArea[layer]
   return {
     day, hour, layer,
     demand: a.demand, capacity: a.capacity, net: a.net,
-    status: classifyNet(a.demand, a.capacity),
-    shortAreas: row.shortAreas.includes(layer) ? [layer] : [],
+    status: classifyNet(a.demand, a.capacity, week.deficitTolerance ?? 0),
+    shortAreas: grid.byArea[layer].status[hour] === 'deficit' ? [layer] : [],
     areas,
   }
 }
@@ -118,7 +128,7 @@ export function consistentPatterns(week, { layer = 'all', minDays = CONSISTENT_M
         for (const area of areas) {
           let count = 0
           for (const h of run.hours) {
-            week.days.forEach(d => { if (d.analysis.hours[h].shortAreas.includes(area)) count++ })
+            week.days.forEach(d => { if (d.grid.byArea[area].status[h] === 'deficit') count++ })
           }
           if (count > 0) areaCounts.push({ area, count })
         }

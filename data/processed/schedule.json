@@ -4,1791 +4,2303 @@
     "team": "Green",
     "end_time": "15:00",
     "role_type": "Attending",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "Green",
     "end_time": "23:00",
     "role_type": "Attending",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "Green",
     "end_time": "07:00",
     "role_type": "Attending",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "Green",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "Green",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "Green",
     "end_time": "07:00",
     "role_type": "PA",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "Green",
     "end_time": "05:00",
     "role_type": "PA",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "Green",
     "end_time": "19:00",
     "role_type": "Resident",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Monday",
     "team": "Green",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Monday",
     "team": "Red",
     "end_time": "15:00",
     "role_type": "Attending",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Attending",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Attending",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "Red",
     "end_time": "15:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
   },
   {
     "day": "Monday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
   },
   {
     "day": "Monday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
   },
   {
     "day": "Monday",
     "team": "Red",
     "end_time": "15:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Monday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Monday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Monday",
     "team": "Red",
     "end_time": "15:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Monday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Monday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Monday",
     "team": "Red",
     "end_time": "15:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Monday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Monday",
     "team": "FastTrack",
     "end_time": "17:00",
     "role_type": "Attending",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "FastTrack",
     "end_time": "01:00",
     "role_type": "Attending",
-    "start_time": "17:00"
+    "start_time": "17:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "FastTrack",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "FastTrack",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "FastTrack",
     "end_time": "23:00",
     "role_type": "PA",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "FastTrack",
     "end_time": "07:00",
     "role_type": "PA",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "PA-Red",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "FastTrack",
     "end_time": "23:00",
     "role_type": "PA",
-    "start_time": "11:00"
+    "start_time": "11:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "FastTrack",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "EM3/4-Green",
+    "resident_level": "PGY-3"
   },
   {
     "day": "Monday",
     "team": "ERU",
     "end_time": "17:00",
     "role_type": "Attending",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "ERU",
     "end_time": "01:00",
     "role_type": "Attending",
-    "start_time": "17:00"
+    "start_time": "17:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Monday",
     "team": "ERU",
     "end_time": "15:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Monday",
     "team": "ERU",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Monday",
     "team": "ERU",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Monday",
     "team": "ERU",
     "end_time": "22:00",
     "role_type": "Resident",
-    "start_time": "14:00"
+    "start_time": "14:00",
+    "role_detail": "EM1",
+    "resident_level": "PGY-1"
   },
   {
     "day": "Monday",
     "team": "ERU",
     "end_time": "22:00",
     "role_type": "Resident",
-    "start_time": "14:00"
+    "start_time": "14:00",
+    "role_detail": "EM4",
+    "resident_level": "PGY-4"
   },
   {
     "day": "Monday",
     "team": "Blue",
+    "end_time": "15:00",
+    "role_type": "Attending",
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Monday",
+    "team": "Blue",
+    "end_time": "23:00",
+    "role_type": "Attending",
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Monday",
+    "team": "Blue",
+    "end_time": "15:00",
+    "role_type": "PA",
+    "start_time": "09:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
+  },
+  {
+    "day": "Monday",
+    "team": "Blue",
+    "end_time": "23:00",
+    "role_type": "PA",
+    "start_time": "15:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
+  },
+  {
+    "day": "Tuesday",
+    "team": "Green",
+    "end_time": "15:00",
+    "role_type": "Attending",
+    "start_time": "07:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Tuesday",
+    "team": "Green",
+    "end_time": "23:00",
+    "role_type": "Attending",
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Tuesday",
+    "team": "Green",
+    "end_time": "07:00",
+    "role_type": "Attending",
+    "start_time": "23:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Tuesday",
+    "team": "Green",
+    "end_time": "19:00",
+    "role_type": "PA",
+    "start_time": "07:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
+  },
+  {
+    "day": "Tuesday",
+    "team": "Green",
+    "end_time": "19:00",
+    "role_type": "PA",
+    "start_time": "07:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
+  },
+  {
+    "day": "Tuesday",
+    "team": "Green",
+    "end_time": "07:00",
+    "role_type": "PA",
+    "start_time": "19:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
+  },
+  {
+    "day": "Tuesday",
+    "team": "Green",
+    "end_time": "07:00",
+    "role_type": "Resident",
+    "start_time": "19:00",
+    "role_detail": "OS",
+    "resident_level": "Off-Service"
+  },
+  {
+    "day": "Tuesday",
+    "team": "Green",
+    "end_time": "19:00",
+    "role_type": "Resident",
+    "start_time": "09:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
+  },
+  {
+    "day": "Tuesday",
+    "team": "Green",
+    "end_time": "07:00",
+    "role_type": "Resident",
+    "start_time": "19:00",
+    "role_detail": "OS",
+    "resident_level": "Off-Service"
+  },
+  {
+    "day": "Tuesday",
+    "team": "Red",
+    "end_time": "15:00",
+    "role_type": "Attending",
+    "start_time": "07:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Tuesday",
+    "team": "Red",
+    "end_time": "23:00",
+    "role_type": "Attending",
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Tuesday",
+    "team": "Red",
+    "end_time": "07:00",
+    "role_type": "Attending",
+    "start_time": "23:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Tuesday",
+    "team": "Red",
+    "end_time": "15:00",
+    "role_type": "Resident",
+    "start_time": "07:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
+  },
+  {
+    "day": "Tuesday",
+    "team": "Red",
+    "end_time": "23:00",
+    "role_type": "Resident",
+    "start_time": "15:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
+  },
+  {
+    "day": "Tuesday",
+    "team": "Red",
+    "end_time": "15:00",
+    "role_type": "Resident",
+    "start_time": "07:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
+  },
+  {
+    "day": "Tuesday",
+    "team": "Red",
+    "end_time": "23:00",
+    "role_type": "Resident",
+    "start_time": "15:00",
+    "role_detail": "EM3/4",
+    "resident_level": "PGY-3"
+  },
+  {
+    "day": "Tuesday",
+    "team": "Red",
+    "end_time": "15:00",
+    "role_type": "Resident",
+    "start_time": "07:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
+  },
+  {
+    "day": "Tuesday",
+    "team": "Red",
+    "end_time": "23:00",
+    "role_type": "Resident",
+    "start_time": "15:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
+  },
+  {
+    "day": "Tuesday",
+    "team": "Red",
+    "end_time": "07:00",
+    "role_type": "PA",
+    "start_time": "19:00",
+    "role_detail": "PA",
+    "resident_level": null
+  },
+  {
+    "day": "Tuesday",
+    "team": "Red",
+    "end_time": "19:00",
+    "role_type": "Resident",
+    "start_time": "07:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
+  },
+  {
+    "day": "Tuesday",
+    "team": "Red",
+    "end_time": "07:00",
+    "role_type": "Resident",
+    "start_time": "19:00",
+    "role_detail": "OS",
+    "resident_level": "Off-Service"
+  },
+  {
+    "day": "Tuesday",
+    "team": "FastTrack",
     "end_time": "17:00",
     "role_type": "Attending",
-    "start_time": "09:00"
-  },
-  {
-    "day": "Monday",
-    "team": "Blue",
-    "end_time": "01:00",
-    "role_type": "Attending",
-    "start_time": "17:00"
-  },
-  {
-    "day": "Monday",
-    "team": "Blue",
-    "end_time": "21:00",
-    "role_type": "PA",
-    "start_time": "09:00"
-  },
-  {
-    "day": "Monday",
-    "team": "Blue",
-    "end_time": "23:00",
-    "role_type": "PA",
-    "start_time": "11:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Green",
-    "end_time": "15:00",
-    "role_type": "Attending",
-    "start_time": "07:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Green",
-    "end_time": "23:00",
-    "role_type": "Attending",
-    "start_time": "15:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Green",
-    "end_time": "07:00",
-    "role_type": "Attending",
-    "start_time": "23:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Green",
-    "end_time": "19:00",
-    "role_type": "PA",
-    "start_time": "07:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Green",
-    "end_time": "19:00",
-    "role_type": "PA",
-    "start_time": "07:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Green",
-    "end_time": "07:00",
-    "role_type": "PA",
-    "start_time": "19:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Green",
-    "end_time": "07:00",
-    "role_type": "Resident",
-    "start_time": "19:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Green",
-    "end_time": "19:00",
-    "role_type": "Resident",
-    "start_time": "09:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Green",
-    "end_time": "07:00",
-    "role_type": "Resident",
-    "start_time": "19:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Red",
-    "end_time": "15:00",
-    "role_type": "Attending",
-    "start_time": "07:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Red",
-    "end_time": "23:00",
-    "role_type": "Attending",
-    "start_time": "15:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Red",
-    "end_time": "07:00",
-    "role_type": "Attending",
-    "start_time": "23:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Red",
-    "end_time": "15:00",
-    "role_type": "Resident",
-    "start_time": "07:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Red",
-    "end_time": "23:00",
-    "role_type": "Resident",
-    "start_time": "15:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Red",
-    "end_time": "15:00",
-    "role_type": "Resident",
-    "start_time": "07:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Red",
-    "end_time": "23:00",
-    "role_type": "Resident",
-    "start_time": "15:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Red",
-    "end_time": "15:00",
-    "role_type": "Resident",
-    "start_time": "07:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Red",
-    "end_time": "23:00",
-    "role_type": "Resident",
-    "start_time": "15:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Red",
-    "end_time": "07:00",
-    "role_type": "PA",
-    "start_time": "19:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Red",
-    "end_time": "19:00",
-    "role_type": "Resident",
-    "start_time": "07:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "Red",
-    "end_time": "07:00",
-    "role_type": "Resident",
-    "start_time": "19:00"
-  },
-  {
-    "day": "Tuesday",
-    "team": "FastTrack",
-    "end_time": "17:00",
-    "role_type": "Attending",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Tuesday",
     "team": "FastTrack",
     "end_time": "01:00",
     "role_type": "Attending",
-    "start_time": "17:00"
+    "start_time": "17:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Tuesday",
     "team": "FastTrack",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Tuesday",
     "team": "FastTrack",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Tuesday",
     "team": "FastTrack",
     "end_time": "23:00",
     "role_type": "PA",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Tuesday",
     "team": "FastTrack",
     "end_time": "07:00",
     "role_type": "PA",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "PA-Red",
+    "resident_level": null
   },
   {
     "day": "Tuesday",
     "team": "FastTrack",
     "end_time": "23:00",
     "role_type": "PA",
-    "start_time": "11:00"
+    "start_time": "11:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Tuesday",
     "team": "FastTrack",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "OS-Green",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Tuesday",
     "team": "ERU",
     "end_time": "17:00",
     "role_type": "Attending",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Tuesday",
     "team": "ERU",
     "end_time": "01:00",
     "role_type": "Attending",
-    "start_time": "17:00"
+    "start_time": "17:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Tuesday",
     "team": "ERU",
     "end_time": "15:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Tuesday",
     "team": "ERU",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Tuesday",
     "team": "ERU",
     "end_time": "07:00",
     "role_type": "PA",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "PA",
+    "resident_level": null
   },
   {
     "day": "Tuesday",
     "team": "ERU",
     "end_time": "22:00",
     "role_type": "Resident",
-    "start_time": "14:00"
+    "start_time": "14:00",
+    "role_detail": "EM1",
+    "resident_level": "PGY-1"
   },
   {
     "day": "Tuesday",
     "team": "ERU",
     "end_time": "22:00",
     "role_type": "Resident",
-    "start_time": "14:00"
+    "start_time": "14:00",
+    "role_detail": "EM4",
+    "resident_level": "PGY-4"
   },
   {
     "day": "Tuesday",
     "team": "Blue",
-    "end_time": "17:00",
+    "end_time": "15:00",
     "role_type": "Attending",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Tuesday",
     "team": "Blue",
-    "end_time": "01:00",
+    "end_time": "23:00",
     "role_type": "Attending",
-    "start_time": "17:00"
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Tuesday",
     "team": "Blue",
-    "end_time": "21:00",
+    "end_time": "15:00",
     "role_type": "PA",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Tuesday",
     "team": "Blue",
     "end_time": "23:00",
     "role_type": "PA",
-    "start_time": "11:00"
+    "start_time": "15:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "Green",
     "end_time": "15:00",
     "role_type": "Attending",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "Green",
     "end_time": "23:00",
     "role_type": "Attending",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "Green",
     "end_time": "07:00",
     "role_type": "Attending",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "Green",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "Green",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "Green",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM1",
+    "resident_level": "PGY-1"
   },
   {
     "day": "Wednesday",
     "team": "Green",
     "end_time": "05:00",
     "role_type": "PA",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "Green",
     "end_time": "21:00",
     "role_type": "PA",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "PA",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "Green",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Wednesday",
     "team": "Red",
     "end_time": "15:00",
     "role_type": "Attending",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Attending",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Attending",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
   },
   {
     "day": "Wednesday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
   },
   {
     "day": "Wednesday",
     "team": "Red",
     "end_time": "15:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "PA",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM2",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Wednesday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Wednesday",
     "team": "Red",
     "end_time": "19:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "PA",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Wednesday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Wednesday",
     "team": "Red",
     "end_time": "19:00",
     "role_type": "Resident",
-    "start_time": "10:00"
+    "start_time": "10:00",
+    "role_detail": "OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Wednesday",
     "team": "FastTrack",
     "end_time": "17:00",
     "role_type": "Attending",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "FastTrack",
     "end_time": "01:00",
     "role_type": "Attending",
-    "start_time": "17:00"
+    "start_time": "17:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "FastTrack",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "FastTrack",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "FastTrack",
     "end_time": "23:00",
     "role_type": "PA",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "FastTrack",
     "end_time": "07:00",
     "role_type": "PA",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "PA-Red",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "FastTrack",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM3/4-Green",
+    "resident_level": "PGY-3"
   },
   {
     "day": "Wednesday",
     "team": "ERU",
     "end_time": "17:00",
     "role_type": "Attending",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "ERU",
     "end_time": "01:00",
     "role_type": "Attending",
-    "start_time": "17:00"
+    "start_time": "17:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "ERU",
     "end_time": "15:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "PA",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "ERU",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM3/4",
+    "resident_level": "PGY-3"
   },
   {
     "day": "Wednesday",
     "team": "ERU",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "EM3/4",
+    "resident_level": "PGY-3"
   },
   {
     "day": "Wednesday",
     "team": "ERU",
     "end_time": "15:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "PA",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "Blue",
-    "end_time": "17:00",
+    "end_time": "15:00",
     "role_type": "Attending",
-    "start_time": "09:00"
-  },
-  {
-    "day": "Wednesday",
-    "team": "Blue",
-    "end_time": "01:00",
-    "role_type": "Attending",
-    "start_time": "17:00"
-  },
-  {
-    "day": "Wednesday",
-    "team": "Blue",
-    "end_time": "21:00",
-    "role_type": "PA",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Wednesday",
     "team": "Blue",
     "end_time": "23:00",
+    "role_type": "Attending",
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Wednesday",
+    "team": "Blue",
+    "end_time": "15:00",
     "role_type": "PA",
-    "start_time": "11:00"
+    "start_time": "09:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
+  },
+  {
+    "day": "Wednesday",
+    "team": "Blue",
+    "end_time": "23:00",
+    "role_type": "PA",
+    "start_time": "15:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "Green",
     "end_time": "15:00",
     "role_type": "Attending",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "Green",
     "end_time": "23:00",
     "role_type": "Attending",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "Green",
     "end_time": "07:00",
     "role_type": "Attending",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "Green",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "Green",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "Green",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM1",
+    "resident_level": "PGY-1"
   },
   {
     "day": "Thursday",
     "team": "Green",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Thursday",
     "team": "Green",
     "end_time": "19:00",
     "role_type": "Resident",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Thursday",
     "team": "Green",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Thursday",
     "team": "Red",
     "end_time": "15:00",
     "role_type": "Attending",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Attending",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Attending",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "Red",
     "end_time": "15:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
   },
   {
     "day": "Thursday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
   },
   {
     "day": "Thursday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
   },
   {
     "day": "Thursday",
     "team": "Red",
     "end_time": "15:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Thursday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Thursday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Thursday",
     "team": "Red",
     "end_time": "15:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Thursday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Thursday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Thursday",
     "team": "Red",
     "end_time": "15:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Thursday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Thursday",
     "team": "FastTrack",
     "end_time": "17:00",
     "role_type": "Attending",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "FastTrack",
     "end_time": "01:00",
     "role_type": "Attending",
-    "start_time": "17:00"
+    "start_time": "17:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "FastTrack",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "FastTrack",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "FastTrack",
     "end_time": "23:00",
     "role_type": "PA",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "FastTrack",
     "end_time": "07:00",
     "role_type": "PA",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "PA-Red",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "FastTrack",
     "end_time": "07:00",
     "role_type": "PA",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "PA-Green",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "ERU",
     "end_time": "17:00",
     "role_type": "Attending",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "ERU",
     "end_time": "01:00",
     "role_type": "Attending",
-    "start_time": "17:00"
+    "start_time": "17:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Thursday",
     "team": "ERU",
     "end_time": "15:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Thursday",
     "team": "ERU",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Thursday",
     "team": "ERU",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Thursday",
     "team": "ERU",
     "end_time": "22:00",
     "role_type": "Resident",
-    "start_time": "14:00"
+    "start_time": "14:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Thursday",
     "team": "ERU",
     "end_time": "22:00",
     "role_type": "Resident",
-    "start_time": "14:00"
+    "start_time": "14:00",
+    "role_detail": "EM4",
+    "resident_level": "PGY-4"
   },
   {
     "day": "Thursday",
     "team": "Blue",
+    "end_time": "15:00",
+    "role_type": "Attending",
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Thursday",
+    "team": "Blue",
+    "end_time": "23:00",
+    "role_type": "Attending",
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Thursday",
+    "team": "Blue",
+    "end_time": "15:00",
+    "role_type": "Resident",
+    "start_time": "09:00",
+    "role_detail": "EM3/4",
+    "resident_level": "PGY-3"
+  },
+  {
+    "day": "Thursday",
+    "team": "Blue",
+    "end_time": "23:00",
+    "role_type": "Resident",
+    "start_time": "15:00",
+    "role_detail": "EM3/4",
+    "resident_level": "PGY-3"
+  },
+  {
+    "day": "Friday",
+    "team": "Green",
+    "end_time": "15:00",
+    "role_type": "Attending",
+    "start_time": "07:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Friday",
+    "team": "Green",
+    "end_time": "23:00",
+    "role_type": "Attending",
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Friday",
+    "team": "Green",
+    "end_time": "07:00",
+    "role_type": "Attending",
+    "start_time": "23:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Friday",
+    "team": "Green",
+    "end_time": "19:00",
+    "role_type": "PA",
+    "start_time": "07:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
+  },
+  {
+    "day": "Friday",
+    "team": "Green",
+    "end_time": "19:00",
+    "role_type": "PA",
+    "start_time": "07:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
+  },
+  {
+    "day": "Friday",
+    "team": "Green",
+    "end_time": "07:00",
+    "role_type": "Resident",
+    "start_time": "19:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
+  },
+  {
+    "day": "Friday",
+    "team": "Green",
+    "end_time": "07:00",
+    "role_type": "Resident",
+    "start_time": "19:00",
+    "role_detail": "EM2",
+    "resident_level": "PGY-2"
+  },
+  {
+    "day": "Friday",
+    "team": "Green",
+    "end_time": "19:00",
+    "role_type": "Resident",
+    "start_time": "09:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "end_time": "15:00",
+    "role_type": "Attending",
+    "start_time": "07:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "end_time": "23:00",
+    "role_type": "Attending",
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "end_time": "07:00",
+    "role_type": "Attending",
+    "start_time": "23:00",
+    "role_detail": "Attending",
+    "resident_level": null
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "end_time": "15:00",
+    "role_type": "Resident",
+    "start_time": "07:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "end_time": "23:00",
+    "role_type": "Resident",
+    "start_time": "15:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "end_time": "07:00",
+    "role_type": "Resident",
+    "start_time": "23:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "end_time": "19:00",
+    "role_type": "Resident",
+    "start_time": "07:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "end_time": "07:00",
+    "role_type": "Resident",
+    "start_time": "19:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "end_time": "19:00",
+    "role_type": "Resident",
+    "start_time": "07:00",
+    "role_detail": "EM1/2",
+    "resident_level": "PGY-1"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "end_time": "07:00",
+    "role_type": "Resident",
+    "start_time": "19:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
+  },
+  {
+    "day": "Friday",
+    "team": "Red",
+    "end_time": "19:00",
+    "role_type": "Resident",
+    "start_time": "07:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
+  },
+  {
+    "day": "Friday",
+    "team": "FastTrack",
     "end_time": "17:00",
     "role_type": "Attending",
-    "start_time": "09:00"
-  },
-  {
-    "day": "Thursday",
-    "team": "Blue",
-    "end_time": "01:00",
-    "role_type": "Attending",
-    "start_time": "17:00"
-  },
-  {
-    "day": "Thursday",
-    "team": "Blue",
-    "end_time": "21:00",
-    "role_type": "Resident",
-    "start_time": "09:00"
-  },
-  {
-    "day": "Thursday",
-    "team": "Blue",
-    "end_time": "23:00",
-    "role_type": "Resident",
-    "start_time": "11:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Green",
-    "end_time": "15:00",
-    "role_type": "Attending",
-    "start_time": "07:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Green",
-    "end_time": "23:00",
-    "role_type": "Attending",
-    "start_time": "15:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Green",
-    "end_time": "07:00",
-    "role_type": "Attending",
-    "start_time": "23:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Green",
-    "end_time": "19:00",
-    "role_type": "PA",
-    "start_time": "07:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Green",
-    "end_time": "19:00",
-    "role_type": "PA",
-    "start_time": "07:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Green",
-    "end_time": "07:00",
-    "role_type": "Resident",
-    "start_time": "19:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Green",
-    "end_time": "07:00",
-    "role_type": "Resident",
-    "start_time": "19:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Green",
-    "end_time": "19:00",
-    "role_type": "Resident",
-    "start_time": "09:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Red",
-    "end_time": "15:00",
-    "role_type": "Attending",
-    "start_time": "07:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Red",
-    "end_time": "23:00",
-    "role_type": "Attending",
-    "start_time": "15:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Red",
-    "end_time": "07:00",
-    "role_type": "Attending",
-    "start_time": "23:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Red",
-    "end_time": "15:00",
-    "role_type": "Resident",
-    "start_time": "07:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Red",
-    "end_time": "23:00",
-    "role_type": "Resident",
-    "start_time": "15:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Red",
-    "end_time": "07:00",
-    "role_type": "Resident",
-    "start_time": "23:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Red",
-    "end_time": "19:00",
-    "role_type": "Resident",
-    "start_time": "07:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Red",
-    "end_time": "07:00",
-    "role_type": "Resident",
-    "start_time": "19:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Red",
-    "end_time": "19:00",
-    "role_type": "Resident",
-    "start_time": "07:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Red",
-    "end_time": "07:00",
-    "role_type": "Resident",
-    "start_time": "19:00"
-  },
-  {
-    "day": "Friday",
-    "team": "Red",
-    "end_time": "19:00",
-    "role_type": "Resident",
-    "start_time": "07:00"
-  },
-  {
-    "day": "Friday",
-    "team": "FastTrack",
-    "end_time": "17:00",
-    "role_type": "Attending",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Friday",
     "team": "FastTrack",
     "end_time": "01:00",
     "role_type": "Attending",
-    "start_time": "17:00"
+    "start_time": "17:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Friday",
     "team": "FastTrack",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Friday",
     "team": "FastTrack",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Friday",
     "team": "FastTrack",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM1/OS-Red",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Friday",
     "team": "FastTrack",
     "end_time": "07:00",
     "role_type": "PA",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "PA-Green",
+    "resident_level": null
   },
   {
     "day": "Friday",
     "team": "ERU",
     "end_time": "17:00",
     "role_type": "Attending",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Friday",
     "team": "ERU",
     "end_time": "01:00",
     "role_type": "Attending",
-    "start_time": "17:00"
+    "start_time": "17:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Friday",
     "team": "ERU",
     "end_time": "15:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Friday",
     "team": "ERU",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Friday",
     "team": "ERU",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Friday",
     "team": "ERU",
     "end_time": "22:00",
     "role_type": "Resident",
-    "start_time": "14:00"
+    "start_time": "14:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Friday",
     "team": "ERU",
     "end_time": "22:00",
     "role_type": "Resident",
-    "start_time": "14:00"
+    "start_time": "14:00",
+    "role_detail": "EM4",
+    "resident_level": "PGY-4"
   },
   {
     "day": "Friday",
     "team": "Blue",
-    "end_time": "17:00",
+    "end_time": "15:00",
     "role_type": "Attending",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Friday",
     "team": "Blue",
-    "end_time": "01:00",
+    "end_time": "23:00",
     "role_type": "Attending",
-    "start_time": "17:00"
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Friday",
     "team": "Blue",
-    "end_time": "21:00",
+    "end_time": "15:00",
     "role_type": "Resident",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "EM3/4",
+    "resident_level": "PGY-3"
   },
   {
     "day": "Friday",
     "team": "Blue",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "11:00"
+    "start_time": "15:00",
+    "role_detail": "EM3/4",
+    "resident_level": "PGY-3"
   },
   {
     "day": "Saturday",
     "team": "Green",
     "end_time": "15:00",
     "role_type": "Attending",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Saturday",
     "team": "Green",
     "end_time": "23:00",
     "role_type": "Attending",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Saturday",
     "team": "Green",
     "end_time": "07:00",
     "role_type": "Attending",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Saturday",
     "team": "Green",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Saturday",
     "team": "Green",
     "end_time": "20:00",
     "role_type": "PA",
-    "start_time": "11:00"
+    "start_time": "11:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Saturday",
     "team": "Green",
     "end_time": "19:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Saturday",
     "team": "Green",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Saturday",
     "team": "Green",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM2",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Saturday",
     "team": "Red",
     "end_time": "15:00",
     "role_type": "Attending",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Saturday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Attending",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Saturday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Attending",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Saturday",
     "team": "Red",
     "end_time": "19:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
   },
   {
     "day": "Saturday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
   },
   {
     "day": "Saturday",
     "team": "Red",
     "end_time": "19:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Saturday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Saturday",
     "team": "Red",
     "end_time": "19:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM2",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Saturday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM3",
+    "resident_level": "PGY-3"
   },
   {
     "day": "Saturday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Saturday",
     "team": "FastTrack",
     "end_time": "17:00",
     "role_type": "Attending",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Saturday",
     "team": "FastTrack",
     "end_time": "01:00",
     "role_type": "Attending",
-    "start_time": "17:00"
+    "start_time": "17:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Saturday",
     "team": "FastTrack",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Saturday",
     "team": "FastTrack",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM2-Green",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Saturday",
     "team": "FastTrack",
     "end_time": "21:00",
     "role_type": "PA",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Saturday",
     "team": "FastTrack",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM1/OS-Red",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Saturday",
     "team": "FastTrack",
     "end_time": "15:00",
     "role_type": "PA",
-    "start_time": "11:00"
+    "start_time": "11:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Saturday",
     "team": "FastTrack",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Saturday",
     "team": "ERU",
     "end_time": "19:00",
     "role_type": "Attending",
-    "start_time": "11:00"
+    "start_time": "11:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Saturday",
     "team": "ERU",
     "end_time": "15:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM3/4",
+    "resident_level": "PGY-3"
   },
   {
     "day": "Saturday",
     "team": "ERU",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM3/4",
+    "resident_level": "PGY-3"
   },
   {
     "day": "Saturday",
     "team": "ERU",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "EM3/4",
+    "resident_level": "PGY-3"
   },
   {
     "day": "Sunday",
     "team": "Green",
     "end_time": "15:00",
     "role_type": "Attending",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Sunday",
     "team": "Green",
     "end_time": "23:00",
     "role_type": "Attending",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Sunday",
     "team": "Green",
     "end_time": "07:00",
     "role_type": "Attending",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Sunday",
     "team": "Green",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Sunday",
     "team": "Green",
     "end_time": "20:00",
     "role_type": "PA",
-    "start_time": "11:00"
+    "start_time": "11:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Sunday",
     "team": "Green",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Sunday",
     "team": "Green",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Sunday",
     "team": "Green",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM2/3",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Sunday",
     "team": "Red",
     "end_time": "15:00",
     "role_type": "Attending",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Sunday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Attending",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Sunday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Attending",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Sunday",
     "team": "Red",
     "end_time": "19:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
   },
   {
     "day": "Sunday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "Senior",
+    "resident_level": "PGY-4"
   },
   {
     "day": "Sunday",
     "team": "Red",
     "end_time": "19:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Sunday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Sunday",
     "team": "Red",
     "end_time": "19:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM2",
+    "resident_level": "PGY-2"
   },
   {
     "day": "Sunday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM1",
+    "resident_level": "PGY-1"
   },
   {
     "day": "Sunday",
     "team": "Red",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM1/OS",
+    "resident_level": "Off-Service"
   },
   {
     "day": "Sunday",
     "team": "Red",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "EM3",
+    "resident_level": "PGY-3"
   },
   {
     "day": "Sunday",
     "team": "FastTrack",
     "end_time": "17:00",
     "role_type": "Attending",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Sunday",
     "team": "FastTrack",
     "end_time": "01:00",
     "role_type": "Attending",
-    "start_time": "17:00"
+    "start_time": "17:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Sunday",
     "team": "FastTrack",
     "end_time": "19:00",
     "role_type": "PA",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "PA-Prim",
+    "resident_level": null
   },
   {
     "day": "Sunday",
     "team": "FastTrack",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "19:00"
+    "start_time": "19:00",
+    "role_detail": "EM1-Green",
+    "resident_level": "PGY-1"
   },
   {
     "day": "Sunday",
     "team": "FastTrack",
     "end_time": "21:00",
     "role_type": "PA",
-    "start_time": "09:00"
+    "start_time": "09:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Sunday",
     "team": "FastTrack",
     "end_time": "23:00",
     "role_type": "PA",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "Mid-Level",
+    "resident_level": null
   },
   {
     "day": "Sunday",
     "team": "ERU",
     "end_time": "19:00",
     "role_type": "Attending",
-    "start_time": "11:00"
+    "start_time": "11:00",
+    "role_detail": "Attending",
+    "resident_level": null
   },
   {
     "day": "Sunday",
     "team": "ERU",
     "end_time": "15:00",
     "role_type": "Resident",
-    "start_time": "07:00"
+    "start_time": "07:00",
+    "role_detail": "EM3/4",
+    "resident_level": "PGY-3"
   },
   {
     "day": "Sunday",
     "team": "ERU",
     "end_time": "23:00",
     "role_type": "Resident",
-    "start_time": "15:00"
+    "start_time": "15:00",
+    "role_detail": "EM3/4",
+    "resident_level": "PGY-3"
   },
   {
     "day": "Sunday",
     "team": "ERU",
     "end_time": "07:00",
     "role_type": "Resident",
-    "start_time": "23:00"
+    "start_time": "23:00",
+    "role_detail": "EM3/4",
+    "resident_level": "PGY-3"
   }
 ]

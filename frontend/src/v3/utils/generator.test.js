@@ -339,3 +339,26 @@ describe('generator "vs baseline" cost is attending-for-attending', () => {
   })
 })
 
+
+// ── Hard structural rules (not user-overridable) ─────────────────────────────
+describe('generator hard structural rules', () => {
+  const flatDemand = v => ({ ERU: { overall: Array(24).fill(v) }, FastTrack: { overall: Array(24).fill(v) }, Main: { overall: Array(24).fill(v) } })
+  const menu = [{ start: 7, length: 8 }, { start: 15, length: 8 }, { start: 23, length: 8 }, { start: 1, length: 8 }]
+  const onAt = (shifts, h) => shifts.filter(s => shiftCoversHour(s, h)).length
+
+  it('hardMaxConcurrent caps a larger user Max concurrent (ERU: one at a time) and reports the rest as uncovered', () => {
+    const r = generateSchedule({ demand: flatDemand(3), target: 'mean', day: 'Monday', area: 'eru', patterns: menu,
+      constraints: { maxConcurrent: 3, minConcurrent: 0, hardMaxConcurrent: 1, costPerHour: 250 }, pph: { eru: 0.8 } })
+    for (let h = 0; h < 24; h++) expect(onAt(r.shifts, h)).toBeLessThanOrEqual(1)
+    expect(r.uncovered.reduce((a, b) => a + b, 0)).toBeGreaterThan(0)
+  })
+
+  it('never generates attending coverage during closed hours, even with a minimum set', () => {
+    const closedHours = [1, 2, 3, 4, 5, 6]
+    const r = generateSchedule({ demand: flatDemand(2), target: 'mean', day: 'Monday', area: 'fasttrack', patterns: menu,
+      constraints: { maxConcurrent: 2, minConcurrent: 1, overnightMin: 1, overnightHours: [23, 0, 1, 2, 3, 4, 5, 6], closedHours, costPerHour: 250 }, pph: { fasttrack: 3.5 } })
+    for (const h of closedHours) expect(onAt(r.shifts, h)).toBe(0)
+    expect(r.shifts.length).toBeGreaterThan(0)
+    for (const h of closedHours) expect(r.uncovered[h]).toBeGreaterThan(0)   // reported, not met
+  })
+})

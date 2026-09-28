@@ -7,6 +7,22 @@ const COVERAGE_LINES = [
   { key: 'after', name: 'After', color: '#2dd4bf' },
 ]
 
+// Hours left short because fixing them would break a hard rule (or no
+// rule-compliant change adds capacity) — reported, never forced.
+function BlockedList({ blocked }) {
+  if (!blocked?.length) return null
+  return (
+    <ul className="space-y-1.5">
+      {blocked.map((b, i) => (
+        <li key={i} className="flex gap-2 text-xs text-amber-300">
+          <span className="shrink-0 mt-0.5">⚠</span>
+          <span>{b.message}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 function DayBreakdown({ day, result, theme }) {
   const [open, setOpen] = useState(false)
   const allResolved = result.resolvedCount === result.totalOverflow
@@ -37,7 +53,7 @@ function DayBreakdown({ day, result, theme }) {
             />
           )}
           {result.changes.length === 0 ? (
-            <div className="text-xs text-[var(--c-text-muted)]">No changes were necessary.</div>
+            <div className="text-xs text-[var(--c-text-muted)]">{result.blocked?.length ? 'No changes that keep to the hard rules were found.' : 'No changes were necessary.'}</div>
           ) : (
             <ul className="space-y-1.5">
               {result.changes.map((c, i) => (
@@ -48,6 +64,7 @@ function DayBreakdown({ day, result, theme }) {
               ))}
             </ul>
           )}
+          <BlockedList blocked={result.blocked} />
         </div>
       )}
     </div>
@@ -98,7 +115,7 @@ export default function OptimizeModal({ result, onAccept, onDiscard, theme }) {
                 />
               )}
               {result.changes.length === 0 ? (
-                <div className="text-xs text-[var(--c-text-muted)]">No changes were necessary.</div>
+                <div className="text-xs text-[var(--c-text-muted)]">{result.blocked?.length ? 'No changes that keep to the hard rules were found.' : 'No changes were necessary.'}</div>
               ) : (
                 <ul className="space-y-2">
                   {result.changes.map((c, i) => (
@@ -109,6 +126,7 @@ export default function OptimizeModal({ result, onAccept, onDiscard, theme }) {
                   ))}
                 </ul>
               )}
+              <BlockedList blocked={result.blocked} />
             </div>
           )}
         </div>

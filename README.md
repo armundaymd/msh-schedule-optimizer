@@ -103,10 +103,15 @@ run it after editing the schedule directly in the DB/dashboard).
    before) into `data/raw/` (create the folder if it doesn't exist —
    it's gitignored, since these exports contain patient data and
    should never be committed).
-2. Either restart the backend (nothing auto-runs the pipeline on
-   startup) or, with the backend already running, trigger it via:
+2. With the backend running, trigger the pipeline (nothing runs it on
+   startup) via:
    - the **↻ Refresh data** button in the dashboard header, or
-   - `curl -X POST http://localhost:8000/api/refresh`
+   - `curl -X POST -H "X-Admin-Token: $ADMIN_TOKEN" http://localhost:8000/api/refresh`
+
+   Refresh is **off unless `ADMIN_TOKEN` is set** in the backend's
+   environment (`.env` locally). When it is, the button appears and asks
+   for that password; without it the button is hidden and the endpoint
+   returns 403.
 
 The pipeline (`pipeline.py`) recombines and deduplicates on CSN
 across every file in `data/raw/`, so you can drop in overlapping
@@ -114,9 +119,47 @@ exports without double-counting, then writes fresh `demand`,
 `summary`, `service_params`, and `schedule` rows straight into
 Postgres.
 
-Note: this same refresh flow also updates production — hitting
-"Refresh data" on the live Coolify-deployed site re-runs the
-pipeline there, against whatever files are in its own `data/raw/`.
+Note: on production, Refresh would re-run the pipeline against
+whatever files are in the server's own `data/raw/` — normally none or
+old ones, which would overwrite good data. Keep `ADMIN_TOKEN` **unset**
+in Coolify so Refresh is disabled there, and update production data as
+described under "Updating production data" below.
+
+Refresh does **not** recompute the `validation` and `demand_ci` rows
+(empirical PPH, the chart's 95% band). Run `python3 validate.py`
+afterwards; it overwrites those two rows in the database named by
+`DATABASE_URL` (`python3 validate.py --help` is safe and runs nothing).
+
+Safety checks: a refresh that would leave fewer than half the encounters
+currently stored is refused unless forced (`POST /api/refresh?force=true`)
+— it usually means older exports are missing from `data/raw/`, since
+refresh rebuilds from every file rather than appending. Files whose CSNs
+were turned into scientific notation (opened and saved in Excel) are
+rejected.
+
+## Updating production data
+
+Raw exports never leave your machine. Instead:
+
+1. Locally: put the exports in `data/raw/`, Refresh (or run the pipeline),
+   and run `python3 validate.py`.
+2. Write the six aggregated outputs from the local database into
+   `data/processed/` (see `scripts/export_processed.py`), review, commit
+   and push. Coolify redeploys automatically.
+3. In Coolify: open the app → **Terminal** → the backend container. If
+   `data/Current_Schedule_Block.csv` changed, first run
+   `python3 migrate_schedule_to_db.py` (replaces the shift schedule table).
+   Then run the seed command from "Populating a fresh local database"
+   (option A).
+   The seed overwrites only those six result rows in the production
+   database; saved scenarios are untouched.
+4. Check the header shows the new encounter count and date range.
+
+`data/processed/*.json` is a committed snapshot of **aggregated** outputs
+(hourly counts, distributions, service-time fits, staff schedule — no
+patient identifiers). It seeds a fresh database and is the input to the
+analysis runs in `frontend/analysis/`; refreshing the database does not
+update it.
 
 ---
 
@@ -149,18 +192,51 @@ ed_staffing/
 
 ---
 
-## Dashboard controls
+## Using the dashboard
 
-| Control | What it does |
-|---------|-------------|
-| Max PPH sliders | Set the realistic ceiling for each team type |
-| Team count sliders | Adjust attendings per time window |
-| Day of week filter | Show demand for a specific DOW vs overall average |
-| Quick scenarios | Snap to predefined staffing configurations |
-| Team tabs | Switch between Main / Fast Track / ERU views |
+The landing page offers three versions: **Classic** (`/legacy`), **Optimizer v2**
+(`/v2`) and **Optimizer v3** (`/v3`, the only one with the Staffing plan).
 
-**Red bars** = demand exceeds capacity at that hour.
-**Blue line** = current capacity ceiling (teams × max PPH).
+**Help for users lives in the app.** In v3, press **?** or click the **?** button
+in the top bar; the small **?** next to each part of the screen opens its
+explanation. The text is in `frontend/src/v3/help/helpContent.js` (edit wording
+there; the Help panel only renders it). A plain-English user guide with
+step-by-step recipes is kept separately: [PPH Scheduling Tool — Plain-English Guide](https://claude.ai/code/artifact/1b2929bc-21a3-4948-b7d7-169161bdad43).
 
-The summary table bottom-left shows status across all time windows at a glance.
+v3 at a glance:
+
+| Part | What it does |
+|------|-------------|
+| Area tabs + Mean / p50 / p75 / p90 | Choose the area (or Main + ERU / Whole ED) and how busy a day to plan for |
+| Throughput sliders | Assumed patients/hr per attending (ceiling, solo) and per resident level / PA |
+| Timeline | Drag, resize or click shifts; ←/→ moves a selected shift 30 min |
+| Coverage bar, week heatmap, chart | Red = short, blue = excess, striped = total fine but an area short (shortfalls under 0.05 patients/hr display as covered) |
+| ⚡ Auto-optimize | Rule-of-thumb patch for one day; keeps hard rules (ERU one attending, none in closed/cross-covered hours) |
+| ✦ Generate schedule | Quick heuristic attending schedule for one area; keeps ERU max one and closed hours |
+| ▦ Staffing plan | OR-Tools CP-SAT planner: fixed hours, coverage/unmet targets, minimum practical, resource frontier |
+
+Operational rules the Staffing plan enforces (configured in
+`frontend/src/shared/operationalCoverage.js`, built into the solver instance in
+`frontend/src/shared/staffingPlan.js`):
+
+- **Resident supervision (hard):** a resident may only work while their
+  operating team has its own attending (explicitly cross-covered hours:
+  the covering area supervises).
+- **Confirmed staff routing:** FastTrack "-Green" / "-Red" overnight staff
+  switch to that Main team at 01:00, when FastTrack closes, until 07:00. Staff
+  move; patient demand never does.
+- **No new patients before closing (intake cutoffs):** Blue from 20:00 (shift
+  ends 23:00), FastTrack from midnight (closes 01:00), and teams added by the
+  tools in the last 3 h of their coverage unless another attending continues
+  it. The team then adds no capacity against demand. Staffing plan only.
+
+All of these (except resident supervision and ERU's one-attending maximum)
+are editable in the Staffing plan's Operational coverage section and are
+saved with scenarios; the defaults live in `DEFAULT_OPERATIONAL_COVERAGE`.
+- Main needs an attending 24/7; ERU has its current dedicated windows and at
+  most one attending at a time; FastTrack is closed 01:00–07:00.
+
+All numbers are modeled estimates (demand = historical patients roomed per
+hour; capacity = assumed rates), not observed throughput, wait times or
+clinical staffing requirements.
 

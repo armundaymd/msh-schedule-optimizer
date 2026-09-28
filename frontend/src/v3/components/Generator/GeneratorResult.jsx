@@ -21,6 +21,11 @@ export default function GeneratorResult({ result, onAccept, onDiscard, costModeE
               ? '✓ Target demand fully covered, assuming attendings reach their supervision ceiling'
               : `⚠ ${totals.uncoveredHours.toFixed(1)} patient-hours of target demand left uncovered even at full ceiling`}
           </div>
+          {result.rulesApplied?.length > 0 && (
+            <div className="text-[11px] text-[var(--c-text-muted)] mt-0.5 max-w-xl">
+              Hard rules kept (any demand they leave uncovered is counted above, not met by breaking them): {result.rulesApplied.join('; ')}.
+            </div>
+          )}
           <div className="text-[11px] text-[var(--c-text-muted)] mt-0.5 max-w-xl">
             This replaces attendings only, sized against their supervision ceiling (patients/hr they can be responsible for once
             backed by residents/PAs). Existing residents and PAs stay on their teams. The live Demand vs Capacity chart shows real

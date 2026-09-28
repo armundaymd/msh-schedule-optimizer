@@ -7,11 +7,10 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { AREA_LABEL, scopeAreas } from '../src/shared/areas'
-import { teamArea } from '../src/shared/capacity'
+import { attendingCountForTeam, teamArea } from '../src/shared/capacity'
 import { getDemandSeries } from '../src/shared/demandSeries'
 import {
-  DEFAULT_OPERATIONAL_COVERAGE, ERU_SCENARIO_PRESETS, cloneCoverageConfig, dedicatedWindowFeasibility,
-  operationalCoverageSummary, routedShifts, unroutedClosedAreaShifts, withEruDedicatedCoverage,
+  attendingsInArea, crossCoverApplies, cloneCoverageConfig, dedicatedWindowFeasibility, DEFAULT_OPERATIONAL_COVERAGE, effectiveShifts, ERU_SCENARIO_PRESETS, operationalCoverageSummary, resolveCoverage, routedShifts, unroutedClosedAreaShifts, withEruDedicatedCoverage,
 } from '../src/shared/operationalCoverage'
 import { DEFAULT_PPH } from '../src/shared/pph'
 import { applyPlanResult, buildPlanInstance, capacityCrossCheck } from '../src/shared/staffingPlan'
@@ -117,6 +116,10 @@ describe('ERU coverage scenarios (real data)', () => {
         for (const a of areas) expect(r.op[a].requiredShortfallHours).toBe(0)
         expect(nonAtt(r.shiftsForDay)).toEqual(nonAtt(currentFor))
         expect(r.crossCheck).toBeLessThan(0.02)
+        // Resident supervision (hard): every resident on a team (after routing)
+        // has that team's attending on, or — in explicitly cross-covered hours —
+        // the covering area has an attending on.
+        expect(unsupervisedResidentHours(r, p.config)).toBe(0)
       }
     }
 
@@ -157,3 +160,21 @@ describe('ERU coverage scenarios (real data)', () => {
     }, null, 2))
   }, 3_600_000)
 })
+
+function unsupervisedResidentHours(r, config) {
+  let n = 0
+  for (const d of DAYS) {
+    const list = r.shiftsForDay(d)
+    for (let h = 0; h < 24; h++) {
+      const on = effectiveShifts(list, config, d, h)
+      const covers = s => (s.endMins <= 1440 ? s.startMins < h * 60 + 60 && s.endMins > h * 60 : s.startMins < h * 60 + 60 || h * 60 < s.endMins - 1440)
+      for (const team of new Set(on.filter(s => s.role_type === 'Resident' && covers(s)).map(s => s.team))) {
+        const area = teamArea(team, r.customTeams)
+        const rule = resolveCoverage(config, area, d, h)
+        if (rule && crossCoverApplies(rule, attendingsInArea(on, r.customTeams, area, h))) { if (attendingsInArea(on, r.customTeams, rule.coveredBy, h) < 1) n++; continue }
+        if (attendingCountForTeam(on, team, h) < 1) n++
+      }
+    }
+  }
+  return n
+}

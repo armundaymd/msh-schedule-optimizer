@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AREA_LABEL } from '../../../shared/areas'
 import { BOTTLENECK_LABEL, BOTTLENECK_ORDER } from '../../../shared/bottlenecks'
+import { DISPLAY_DEFICIT_TOLERANCE_PPH } from '../../../shared/coverageInsights'
 
 const fmt = (n, d = 1) => (n ?? 0).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d })
 const HINT = {
@@ -16,7 +17,10 @@ const HINT = {
 export default function BottleneckPanel({ bottlenecks, title = 'Why deficits remain' }) {
   const [open, setOpen] = useState(false)
   if (!bottlenecks) return null
-  const { total, byLabel, byArea, runs } = bottlenecks
+  const { total, byLabel, byArea } = bottlenecks
+  // Periods whose worst hour is short by less than the display tolerance read
+  // as 0.0 elsewhere on screen, so they are not listed (totals stay exact).
+  const runs = bottlenecks.runs.filter(r => (r.peak ?? Infinity) >= DISPLAY_DEFICIT_TOLERANCE_PPH - 1e-12)
   if (total < 0.05) return <div className="text-xs text-green-400">No modeled unmet demand remains.</div>
   const areas = Object.keys(byArea)
   return (

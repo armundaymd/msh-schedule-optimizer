@@ -40,6 +40,24 @@ def _gap(sol: engine.Solution) -> float:
     return abs(sol.objective - sol.best_bound) / max(1.0, abs(sol.objective))
 
 
+def _proven(sol: engine.Solution) -> bool:
+    """Mathematically proven optimal: status OPTIMAL *and* zero gap. CP-SAT
+    also reports OPTIMAL once it is within OPTIMALITY_GAP (0.1%) of its
+    bound, which is near-optimal, not proven best."""
+    return sol.status == "optimal" and _gap(sol) <= 1e-9
+
+
+def status_note(sol: engine.Solution, effort: str) -> str:
+    """User-facing wording for a solve's status (mirrors shared/solverStatus.js)."""
+    gap = _gap(sol)
+    if _proven(sol):
+        return "Optimal: mathematically proven best plan for this model."
+    if sol.status == "optimal":
+        return (f"Near-optimal: within {gap:.2%} of the best possible objective "
+                f"(the search stops once within {OPTIMALITY_GAP:.1%}).")
+    return f"Best found within the '{effort}' search budget: {gap:.1%} optimality gap."
+
+
 def _stats(sol: engine.Solution) -> dict:
     gap = _gap(sol)
     return {
@@ -48,7 +66,9 @@ def _stats(sol: engine.Solution) -> dict:
         "constraints": sol.num_constraints,
         "objectiveValue": sol.objective,
         "bestBound": sol.best_bound,
-        "relativeGap": round(gap, 6),
+        # Rounded UP to 6 decimals, so a nonzero gap never reads as 0 (0 =
+        # mathematically proven optimal; see shared/solverStatus.js).
+        "relativeGap": math.ceil(gap * 1e6) / 1e6 if gap > 0 else 0.0,
     }
 
 
@@ -141,8 +161,16 @@ def unreachable_requirements(inst: Instance) -> list[dict]:
                     if ub > 0:
                         for h in covers[pi]:
                             free[h] += ub
+                slot_reach = [min(s.maxAttendings[d][h], s.locked[d][h] + free[h]) for h in range(HOURS)]
                 for h in range(HOURS):
-                    reach[h] += min(s.maxAttendings[d][h], s.locked[d][h] + free[h])
+                    reach[h] += slot_reach[h]
+                # Resident supervision: this team must have its own attending.
+                if s.minAttendings is not None:
+                    sbad = [h for h in range(HOURS) if s.minAttendings[d][h] > slot_reach[h]]
+                    if sbad:
+                        found.append({"area": a.key, "team": s.id, "day": day, "hours": sbad,
+                                      "need": max(s.minAttendings[d][h] for h in sbad),
+                                      "reachable": min(slot_reach[h] for h in sbad), "kind": "resident supervision"})
             if a.maxCoverage is not None:
                 reach = [min(reach[h], a.maxCoverage[d][h]) for h in range(HOURS)]
             bad = [h for h in range(HOURS) if a.minCoverage[d][h] > reach[h]]
@@ -159,7 +187,8 @@ def required_hours_by_area(inst: Instance) -> dict:
     per-area figures plus the locked hours add up to the total requirement."""
     out = {}
     for a in inst.areas:
-        if not any(v > 0 for row in a.minCoverage for v in row):
+        if not any(v > 0 for row in a.minCoverage for v in row) and \
+                not any(v > 0 for s in a.slots if s.minAttendings for row in s.minAttendings for v in row):
             continue
         sub = inst.model_copy(update={"areas": [a], "crossCover": [], "coveringAreas": {}})
         sol = engine.solve(sub, "min_hours")
@@ -234,7 +263,8 @@ def _coverage_view(inst: Instance, unmet_by_area: dict) -> dict:
 
 def _stage(name: str, sol: engine.Solution, **extra) -> dict:
     return {"stage": name, "status": sol.status, "seconds": round(sol.wall_seconds, 3),
-            "objective": sol.objective, "bestBound": sol.best_bound, "relativeGap": round(_gap(sol), 6), **extra}
+            "objective": sol.objective, "bestBound": sol.best_bound,
+            "relativeGap": math.ceil(_gap(sol) * 1e6) / 1e6 if _gap(sol) > 0 else 0.0, **extra}
 
 
 def best_achievable(inst: Instance) -> tuple[engine.Solution, dict]:
@@ -248,7 +278,7 @@ def best_achievable(inst: Instance) -> tuple[engine.Solution, dict]:
         info["attendingHours"] = inst.lockedHours + sol.units_used / TIME_UNITS_PER_HOUR
         # Lower bound on unmet (proof): the objective IS scaled unmet.
         info["unmetLowerBoundPph"] = math.floor(sol.best_bound + 1e-9) / PPH_SCALE
-        info["proven"] = sol.status == "optimal"
+        info["proven"] = _proven(sol)
     return sol, info
 
 
@@ -418,7 +448,10 @@ def solve(inst: Instance) -> Result:
     unreachable = unreachable_requirements(inst)
     if unreachable:
         labels = {a.key: a.requirementLabels for a in inst.areas}
-        lines = [f"{u['area']} {u['day']} {', '.join(_runs(u['hours']))}: needs {u['need']} attending(s), "
+        lines = [(f"{u['area']} team {u['team']} {u['day']} {', '.join(_runs(u['hours']))}: residents on duty need "
+                  f"a supervising {u['team']} attending, at most {u['reachable']} possible")
+                 if u.get("kind") == "resident supervision" else
+                 f"{u['area']} {u['day']} {', '.join(_runs(u['hours']))}: needs {u['need']} attending(s), "
                  f"at most {u['reachable']} possible" for u in unreachable[:8]]
         more = f" (+{len(unreachable) - 8} more)" if len(unreachable) > 8 else ""
         rules = sorted({r for u in unreachable for r in labels.get(u["area"], [])})
@@ -475,6 +508,4 @@ def solve(inst: Instance) -> Result:
                                   "Try a longer search, fewer shift patterns, or a smaller scope.")
         return Result(status="invalid", stats=_stats(sol), message="The solver rejected the model as invalid.")
 
-    note = f"Optimal (proven within {OPTIMALITY_GAP:.1%})." if sol.status == "optimal" else \
-        f"Best plan found within the '{inst.effort}' search budget (not proven optimal; see relativeGap)."
-    return _plan_result(inst, sol, note)
+    return _plan_result(inst, sol, status_note(sol, inst.effort))

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AREA_LABEL, SCOPE_LABEL } from '../../shared/areas'
-import { formatHour, formatPph } from '../../shared/coverageInsights'
+import { DISPLAY_DEFICIT_TOLERANCE_PPH, formatHour, formatPph, isBelowDisplayTolerance } from '../../shared/coverageInsights'
 import { analyzeWeek, weekCell, weekHourSummary, weekDaySummary, consistentPatterns, isShortStatus } from '../../shared/weekCoverage'
 import { ROW_HEADER_W, hourPxForWidth } from './Timeline/layout'
 import { STATUS_SWATCH, STATUS_TEXT, STATUS_TEXT_CLASS, statusBackground } from './coverageStyles'
@@ -19,6 +19,9 @@ function cellLabel(cell, scopeName, combined) {
     `Capacity − demand: ${formatPph(cell.net)} PPH (${STATUS_TEXT[cell.status]})`,
     `Capacity ${cell.capacity.toFixed(1)} / demand ${cell.demand.toFixed(1)}`,
   ]
+  if (isBelowDisplayTolerance(cell.demand, cell.capacity)) {
+    lines.push(`Short by ${(cell.demand - cell.capacity).toFixed(3)} (capacity ${cell.capacity.toFixed(3)} / demand ${cell.demand.toFixed(3)}) — below the ${DISPLAY_DEFICIT_TOLERANCE_PPH} PPH display threshold, shown as covered`)
+  }
   if (combined) {
     for (const a of cell.areas) lines.push(`${AREA_LABEL[a.area]}: ${formatPph(a.net)} (${STATUS_TEXT[a.status]})`)
   }
@@ -63,7 +66,7 @@ export default function WeekHeatmap({
   // shiftsForDay's identity only changes when schedule data does, so hover
   // re-renders elsewhere in the app don't recompute the week.
   const week = useMemo(
-    () => analyzeWeek({ days, shiftsForDay, demand, pph, customTeams, scope, target, coverage }),
+    () => analyzeWeek({ days, shiftsForDay, demand, pph, customTeams, scope, target, coverage, deficitTolerance: DISPLAY_DEFICIT_TOLERANCE_PPH }),
     [days, shiftsForDay, demand, pph, customTeams, scope, target, coverage],
   )
   const combined = week.areas.length > 1

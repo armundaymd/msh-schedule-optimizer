@@ -1,4 +1,4 @@
-import { formatHour, formatPph } from '../../../shared/coverageInsights'
+import { DISPLAY_DEFICIT_TOLERANCE_PPH, formatHour, formatPph } from '../../../shared/coverageInsights'
 import { STATUS_TEXT, statusBackground } from '../coverageStyles'
 import HelpButton from '../Help/HelpButton'
 
@@ -31,7 +31,7 @@ export default function CoverageRibbon({ hourPx, rowHeaderW, rows, hoverHour }) 
               {row.net.map((v, h) => (
                 <div
                   key={h}
-                  title={`${row.label} ${formatHour(h)} — ${formatPph(v)} PPH vs target (${STATUS_TEXT[row.status[h]]})`}
+                  title={`${row.label} ${formatHour(h)} — ${formatPph(v)} PPH vs target (${STATUS_TEXT[row.status[h]]})${v < 0 && v > -DISPLAY_DEFICIT_TOLERANCE_PPH ? ` · short by ${(-v).toFixed(3)}, below the ${DISPLAY_DEFICIT_TOLERANCE_PPH} PPH display threshold` : ''}`}
                   style={{ width: hourPx, height: '100%', background: statusBackground(row.status[h], v) }}
                 />
               ))}

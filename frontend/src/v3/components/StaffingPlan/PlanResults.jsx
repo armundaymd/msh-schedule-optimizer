@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { AREA_LABEL, SCOPE_LABEL } from '../../../shared/areas'
-import { formatHour } from '../../../shared/coverageInsights'
-import { consistentPatterns } from '../../../shared/weekCoverage'
+import { DISPLAY_DEFICIT_TOLERANCE_PPH, formatHour } from '../../../shared/coverageInsights'
+import { consistentPatterns, withDeficitTolerance } from '../../../shared/weekCoverage'
 import { WEEKS_PER_YEAR } from '../../../shared/staffingPlan'
 import { planningUnits } from '../../../shared/attendingPlanner'
+import { solverStatus } from '../../../shared/solverStatus'
 import WeekHeatmap from '../WeekHeatmap'
 import AssumptionStrip, { Tag } from './AssumptionStrip'
 import BottleneckPanel from './BottleneckPanel'
@@ -47,7 +48,7 @@ function CoverageTable({ before, after, scope }) {
   if (rows.length > 1) rows.push([`${SCOPE_LABEL[scope]} (pooled)`, before.aggregate, after.aggregate, true])
   const cols = [
     ['Uncovered patients/hr·h', 'uncoveredPphHours', 1, 'Sum over the week of how far demand exceeds capacity, hour by hour'],
-    ['Short hours', 'deficitHours', 0, 'Hours where demand exceeds capacity'],
+    ['Short hours', 'displayDeficitHours', 0, `Hours short by at least ${DISPLAY_DEFICIT_TOLERANCE_PPH} patients/hr (a smaller shortfall rounds to 0.0 and is shown as covered everywhere on screen; Uncovered patients/hr·h still includes it)`],
     ['Severe hours', 'severeDeficitHours', 0, 'Hours more than 2 patients/hr short'],
     ['No attending, demand', 'unattendedDemandHours', 0, 'Hours with expected patients, no attending in the area, and (with operational coverage on) no cross-coverage'],
     ['Excess hours', 'excessHours', 0, 'Hours with surplus beyond the excess threshold'],
@@ -154,7 +155,7 @@ function EruComparison({ plan }) {
     ['ERU dedicated hours', m => m.operational.eru?.hoursDedicated ?? 0, 0, null],
     ['ERU cross-covered hours', m => m.operational.eru?.hoursCrossCovered ?? 0, 0, null],
   ]
-  const gap = r => `${r.result.status === 'optimal' ? 'optimal' : 'best found'} · gap ${fmt((r.result.stats?.relativeGap ?? 0) * 100, 1)}%`
+  const gap = r => solverStatus(r.result.status, r.result.stats?.relativeGap).short
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
@@ -243,9 +244,11 @@ function Allocation({ after, days, annual }) {
 }
 
 function RemainingProblems({ after, scope, onRequireCoverage }) {
-  const patterns = consistentPatterns(after.week).filter(p => p.kind === 'short')
+  // Same display rule as the heatmap: shortfalls below the display tolerance are not "short".
+  const shown = withDeficitTolerance(after.week, DISPLAY_DEFICIT_TOLERANCE_PPH)
+  const patterns = consistentPatterns(shown).filter(p => p.kind === 'short')
   const unattended = Object.entries(after.byArea).filter(([, m]) => m.unattendedDemandHours > 0)
-  const excess = consistentPatterns(after.week).filter(p => p.kind === 'excess')
+  const excess = consistentPatterns(shown).filter(p => p.kind === 'excess')
   if (!patterns.length && !unattended.length && !excess.length) {
     return <div className="text-xs text-green-400">No area is consistently short, and every hour with demand has an attending.</div>
   }
@@ -368,8 +371,8 @@ export default function PlanResults({ plan, days, demand, pph, currentShiftsForD
         <Tile label="Uncovered demand" value={<Delta before={before.componentUncoveredPphHours} after={after.componentUncoveredPphHours} />}
           sub="patients/hr·h per week, summed per area" />
         <Tile label="Solver"
-          value={result.status === 'optimal' ? 'Optimal' : 'Best found'}
-          sub={`${fmt(result.stats?.solveSeconds, 1)} s · ${result.status === 'optimal' ? 'proven' : `within ${fmt(gap * 100, 1)}%`} of best possible`} />
+          value={solverStatus(result.status, gap).label}
+          sub={`${fmt(result.stats?.solveSeconds, 1)} s · ${solverStatus(result.status, gap).detail}`} />
       </div>
 
       {crossCheck > 0.05 && (

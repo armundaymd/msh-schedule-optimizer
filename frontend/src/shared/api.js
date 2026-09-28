@@ -31,9 +31,56 @@ export async function fetchSummary() {
   return r.json()
 }
 
-export async function postRefresh() {
-  const r = await fetch(`${API_BASE}/api/refresh`, { method: 'POST' })
-  if (!r.ok) throw new Error('refresh failed')
+// Whether this server allows "Refresh data" at all (it needs an ADMIN_TOKEN
+// configured server-side). Any failure reads as disabled.
+export async function fetchRefreshStatus() {
+  try {
+    const r = await fetch(`${API_BASE}/api/refresh-status`)
+    if (!r.ok) return { enabled: false }
+    return await r.json()
+  } catch {
+    return { enabled: false }
+  }
+}
+
+// The admin password for Refresh, remembered for this browser session only.
+const ADMIN_TOKEN_KEY = 'edso.adminToken'
+function storedToken() {
+  try { return window.sessionStorage.getItem(ADMIN_TOKEN_KEY) } catch { return null }
+}
+function rememberToken(t) {
+  try { if (t) window.sessionStorage.setItem(ADMIN_TOKEN_KEY, t); else window.sessionStorage.removeItem(ADMIN_TOKEN_KEY) } catch { /* private mode */ }
+}
+
+// Throws an Error whose message is the backend's explanation. A 409 means the
+// refresh would shrink the stored dataset a lot; the user must confirm first.
+// `token`: the admin password (v3 asks for it in a masked field); without
+// one, the session's remembered password is used, else the browser prompts.
+export async function postRefresh(token = null) {
+  let t = token || storedToken()
+  if (!t) {
+    t = window.prompt('Admin password to refresh the data:')
+    if (!t) throw new Error('Refresh cancelled — existing data kept.')
+  }
+  const headers = { 'X-Admin-Token': t }
+  let r = await fetch(`${API_BASE}/api/refresh`, { method: 'POST', headers })
+  if (r.status === 401 || r.status === 403) {
+    rememberToken(null)
+    const body = await r.json().catch(() => ({}))
+    throw new Error(body.detail || 'Refresh not allowed')
+  }
+  rememberToken(t)
+  if (r.status === 409) {
+    const { detail } = await r.json()
+    if (!window.confirm(`${detail}\n\nReplace the existing data anyway?`)) {
+      throw new Error('Refresh cancelled — existing data kept.')
+    }
+    r = await fetch(`${API_BASE}/api/refresh?force=true`, { method: 'POST', headers })
+  }
+  if (!r.ok) {
+    const body = await r.json().catch(() => ({}))
+    throw new Error(body.detail || 'Refresh failed')
+  }
   return r.json()
 }
 

@@ -81,7 +81,7 @@ describe('planAndScore — attending-only planning', () => {
     // 9: each area keeps its own historical demand series.
     for (const a of seen.areas) DAYS.forEach((d, i) => expect(a.demand[i]).toEqual(getDemandSeries(DEMAND, AREA_LABEL[a.key], d, 'mean')))
     // 10: nothing about ESI anywhere in the instance.
-    expect(JSON.stringify(seen)).not.toMatch(/esi/i)
+    expect(JSON.stringify(seen)).not.toMatch(/\besi\b/i)
     // Target fields reach the solver.
     expect(seen).toMatchObject({ mode: 'target', targetCoverage: 0.9, areaTargetCoverage: { main: 0.95 }, budgetHours: null })
   })
